@@ -1,23 +1,31 @@
 {
-  "name": "companion-module-fora-mfr",
-  "version": "1.0.0",
-  "description": "Companion module for For.A MFr series 3G/HD/SD/ASI Routing Switcher",
+  "name": "fora-mfr",
+  "version": "0.0.1",
+  "api_version": "0.0.1",
+  "description": "For.A MFR Series Routing Swicher",
+  "keywords": [
+    "Matrix",
+    "Router"
+  ],
+  "manufacturer": "For.A",
+  "product": "MFR",
+  "shortname": "fora-mfr",
+  "homepage": "https://github.com/bitfocus/companion-module-fora-mfr#readme",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bitfocus/companion-module-fora-mfr.git"
+    "url": "git+https://github.com/bitfocus/https://github.com/bitfocus/companion-module-fora-mfr"
   },
-  "keywords": [
-    "Routing",
-    "Switcher"
-  ],
   "author": "Dan Hall",
-  "license": "ISC",
+  "contributors": [
+  ],
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/bitfocus/companion-module-fora-mfr/issues"
   },
-  "homepage": "https://github.com/bitfocus/companion-module-fora-mfr#readme"
+  "dependencies": {},
+  "devDependencies": {}
 }
