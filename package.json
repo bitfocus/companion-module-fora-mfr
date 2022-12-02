@@ -28,5 +28,7 @@
     "url": "https://github.com/bitfocus/companion-module-fora-mfr/issues"
   },
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "prettier": "2.8.0"
+  }
 }
