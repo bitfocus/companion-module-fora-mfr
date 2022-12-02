@@ -1,311 +1,640 @@
-const tcp = require('../../tcp')
-const udp = require('../../udp')
-const instance_skel = require('../../instance_skel')
+var tcp = require('../../tcp');
+var instance_skel = require('../../instance_skel');
+var debug;
+var log;
 
-class instance extends instance_skel {
-	/**
-	 * Create an instance of the module
-	 *
-	 * @param {EventEmitter} system - the brains of the operation
-	 * @param {string} id - the instance ID
-	 * @param {Object} config - saved user configuration parameters
-	 * @since 1.0.0
-	 */
-	constructor(system, id, config) {
-		super(system, id, config)
-		this.actions() // export actions
-		this.init_presets() // export presets
-	}
+/* 
+	++ LINK TO USER MANUAL WITH CONTROL PROTOCOL COMMANDS
+*/
 
-	updateConfig(config) {
-		this.init_presets()
+function instance(system, id, config) {
+	var self = this;
 
-		if (this.udp !== undefined) {
-			this.udp.destroy()
-			delete this.udp
-		}
+	self.CHOICES_INPUTS = [];
+	self.CHOICES_OUTPUTS = [];
+	self.CHOICES_PRESETS = [];
 
-		if (this.socket !== undefined) {
-			this.socket.destroy()
-			delete this.socket
-		}
+	self.presets = {};
+	self.outputs = 0;
+	self.inputs = 0;
+	self.variables = [];
 
-		this.config = config
+	// super-constructor
+	instance_skel.apply(this, arguments);
 
-		if (this.config.prot == 'tcp') {
-			this.init_tcp()
+	self.init_actions(); // export actions
 
-			this.init_tcp_variables()
-		}
-
-		if (this.config.prot == 'udp') {
-			this.init_udp()
-		}
-	}
-
-	init() {
-		this.init_presets()
-		if (this.config.prot == 'tcp') {
-			this.init_tcp()
-
-			this.init_tcp_variables()
-		}
-
-		if (this.config.prot == 'udp') {
-			this.init_udp()
-		}
-	}
-
-	init_udp() {
-		if (this.udp !== undefined) {
-			this.udp.destroy()
-			delete this.udp
-		}
-
-		this.status(this.STATE_WARNING, 'Connecting')
-
-		if (this.config.host !== undefined) {
-			this.udp = new udp(this.config.host, this.config.port)
-
-			this.udp.on('error', (err) => {
-				this.debug('Network error', err)
-				this.status(this.STATE_ERROR, err)
-				this.log('error', 'Network error: ' + err.message)
-			})
-
-			// If we get data, thing should be good
-			this.udp.on('data', () => {
-				this.status(this.STATE_OK)
-			})
-
-			this.udp.on('status_change', (status, message) => {
-				this.status(status, message)
-			})
-		}
-	}
-
-	init_tcp() {
-		if (this.socket !== undefined) {
-			this.socket.destroy()
-			delete this.socket
-		}
-
-		this.status(this.STATE_WARNING, 'Connecting')
-
-		if (this.config.host) {
-			this.socket = new tcp(this.config.host, this.config.port)
-
-			this.socket.on('status_change', (status, message) => {
-				this.status(status, message)
-			})
-
-			this.socket.on('error', (err) => {
-				this.debug('Network error', err)
-				this.status(this.STATE_ERROR, err)
-				this.log('error', 'Network error: ' + err.message)
-			})
-
-			this.socket.on('connect', () => {
-				this.status(this.STATE_OK)
-				this.debug('Connected')
-			})
-
-			this.socket.on('data', (data) => {
-				if (this.config.saveresponse) {
-					let dataResponse = data
-
-					if (this.config.convertresponse == 'string') {
-						dataResponse = data.toString()
-					}
-					else if (this.config.convertresponse == 'hex') {
-						dataResponse = data.toString('hex')
-					}
-
-					this.setVariable('tcp_response', dataResponse)
-				}
-			})
-		}
-	}
-
-	init_tcp_variables() {
-		let variables = [
-			{ label: 'Last TCP Response', name: 'tcp_response'}
-		]
-
-		this.setVariableDefinitions(variables);
-
-		this.setVariable('tcp_response', '');
-	}
-
-	// Return config fields for web config
-	config_fields() {
-		return [
-			{
-				type: 'text',
-				id: 'info',
-				label: 'Information',
-				width: 12,
-				value: `
-				<div class="alert alert-danger">
-					<h3>IMPORTANT MESSAGE</h3>
-					<div>
-						<strong>Please read and understand the following before using this module</strong>
-						<br>
-						The companion project started out as an attempt to make the everyday life of a technician easier. We've held back generic TCP/UDP modules for a long time
-						to ensure that we have ready made actions, presets and feedbacks for as many products as possible.
-						<ul>
-							<li>You shoudn't need to go around remembering raw TCP commands</li>
-							<li>If you have a product we don't support, please file a module request for it</li>
-							<li>Do you think your product/device is too insignificant to make a module for, it's not.</li>
-							<li>Properitary/inhouse products should also have their own modules.</li>
-							<li>Please use Generic TCP/UDP as a last resort</li>
-							<li>With generic modules you won't get nice things like presets and feedback</li>
-						</ul>
-						<a href="https://github.com/bitfocus/companion-module-requests/issues" target="_new" class="btn btn-warning mr-1">See current requests</a>
-						<a href="https://github.com/bitfocus/companion-module-requests/issues/new" target="_new" class="btn btn-success">Request support for a product</a>
-					</div>
-				</div>
-			`,
-			},
-			{
-				type: 'textinput',
-				id: 'host',
-				label: 'Target IP',
-				width: 6,
-				regex: this.REGEX_IP,
-			},
-			{
-				type: 'textinput',
-				id: 'port',
-				label: 'Target Port',
-				width: 2,
-				default: 7000,
-				regex: this.REGEX_PORT,
-			},
-			{
-				type: 'dropdown',
-				id: 'prot',
-				label: 'Connect with TCP / UDP',
-				default: 'tcp',
-				choices: [
-					{ id: 'tcp', label: 'TCP' },
-					{ id: 'udp', label: 'UDP' },
-				],
-			},
-			{
-				type: 'checkbox',
-				id: 'saveresponse',
-				label: 'Save TCP Response',
-				default: false,
-				isVisible: (configValues) => configValues.prot === 'tcp',
-			},
-			{
-				type: 'dropdown',
-				id: 'convertresponse',
-				label: 'Convert TCP Response Format',
-				default: 'none',
-				choices: [
-					{ id: 'none', label: 'No conversion'},
-					{ id: 'hex', label: 'To Hex'},
-					{ id: 'string', label: 'To String'}
-				],
-				isVisible: (configValues) => configValues.saveresponse === true,
-			}
-		]
-	}
-
-	// When module gets deleted
-	destroy() {
-		if (this.socket !== undefined) {
-			this.socket.destroy()
-		}
-
-		if (this.udp !== undefined) {
-			this.udp.destroy()
-		}
-
-		this.debug('destroy', this.id)
-	}
-
-	CHOICES_END = [
-		{ id: '', label: 'None' },
-		{ id: '\n', label: 'LF - \\n (Common UNIX/Mac)' },
-		{ id: '\r\n', label: 'CRLF - \\r\\n (Common Windows)' },
-		{ id: '\r', label: 'CR - \\r (Old MacOS)' },
-		{ id: '\x00', label: 'NULL - \\x00 (Can happen)' },
-		{ id: '\n\r', label: 'LFCR - \\n\\r (Just stupid)' },
-	]
-
-	init_presets() {
-		let presets = []
-		this.setPresetDefinitions(presets)
-	}
-
-	actions(system) {
-		this.setActions({
-			send: {
-				label: 'Send Command',
-				options: [
-					{
-						type: 'textwithvariables',
-						id: 'id_send',
-						label: 'Command:',
-						tooltip: 'Use %hh to insert Hex codes',
-						default: '',
-						width: 6,
-					},
-					{
-						type: 'dropdown',
-						id: 'id_end',
-						label: 'Command End Character:',
-						default: '\n',
-						choices: this.CHOICES_END,
-					},
-				],
-			},
-		})
-	}
-
-	action(action) {
-		let cmd
-		let end
-
-		switch (action.action) {
-			case 'send':
-				this.parseVariables(action.options.id_send, (value) => {
-					cmd = unescape(value);
-				})
-				end = action.options.id_end
-				break
-		}
-
-		/*
-		 * create a binary buffer pre-encoded 'latin1' (8bit no change bytes)
-		 * sending a string assumes 'utf8' encoding
-		 * which then escapes character values over 0x7F
-		 * and destroys the 'binary' content
-		 */
-		let sendBuf = Buffer.from(cmd + end, 'latin1')
-
-		if (sendBuf != '') {
-			if (this.config.prot == 'tcp') {
-				this.debug('sending ', sendBuf, 'to', this.config.host)
-
-				if (this.socket !== undefined && this.socket.connected) {
-					this.socket.send(sendBuf)
-				} else {
-					this.debug('Socket not connected :(')
-				}
-			}
-
-			if (this.config.prot == 'udp') {
-				if (this.udp !== undefined) {
-					this.debug('sending', sendBuf, 'to', this.config.host)
-
-					this.udp.send(sendBuf)
-				}
-			}
-		}
-	}
+	return self;
 }
-exports = module.exports = instance
+
+instance.prototype.updateConfig = function(config) {
+	var self = this;
+
+	self.config = config;
+	self.init_tcp();
+};
+
+instance.prototype.init = function() {
+	var self = this;
+
+	debug = self.debug;
+	log = self.log;
+
+	self.numPresets = 0;
+	self.xpt = {};
+
+	self.status(self.STATE_UNKNOWN);
+
+	self.init_tcp();
+	self.init_feedbacks();
+};
+
+instance.prototype.init_tcp = function() {
+	var self = this;
+	var receivebuffer = '';
+	self.responseHandlers = {};
+
+	if (self.socket !== undefined) {
+		self.socket.destroy();
+		delete self.socket;
+	}
+
+	if (self.config.host) {
+		self.socket = new tcp(self.config.host, self.config.port);
+
+		self.socket.on('status_change', function (status, message) {
+			self.status(status, message);
+		});
+
+		self.socket.on('connect', function () {
+			// request system size
+			// MFR registers are zero based so decrement by 1
+			// MFR uses hex throughout but max level is 8 so no conversion needed
+			let level = self.config.level -1;
+			self.socket.send("@ F?" + level +"\r\n");
+
+			// self.checkNumpresets();
+		});
+
+		self.socket.on('error', function (err) {
+			debug("Network error", err);
+			self.log('error',"Network error: " + err.message);
+		});
+
+		self.socket.on('data', function (chunk) {
+			var i = 0, line = '', offset = 0;
+			receivebuffer += chunk;
+
+			while ( (i = receivebuffer.indexOf('>', offset)) !== -1) {
+				line = receivebuffer.substr(offset, i - offset);
+				offset = i + 1;
+				self.socket.emit('receiveline', line.toString());
+			}
+			receivebuffer = receivebuffer.substr(offset);
+		});
+
+		self.socket.on('receiveline', function (line) {
+
+			var match;
+
+			if (line.startsWith('@ F?' + (self.config.level-1).toString())) {
+
+				match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
+
+				var systemsize = match[1].match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm).toString().split(',');
+				
+				// self.CHOICES_OUTPUTS.length = 0;
+
+				self.outputs = parseInt(systemsize[0],16) + 1;
+				self.variables.push({ label: 'Total outputs', name: 'output-count' });
+				self.setVariable('output-count', self.outputs);
+
+
+				// self.CHOICES_INPUTS.length = 0;
+
+				self.inputs = parseInt(systemsize[1],16) + 1;
+				self.variables.push({ label: 'Total inputs', name: 'input-count' });
+				self.setVariable('input-count', self.inputs);
+
+			// Update inputs/outputs
+			self.init_actions();
+			self.getIO();
+			// self.init_feedbacks()
+			// self.checkFeedbacks('xpt_color');
+			// self.init_presets();
+			self.init_variables();
+			}
+			//	process output channel names (ascii)
+			else if (line.trim().startsWith('@ K?DA')) {
+
+				// remove the echo'd command response
+				line = line.split("\r\r\n")[1];
+				// split the line into the 32 retrieved channel names
+				line = line.trimEnd().split("\r\n\r\n");
+
+				for (var i = 0; i < line.length; i++) {
+					var channelNumber = line[i].split(',')[0]
+					channelNumber = parseInt(channelNumber.substring(channelNumber.length-2),16) + 1;
+					var channelName  = line[i].split(',')[1];
+					channelName = (Buffer.from(channelName, 'hex')).toString();
+					
+					self.variables.push({ label: (channelNumber-1), name: 'output-' + channelNumber });
+					self.setVariable('output-' + channelNumber, channelName);
+					self.CHOICES_OUTPUTS[channelNumber-1] =  {  id: channelNumber-1, label: channelName };
+				}
+				self.setVariableDefinitions(self.variables);
+				self.init_actions();
+			}
+			//	process input channel names (ascii)
+			else if (line.trim().startsWith('@ K?SA')) {
+
+				// remove the echo'd command response
+				line = line.split("\r\r\n")[1];
+				// split the line into the 32 retrieved channel names
+				line = line.trimEnd().split("\r\n\r\n");
+
+				for (var i = 0; i < line.length; i++) {
+					var channelNumber = line[i].split(',')[0]
+					channelNumber = parseInt(channelNumber.substring(channelNumber.length-2),16) + 1;
+					var channelName  = line[i].split(',')[1];
+					channelName = (Buffer.from(channelName, 'hex')).toString();
+
+					self.variables.push({ label: (channelNumber-1), name: 'input-' + channelNumber });
+					self.setVariable('input-' + channelNumber, channelName);
+					self.CHOICES_INPUTS[channelNumber-1] = {  id: channelNumber-1, label: channelName };
+				}
+				self.setVariableDefinitions(self.variables);
+				self.init_actions();
+			}
+			else if (line.includes('S:')) {
+				var lines = line.split('\n');
+				for (var i = 0; i < lines.length; i++) {
+					self.debug("here's a line => " + lines[i]);
+					if ( lines[i].startsWith('S:') === true ) {
+						lines.splice(i,1);
+					}
+					
+				}
+				self.debug("after splicing");
+
+					self.debug("here's a line => " + lines[i]);
+			}
+			else {
+				
+				self.debug("uncaught line =>" + line.toString() + "<==");
+
+
+			}
+			// else if (match = line.match(/(ERR04)/i)) {
+			// 	if (self.checkPresets !== undefined) {
+			// 		self.checkNumpresets();
+			// 	}
+			// }
+			// else if (match = line.match(/\(INAME#(\d+)=([^)]+)\)$/i)) {
+			// 	var id = parseInt(match[1]);
+			// 	var name = match[2];
+
+			// 	self.setVariable('input_' + id, name);
+			// 	self.CHOICES_INPUTS[id - 1] = { label: name, id: id };
+
+			// 	// This is (regrettably) needed to update the dropdown boxes of inputs/outputs
+			// 	self.init_actions();
+			// 	self.init_presets();
+			// 	self.init_feedbacks()
+			// }
+			// else if (match = line.match(/\(ONAME#(\d+)=([^)]+)\)$/i)) {
+			// 	var id = parseInt(match[1]);
+			// 	var name = match[2];
+
+			// 	self.setVariable('output_' + id, name);
+			// 	self.CHOICES_OUTPUTS[id - 1] = { label: name, id: id };
+
+			// 	// This is (regrettably) needed to update the dropdown boxes of inputs/outputs
+			// 	self.init_actions();
+			// 	self.init_presets();
+			// 	self.init_feedbacks()
+			// }
+			// else if (match = line.match(/\(PNAME#(\d+)=([^)]+)\)$/i)) {
+			// 	var id = parseInt(match[1]);
+			// 	var name = match[2];
+
+			// 	if (self.checkPresets !== undefined) {
+			// 		debug('Detected ' + id + ' presets on LW2 device');
+			// 		self.numPresets = id;
+			// 		self.checkPresets = undefined;
+			// 		self.getPresets();
+			// 		self.init_variables();
+			// 		self.init_presets();
+			// 	} else {
+			// 		self.presets[id] = name;
+			// 		self.setVariable('preset_' + id, self.presets[id]);
+			// 		self.CHOICES_PRESETS[id - 1] = { label: 'Preset ' + id + ': ' + name, id: id };
+			// 		self.init_actions();
+			// 	}
+			// }
+			// else if (match = line.match(/\(O(\d+) I(\d+)\)/i)) {
+			// 	self.xpt[parseInt(match[1])] = parseInt(match[2]);
+			// 	self.checkFeedbacks('xpt_color');
+			// }
+			// else if (match = line.match(/\(i:\s*(.+)\)$/i)) {
+			// 	log('info', 'Connected to ' + match[1]);
+			// }
+		
+		
+		});
+	}
+};
+
+instance.prototype.getIO = function() {
+	var self = this;
+
+	//	Up to 32 channel names can be obtained per a single request.
+	//	Note that the number of request channels exceeds the system maximum size, 
+	//	no data will return for the exceeded channels.
+	
+	// divide (decimal) number of output channels by 32 
+	let outputChannelRequests = Math.ceil(self.outputs / 32);
+
+	for (var i = 0; i < outputChannelRequests; ++i)	{
+		self.socket.send("@ K?DA," + (i*32).toString(16).padStart(3, '0') + "\r\n");
+	}
+
+	// divide (decimal) number of input channels by 32
+	let inputChannelRequests = Math.ceil(self.inputs / 32);
+
+	for (var i = 0; i < inputChannelRequests; ++i)	{
+		self.socket.send("@ K?SA," + (i*32).toString(16).padStart(3, '0') + "\r\n");
+	}
+	
+};
+
+// instance.prototype.getPresets = function() {
+// 	var self = this;
+
+// 	for (var i = 0; i < self.numPresets; ++i) {
+// 		self.socket.send("{pname#" + (i+1) + "=?}\r\n");
+// 	}
+// };
+
+// instance.prototype.checkNumpresets = function() {
+// 	var self = this;
+
+// 	if (self.checkPresets === undefined) {
+// 		self.CHOICES_PRESETS.length = 0;
+// 		self.checkPresets = 64;
+// 		self.socket.send("{pname#64=?}\r\n");
+// 	} else if (self.checkPresets == 64) {
+// 		self.checkPresets = 32;
+// 		self.socket.send("{pname#32=?}\r\n");
+// 	} else if (self.checkPresets == 32) {
+// 		self.checkPresets = 16;
+// 		self.socket.send("{pname#16=?}\r\n");
+// 	} else if (self.checkPresets == 16) {
+// 		self.checkPresets = 8;
+// 		self.socket.send("{pname#8=?}\r\n");
+// 	} else {
+// 		debug('Found no presets on device');
+// 		self.checkPresets = undefined;
+// 	}
+// };
+
+// Return config fields for web config
+instance.prototype.config_fields = function () {
+	var self = this;
+	return [
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: 'Information',
+			value: 'This module is for controlling For.A MFR routing switchers using Crosspoint remote control protocol 2. Tested on MFR-3000'
+		},
+		{
+			type: 'textinput',
+			id: 'host',
+			label: 'Device IP',
+			width: 12,
+			regex: self.REGEX_IP
+		},
+		{
+			type: 'number',
+			id: 'port',
+			label: 'TCP Port',
+			default: 23,
+			required: true
+		},
+		{
+			type: 'number',
+			id: 'level',
+			label: 'Level',
+			min: 1,
+			max: 8,
+			default: 1,
+			required: true
+		}
+	]
+};
+
+instance.prototype.init_variables = function() {
+	var self = this;
+	// var variables = [];
+
+	for (var i = 0; i < self.numPresets; ++i) {
+		self.variables.push({ label: 'Label of preset ' + (i+1), name: 'preset_' + (i+1) });
+	}
+
+	self.setVariableDefinitions(self.variables);
+};
+
+instance.prototype.init_feedbacks = function() {
+	var self = this;
+
+	self.setFeedbackDefinitions({
+		xpt_color: {
+			label: 'Change background color',
+			description: 'If the input specified is in use by the output specified, change colors of the bank',
+			options: [
+				{
+					type: 'colorpicker',
+					label: 'Foreground color',
+					id: 'fg',
+					default: self.rgb(255,255,255)
+				},
+				{
+					type: 'colorpicker',
+					label: 'Background color',
+					id: 'bg',
+					default: self.rgb(255,0,0)
+				},
+				{
+					type: 'dropdown',
+					label: 'Input',
+					id: 'input',
+					default: '1',
+					choices: self.CHOICES_INPUTS
+				},
+				{
+					type: 'dropdown',
+					label: 'Output',
+					id: 'output',
+					default: '1',
+					choices: self.CHOICES_OUTPUTS
+				}
+			]
+		}
+	});
+};
+
+instance.prototype.init_presets = function () {
+	var self = this;
+	var presets = [];
+
+	for (var o = 0; o < self.CHOICES_OUTPUTS.length; ++o) {
+		for (var i = 0; i < self.CHOICES_INPUTS.length; ++i) {
+			presets.push({
+				category: 'Output ' + (o + 1),
+				label: 'Feedback button for input ' + (i + 1) + ' on output ' + (o + 1),
+				bank: {
+					style: 'text',
+					text: '$(instance:input_' + (i+1) + ')\\n$(instance:output_' + (o+1) + ')',
+					size: 'auto',
+					color: '16777215',
+					bgcolor: 0
+				},
+				feedbacks: [
+					{
+						type: 'xpt_color',
+						options: {
+							bg: self.rgb(255, 0, 0),
+							fg: self.rgb(255, 255, 255),
+							input: (i+1),
+							output: (o+1)
+						}
+					}
+				],
+				actions: [
+					{
+						action: 'xpt',
+						options: {
+							input: (i+1),
+							output: (o+1)
+						}
+					}
+				]
+			});
+		}
+	}
+
+	if (self.numPresets) {
+		for (var i = 0; i < self.numPresets; ++i) {
+			presets.push({
+				category: 'Load presets',
+				label: 'Load button for preset ' + (i+1),
+				bank: {
+					style: 'text',
+					text: '$(instance:preset_' + (i+1) + ')',
+					size: 'auto',
+					color: '16777215',
+					bgcolor: 0
+				},
+				actions: [
+					{
+						action: 'preset',
+						options: {
+							preset: (i+1)
+						}
+					}
+				]
+			});
+			presets.push({
+				category: 'Save presets',
+				label: 'Save button for preset ' + (i+1),
+				bank: {
+					style: 'text',
+					text: '$(instance:preset_' + (i+1) + ')',
+					size: 'auto',
+					color: '16777215',
+					bgcolor: 0
+				},
+				actions: [
+					{
+						action: 'savepreset',
+						options: {
+							preset: (i+1)
+						}
+					}
+				]
+			});
+		}
+	}
+
+	self.setPresetDefinitions(presets);
+};
+
+// When module gets deleted
+instance.prototype.destroy = function() {
+	var self = this;
+
+	if (self.socket !== undefined) {
+		self.socket.destroy();
+	}
+
+	debug("destroy", self.id);
+};
+
+
+instance.prototype.init_actions = function(system) {
+	var self = this;
+
+	var actions = {
+		'xpt': {
+
+			label: 'Switch route - one input to one output',
+			options: [
+				{
+					label: 'Input',
+					type: 'dropdown',
+					id: 'input',
+					choices: self.CHOICES_INPUTS,
+					default: 0
+				},
+				{
+					label: 'Output',
+					type: 'dropdown',
+					id: 'output',
+					choices: self.CHOICES_OUTPUTS,
+					default: 0
+				}
+			]
+		},
+		'presetXpt': {
+
+			label: 'Preset route - one input to one output',
+			options: [
+				{
+					label: 'Input',
+					type: 'dropdown',
+					id: 'input',
+					choices: self.CHOICES_INPUTS,
+					default: 0
+				},
+				{
+					label: 'Output',
+					type: 'dropdown',
+					id: 'output',
+					choices: self.CHOICES_OUTPUTS,
+					default: 0
+				}
+			]
+		},
+		'switchPresetXpt': {
+
+			label: 'Set the preset crosspoints simultaneously',
+			id: 'switchPresetXpt'
+		},
+		'clearPresetXpt': {
+
+			label: 'Clear preset crosspoints',
+			id: 'clearPresetXpt'
+		},
+		'getSignalNames': {
+
+			label: 'Update signal names',
+			id: 'getSignalNames'
+		}
+	};
+
+	if (self.numPresets > 0) {
+		actions['preset'] = {
+			label: 'Load preset',
+			options: [
+				{
+					label: 'Preset',
+					type: 'dropdown',
+					id: 'preset',
+					choices: self.CHOICES_PRESETS,
+					default: 1
+				}
+			]
+		};
+		actions['savepreset'] = {
+			label: 'Save preset',
+			options: [
+				{
+					label: 'Preset',
+					type: 'dropdown',
+					id: 'preset',
+					choices: self.CHOICES_PRESETS,
+					default: 1
+				}
+			]
+		};
+	}
+
+	self.setActions(actions);
+}
+
+instance.prototype.action = function(action) {
+	var self = this;
+	var cmd;
+	var opt = action.options;
+
+	switch (action.action) {
+
+		case 'xpt':
+			cmd = '@ X:' + (self.config.level-1) + '/' + opt.output.toString(16) + ',' + opt.input.toString(16); 
+			break;
+		
+		case 'presetXpt':
+			cmd = '@ P:' + (self.config.level-1) + '/' + opt.output.toString(16) + ',' + opt.input.toString(16); 
+			break;
+			
+		case 'switchPresetXpt':
+			cmd = '@ B:E'
+			break;
+		
+		case 'clearPresetXpt':
+			cmd = '@ B:C'
+			break;
+			
+		case 'getSignalNames':
+			self.getIO();	
+			break;
+	
+		// case 'preset':
+		// 	cmd = '{%' + opt.preset + '}';
+		// 	break;
+
+		// case 'savepreset':
+		// 	cmd = '{$' + opt.preset + '}';
+		// 	break;
+
+	}
+
+	debug('action():', action);
+
+	if (cmd !== undefined) {
+		if (self.socket !== undefined) {
+			debug('sending ', cmd, "to", self.socket.host);
+			self.socket.send(cmd + "\r\n");
+		}
+	}
+};
+
+instance.prototype.feedback = function(feedback, bank) {
+	var self = this;
+
+	if (feedback.type = 'xpt_color') {
+		var bg = feedback.options.bg;
+
+		if (self.xpt[parseInt(feedback.options.output)] == parseInt(feedback.options.input)) {
+			return {
+				color: feedback.options.fg,
+				bgcolor: feedback.options.bg
+			};
+		}
+	}
+};
+
+instance_skel.extendedBy(instance);
+exports = module.exports = instance;

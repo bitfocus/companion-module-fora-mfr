@@ -134,5 +134,13 @@ If "Crosspoint remote control 2" is not enabled some functionality is not availa
         Cancel preset settings. =>  @[sp]UE:C
         - Command response  <=  UR!C
 
-**Available commands in this module**
+## Available commands in this module
 
+    20221130
+        -   F?  =>  request system size  
+    20221201
+        -   K?  =>  Request input/output channel names
+        -   X:  =>  Switch a crosspoint (single channel)
+        -   P:  =>  Preset a crosspoint
+        -   B:E =>  Switch preset crosspoints simultaneously
+        -   B:C =>  Clear preset crosspoints 
