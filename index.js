@@ -77,7 +77,7 @@ instance.prototype.init_tcp = function() {
 		});
 
 		self.socket.on('error', function (err) {
-			debug("Network error", err);
+			self.debug("Network error", err);
 			self.log('error',"Network error: " + err.message);
 		});
 
@@ -85,16 +85,16 @@ instance.prototype.init_tcp = function() {
 			var i = 0, line = '', offset = 0;
 			receivebuffer += chunk;
 
-			while ( (i = receivebuffer.indexOf('>', offset)) !== -1) {
+			while ( (i = receivebuffer.indexOf('\n', offset)) !== -1) {
 				line = receivebuffer.substr(offset, i - offset);
 				offset = i + 1;
-				self.socket.emit('receiveline', line.toString());
+				self.socket.emit('receiveline', line.trim());
 			}
 			receivebuffer = receivebuffer.substr(offset);
 		});
 
 		self.socket.on('receiveline', function (line) {
-
+			
 			var match;
 
 			if (line.startsWith('@ F?' + (self.config.level-1).toString())) {
@@ -124,66 +124,66 @@ instance.prototype.init_tcp = function() {
 			// self.init_presets();
 			self.init_variables();
 			}
-			//	process output channel names (ascii)
-			else if (line.trim().startsWith('@ K?DA')) {
+			// catch all channel names by matching "@ K?"
+			// then match D or S ( output or input
+			else if (line.match("K:")) {
+				
+				//	process output channel names (ascii)
+				if (line.match("K:DA")) {
 
-				// remove the echo'd command response
-				line = line.split("\r\r\n")[1];
-				// split the line into the 32 retrieved channel names
-				line = line.trimEnd().split("\r\n\r\n");
+					let regex = "[^K:DA][A-Za-z0-9]{2}";
+					let channelNumber = parseInt(line.match(regex),16);
 
-				for (var i = 0; i < line.length; i++) {
-					var channelNumber = line[i].split(',')[0]
-					channelNumber = parseInt(channelNumber.substring(channelNumber.length-2),16) + 1;
-					var channelName  = line[i].split(',')[1];
+					var channelName  = line.split(',')[1];
 					channelName = (Buffer.from(channelName, 'hex')).toString();
-					
-					self.variables.push({ label: (channelNumber-1), name: 'output-' + channelNumber });
+						
+					self.variables.push({ label: "Output " + channelNumber, name: 'output-' + channelNumber });
 					self.setVariable('output-' + channelNumber, channelName);
 					self.CHOICES_OUTPUTS[channelNumber-1] =  {  id: channelNumber-1, label: channelName };
-				}
-				self.setVariableDefinitions(self.variables);
-				self.init_actions();
-			}
-			//	process input channel names (ascii)
-			else if (line.trim().startsWith('@ K?SA')) {
-
-				// remove the echo'd command response
-				line = line.split("\r\r\n")[1];
-				// split the line into the 32 retrieved channel names
-				line = line.trimEnd().split("\r\n\r\n");
-
-				for (var i = 0; i < line.length; i++) {
-					var channelNumber = line[i].split(',')[0]
-					channelNumber = parseInt(channelNumber.substring(channelNumber.length-2),16) + 1;
-					var channelName  = line[i].split(',')[1];
-					channelName = (Buffer.from(channelName, 'hex')).toString();
-
-					self.variables.push({ label: (channelNumber-1), name: 'input-' + channelNumber });
-					self.setVariable('input-' + channelNumber, channelName);
-					self.CHOICES_INPUTS[channelNumber-1] = {  id: channelNumber-1, label: channelName };
-				}
-				self.setVariableDefinitions(self.variables);
-				self.init_actions();
-			}
-			else if (line.includes('S:')) {
-				var lines = line.split('\n');
-				for (var i = 0; i < lines.length; i++) {
-					self.debug("here's a line => " + lines[i]);
-					if ( lines[i].startsWith('S:') === true ) {
-						lines.splice(i,1);
-					}
-					
-				}
-				self.debug("after splicing");
-
-					self.debug("here's a line => " + lines[i]);
-			}
-			else {
 				
-				self.debug("uncaught line =>" + line.toString() + "<==");
+					self.setVariableDefinitions(self.variables);
+					self.init_actions();
+				}
+				//	process input channel names (ascii)
+				else if (line.match("K:SA")) {
 
+					let regex = "[^K:SA][A-Za-z0-9]{2}";
+					let channelNumber = parseInt(line.match(regex),16);
 
+					var channelName  = line.split(',')[1];
+					channelName = (Buffer.from(channelName, 'hex')).toString();
+						
+					self.variables.push({ label: "Input + " + channelNumber, name: 'input-' + channelNumber });
+					self.setVariable('input-' + channelNumber, channelName);
+					self.CHOICES_INPUTS[channelNumber-1] =  {  id: channelNumber-1, label: channelName };
+				
+					self.setVariableDefinitions(self.variables);
+					self.init_actions();
+				}
+			}
+			else if (line.match("^S")) {
+				// self.debug("caught S response " + line);
+
+				line = line.match("[^S:][^0-9].+")[0].split(',');
+				// self.debug("\td,s == " + parseInt(line[0],16) + " : " + parseInt(line[1],16));
+				self.xpt[parseInt(line[0],16)] = parseInt(line[1],16);
+				self.checkFeedbacks('xpt_color');
+
+			}
+			// else if (match = line.match(/\(O(\d+) I(\d+)\)/i)) {
+			// 	self.xpt[parseInt(match[1])] = parseInt(match[2]);
+			// 	self.checkFeedbacks('xpt_color');
+			// }
+			// else if (match = line.match(/\(i:\s*(.+)\)$/i)) {
+			// 	log('info', 'Connected to ' + match[1]);
+			// }
+			else {
+				// catch any non-empty unprocessed lines and print them to console
+				if (line.trim().length > 0) {
+					if (line !== '>') {
+						self.debug("unhandled respnose received : " + line );
+					}
+				}
 			}
 			// else if (match = line.match(/(ERR04)/i)) {
 			// 	if (self.checkPresets !== undefined) {
@@ -219,7 +219,7 @@ instance.prototype.init_tcp = function() {
 			// 	var name = match[2];
 
 			// 	if (self.checkPresets !== undefined) {
-			// 		debug('Detected ' + id + ' presets on LW2 device');
+			// 		self.debug('Detected ' + id + ' presets on LW2 device');
 			// 		self.numPresets = id;
 			// 		self.checkPresets = undefined;
 			// 		self.getPresets();
@@ -293,7 +293,7 @@ instance.prototype.getIO = function() {
 // 		self.checkPresets = 8;
 // 		self.socket.send("{pname#8=?}\r\n");
 // 	} else {
-// 		debug('Found no presets on device');
+// 		self.debug('Found no presets on device');
 // 		self.checkPresets = undefined;
 // 	}
 // };
@@ -479,7 +479,7 @@ instance.prototype.destroy = function() {
 		self.socket.destroy();
 	}
 
-	debug("destroy", self.id);
+	self.debug("destroy", self.id);
 };
 
 
@@ -611,7 +611,7 @@ instance.prototype.action = function(action) {
 
 	}
 
-	debug('action():', action);
+	self.debug('action():', action);
 
 	if (cmd !== undefined) {
 		if (self.socket !== undefined) {

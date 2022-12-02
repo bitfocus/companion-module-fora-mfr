@@ -22,8 +22,7 @@
     "url": "git+https://github.com/bitfocus/https://github.com/bitfocus/companion-module-fora-mfr"
   },
   "author": "Dan Hall",
-  "contributors": [
-  ],
+  "contributors": [],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/bitfocus/companion-module-fora-mfr/issues"
