@@ -1,0 +1,33 @@
+{
+	"id": "fora-mfr",
+	"name": "fora-mfr",
+	"shortname": "mfr",
+	"description": "fora-mfr",
+	"version": "0.0.0",
+	"license": "MIT",
+	"repository": "git+https://github.com/bitfocus/companion-module-fora-mfr.git",
+	"bugs": "https://github.com/bitfocus/companion-module-fora-mfr/issues",
+	"maintainers": [
+		{
+			"name": "Dan Hall",
+			"email": "dan@qed-productions.com"
+		}
+	],
+	"legacyIds": [],
+	"runtime": {
+		"type": "node18",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../index.js"
+	},
+	"manufacturer": "For.A",
+	"products": [
+		"MFR"
+	],
+	"keywords": [
+        "Matrix",
+        "Swicthing",
+        "Router",
+        "Crosspoint"
+      ],
+}
