@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
 	"name": "fora-mfr",
 	"version": "2.0.0",
 	"main": "fora-mfr.js",
@@ -19,3 +20,27 @@
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json"
 }
+=======
+  "name": "fora-mfr",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitfocus/https://github.com/bitfocus/companion-module-fora-mfr"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bitfocus/companion-module-fora-mfr/issues"
+  },
+  "dependencies": {
+    "@companion-module/base": "~1.0.1"
+  },
+  "devDependencies": {
+    "@companion-module/tools": "^0.5.1",
+    "prettier": "2.8.0"
+  }
+}
+>>>>>>> 86fcf8c (started https://github.com/bitfocus/companion-module-base/wiki/Upgrading-a-module-built-for-Companion-2.x)

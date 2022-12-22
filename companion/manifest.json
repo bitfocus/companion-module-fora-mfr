@@ -1,6 +1,7 @@
 {
 	"id": "fora-mfr",
 	"name": "fora-mfr",
+<<<<<<< HEAD
 	"shortname": "mfr",
 	"description": "Direct: FOR-A MFR plugin for Companion",
 	"version": "0.0.0",
@@ -13,13 +14,40 @@
 			"email": "hdefdan@me.com"
 		}
 	],
+=======
+	"shortname": "fora-mfr",
+	"description": "For.A MFR Series Routing Swicher",
+	"version": "0.0.0",
+	"license": "MIT",
+	"repository": "git+https://github.com/bitfocus/https://github.com/bitfocus/companion-module-fora-mfr",
+	"bugs": "https://github.com/bitfocus/companion-module-fora-mfr/issues",
+	"maintainers": [
+		{
+			"name": "Dan Hall"
+		}
+	],
+	"legacyIds": [],
+>>>>>>> 86fcf8c (started https://github.com/bitfocus/companion-module-base/wiki/Upgrading-a-module-built-for-Companion-2.x)
 	"runtime": {
 		"type": "node18",
 		"api": "nodejs-ipc",
 		"apiVersion": "0.0.0",
 		"entrypoint": "../fora-mfr.js"
 	},
+<<<<<<< HEAD
 	"manufacturer": "FOR-A",
 	"products": ["MFR"],
 	"keywords": ["Switcher", "Matrix"]
+=======
+	"manufacturer": "For.A",
+	"products": [
+		"MFR"
+	],
+	"keywords": [
+		"Matrix",
+		"Swicthing",
+		"Router",
+		"Crosspoint"
+	]
+>>>>>>> 86fcf8c (started https://github.com/bitfocus/companion-module-base/wiki/Upgrading-a-module-built-for-Companion-2.x)
 }
