@@ -2,6 +2,7 @@
 	"id": "fora-mfr",
 	"name": "fora-mfr",
 <<<<<<< HEAD
+<<<<<<< HEAD
 	"shortname": "mfr",
 	"description": "Direct: FOR-A MFR plugin for Companion",
 	"version": "0.0.0",
@@ -15,6 +16,8 @@
 		}
 	],
 =======
+=======
+>>>>>>> 530d59c (v3.0 upgrades attempt)
 	"shortname": "fora-mfr",
 	"description": "For.A MFR Series Routing Swicher",
 	"version": "0.0.0",
@@ -27,7 +30,24 @@
 		}
 	],
 	"legacyIds": [],
+<<<<<<< HEAD
 >>>>>>> 86fcf8c (started https://github.com/bitfocus/companion-module-base/wiki/Upgrading-a-module-built-for-Companion-2.x)
+=======
+=======
+	"shortname": "mfr",
+	"description": "Direct: FOR-A MFR plugin for Companion",
+	"version": "0.0.0",
+	"license": "MIT",
+	"repository": "git+https://github.com/bitfocus/companion-module-fora-mfr.git",
+	"bugs": "https://github.com/bitfocus/companion-module-fora-mfr/issues",
+	"maintainers": [
+		{
+			"name": "Dan Hall",
+			"email": "hdefdan@me.com"
+		}
+	],
+>>>>>>> 42bd0a44dcd199f4f789ff7ac39842e1b309933d
+>>>>>>> 530d59c (v3.0 upgrades attempt)
 	"runtime": {
 		"type": "node18",
 		"api": "nodejs-ipc",
@@ -35,10 +55,13 @@
 		"entrypoint": "../fora-mfr.js"
 	},
 <<<<<<< HEAD
+<<<<<<< HEAD
 	"manufacturer": "FOR-A",
 	"products": ["MFR"],
 	"keywords": ["Switcher", "Matrix"]
 =======
+=======
+>>>>>>> 530d59c (v3.0 upgrades attempt)
 	"manufacturer": "For.A",
 	"products": [
 		"MFR"
@@ -49,5 +72,13 @@
 		"Router",
 		"Crosspoint"
 	]
+<<<<<<< HEAD
 >>>>>>> 86fcf8c (started https://github.com/bitfocus/companion-module-base/wiki/Upgrading-a-module-built-for-Companion-2.x)
+=======
+=======
+	"manufacturer": "FOR-A",
+	"products": ["MFR"],
+	"keywords": ["Switcher", "Matrix"]
+>>>>>>> 42bd0a44dcd199f4f789ff7ac39842e1b309933d
+>>>>>>> 530d59c (v3.0 upgrades attempt)
 }

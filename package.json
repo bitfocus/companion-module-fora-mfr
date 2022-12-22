@@ -1,5 +1,6 @@
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	"name": "fora-mfr",
 	"version": "2.0.0",
 	"main": "fora-mfr.js",
@@ -21,6 +22,8 @@
 	"prettier": "@companion-module/tools/.prettierrc.json"
 }
 =======
+=======
+>>>>>>> 530d59c (v3.0 upgrades attempt)
   "name": "fora-mfr",
   "version": "0.0.1",
   "main": "index.js",
@@ -43,4 +46,29 @@
     "prettier": "2.8.0"
   }
 }
+<<<<<<< HEAD
 >>>>>>> 86fcf8c (started https://github.com/bitfocus/companion-module-base/wiki/Upgrading-a-module-built-for-Companion-2.x)
+=======
+=======
+	"name": "fora-mfr",
+	"version": "2.0.0",
+	"main": "fora-mfr.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"format": "prettier -w ."
+	},
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-fora-mfr.git"
+	},
+	"dependencies": {
+		"@companion-module/base": "~0.6.1"
+	},
+	"devDependencies": {
+		"@companion-module/tools": "^0.4.1"
+	},
+	"prettier": "@companion-module/tools/.prettierrc.json"
+}
+>>>>>>> 42bd0a44dcd199f4f789ff7ac39842e1b309933d
+>>>>>>> 530d59c (v3.0 upgrades attempt)
