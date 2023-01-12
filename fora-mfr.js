@@ -221,11 +221,4 @@ class OSCInstance extends InstanceBase {
 	}
 }
 
-<<<<<<< HEAD
 runEntrypoint(OSCInstance, UpgradeScripts)
-=======
-instance_skel.extendedBy(instance)
-exports = module.exports = instance
-
-runEntrypoint(OSCInstance, UpgradeScripts)
->>>>>>> 530d59c (v3.0 upgrades attempt)
