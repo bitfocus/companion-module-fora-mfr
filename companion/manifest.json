@@ -1,41 +1,8 @@
 {
 	"id": "fora-mfr",
 	"name": "fora-mfr",
-<<<<<<< HEAD
-<<<<<<< HEAD
-	"shortname": "mfr",
-	"description": "Direct: FOR-A MFR plugin for Companion",
-	"version": "0.0.0",
-	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-fora-mfr.git",
-	"bugs": "https://github.com/bitfocus/companion-module-fora-mfr/issues",
-	"maintainers": [
-		{
-			"name": "Dan Hall",
-			"email": "hdefdan@me.com"
-		}
-	],
-=======
-=======
->>>>>>> 530d59c (v3.0 upgrades attempt)
 	"shortname": "fora-mfr",
-	"description": "For.A MFR Series Routing Swicher",
-	"version": "0.0.0",
-	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/https://github.com/bitfocus/companion-module-fora-mfr",
-	"bugs": "https://github.com/bitfocus/companion-module-fora-mfr/issues",
-	"maintainers": [
-		{
-			"name": "Dan Hall"
-		}
-	],
-	"legacyIds": [],
-<<<<<<< HEAD
->>>>>>> 86fcf8c (started https://github.com/bitfocus/companion-module-base/wiki/Upgrading-a-module-built-for-Companion-2.x)
-=======
-=======
-	"shortname": "mfr",
-	"description": "Direct: FOR-A MFR plugin for Companion",
+	"description": "A short one line description of your module",
 	"version": "0.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-fora-mfr.git",
@@ -43,42 +10,17 @@
 	"maintainers": [
 		{
 			"name": "Dan Hall",
-			"email": "hdefdan@me.com"
+			"email": "dan@qed-productions.com"
 		}
 	],
->>>>>>> 42bd0a44dcd199f4f789ff7ac39842e1b309933d
->>>>>>> 530d59c (v3.0 upgrades attempt)
 	"runtime": {
 		"type": "node18",
 		"api": "nodejs-ipc",
 		"apiVersion": "0.0.0",
-		"entrypoint": "../fora-mfr.js"
+		"entrypoint": "../main.js"
 	},
-<<<<<<< HEAD
-<<<<<<< HEAD
-	"manufacturer": "FOR-A",
-	"products": ["MFR"],
-	"keywords": ["Switcher", "Matrix"]
-=======
-=======
->>>>>>> 530d59c (v3.0 upgrades attempt)
+	"legacyIds": [],
 	"manufacturer": "For.A",
-	"products": [
-		"MFR"
-	],
-	"keywords": [
-		"Matrix",
-		"Swicthing",
-		"Router",
-		"Crosspoint"
-	]
-<<<<<<< HEAD
->>>>>>> 86fcf8c (started https://github.com/bitfocus/companion-module-base/wiki/Upgrading-a-module-built-for-Companion-2.x)
-=======
-=======
-	"manufacturer": "FOR-A",
 	"products": ["MFR"],
-	"keywords": ["Switcher", "Matrix"]
->>>>>>> 42bd0a44dcd199f4f789ff7ac39842e1b309933d
->>>>>>> 530d59c (v3.0 upgrades attempt)
+	"keywords": ["Switcher, Router, Matrix"]
 }

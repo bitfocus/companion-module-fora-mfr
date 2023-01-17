@@ -1,9 +1,8 @@
 {
 	"name": "fora-mfr",
-	"version": "2.0.0",
-	"main": "fora-mfr.js",
+	"version": "0.1.0",
+	"main": "main.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
 		"format": "prettier -w ."
 	},
 	"license": "MIT",
@@ -12,10 +11,10 @@
 		"url": "git+https://github.com/bitfocus/companion-module-fora-mfr.git"
 	},
 	"dependencies": {
-		"@companion-module/base": "~0.6.1"
+		"@companion-module/base": "~1.0.1"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^0.4.1"
+		"@companion-module/tools": "^0.5.1"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json"
 }
