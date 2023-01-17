@@ -134,7 +134,7 @@
          Cancel preset settings. =>  @[sp]UE:C
          - Command response  <=  UR!C
 
- ## Available commands in this module
+Write some help for your users here!
 
      20221130
          -   F?  =>  request system size  
