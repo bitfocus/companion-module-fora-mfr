@@ -3,11 +3,6 @@ const UpgradeScripts = require('./upgrades.js')
 const UpdateActions = require('./actions.js')
 const UpdateFeedbacks = require('./feedbacks.js')
 const UpdateVariableDefinitions = require('./variables.js')
-const setVariableDefinitions = require('./variables.js')
-
-var variable_array = []
-var outputs
-var inputs
 
 class ForaMfrInstance extends InstanceBase {
 	constructor(internal) {
@@ -71,6 +66,33 @@ class ForaMfrInstance extends InstanceBase {
 				default: 23,
 				regex: Regex.PORT,
 			},
+			{
+				type: 'number',
+				id: 'level',
+				label: 'MFR Level',
+				width: 4,
+				default: 1,
+				min: 1,
+				max: 8,
+			},
+			// {
+			// 	type: 'number',
+			// 	id: 'inputCount',
+			// 	label: 'Input Count',
+			// 	width: 3,
+			// 	default: 48,
+			// 	min: 0,
+			// 	max: 128,
+			// },
+			// {
+			// 	type: 'number',
+			// 	id: 'outputCount',
+			// 	label: 'Output Count',
+			// 	width: 3,
+			// 	default: 48,
+			// 	min: 0,
+			// 	max: 128,
+			// },
 		]
 	}
 
@@ -121,11 +143,11 @@ class ForaMfrInstance extends InstanceBase {
 				receivebuffer += chunk
 
 				while ((i = receivebuffer.indexOf('\n', offset)) !== -1) {
-					line = receivebuffer.substring(offset, i - offset)
+					line = receivebuffer.substr(offset, i - offset)
 					offset = i + 1
 					this.socket.emit('receiveline', line.trim())
 				}
-				receivebuffer = receivebuffer.substring(offset)
+				receivebuffer = receivebuffer.substr(offset)
 			})
 
 			this.socket.on('receiveline', (line) => {
@@ -142,20 +164,15 @@ class ForaMfrInstance extends InstanceBase {
 						.split(',')
 
 					this.outputs = parseInt(systemsize[0], 16) + 1
-					this.log('debug', `System outputs =\t${this.outputs}`)
 
 					this.inputs = parseInt(systemsize[1], 16) + 1
-					this.log('debug', `System inputs =\t${this.inputs}`)
 
-					// add input and aouput counts to variable_array
-					variable_array.push({ variableId: 'input_count', name: 'Input Count' })
-					variable_array.push({ variableId: 'output_count', name: 'Output Count' })
-
-					this.setVariableDefinitions(variable_array)
-
+					var variable_array = [
+						{ variableId: 'input_count', name: 'Input Count' },
+						{ variableId: 'output_count', name: 'Output Count' },
+					]
 					this.setVariableValues({ input_count: this.inputs })
 					this.setVariableValues({ output_count: this.outputs })
-
 					this.updateVariableDefinitions
 				}
 			})

@@ -7,3 +7,12 @@ module.exports = async function (self) {
 
 	self.setVariableDefinitions(variable_array)
 }
+
+// module.exports = function getOutputNames(outputs) {
+
+// 	for (let i = 0; i < Math.ceil(outputs/32); i++) {
+// 		this.log('debug',`outputs  = ${outputs}`)
+// 		this.log('debug',`i  = ${i}`)
+// 	}
+
+// }
