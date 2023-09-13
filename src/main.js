@@ -1,8 +1,13 @@
 const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = require('@companion-module/base')
-const UpgradeScripts = require('./upgrades')
-const UpdateActions = require('./actions')
-const UpdateFeedbacks = require('./feedbacks')
-const UpdateVariableDefinitions = require('./variables')
+const UpgradeScripts = require('./upgrades.js')
+const UpdateActions = require('./actions.js')
+const UpdateFeedbacks = require('./feedbacks.js')
+const UpdateVariableDefinitions = require('./variables.js')
+const setVariableDefinitions = require('./variables.js')
+
+var variable_array = []
+var outputs
+var inputs
 
 class ForaMfrInstance extends InstanceBase {
 	constructor(internal) {
@@ -17,7 +22,6 @@ class ForaMfrInstance extends InstanceBase {
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
-
 	}
 	// When module gets deleted
 	async destroy() {
@@ -45,30 +49,27 @@ class ForaMfrInstance extends InstanceBase {
 	getConfigFields() {
 		return [
 			{
-				type: 'textinput',
-				id: 'host',
-				label: 'Target IP',
-				width: 8,
-				regex: Regex.IP,
-				required: true,
+				type: 'static-text',
+				id: 'info',
+				width: 12,
+				label: 'Information',
+				value: 'This module will connect to ForA MFR switching router.',
 			},
 			{
 				type: 'textinput',
-				id: 'port',
-				label: 'TCP Port',
-				default: 23,
-				width: 4,
-				regex: Regex.PORT,
-				required: true,
+				id: 'host',
+				label: 'MFR IP',
+				width: 6,
+				default: '10.0.1.21',
+				regex: Regex.IP,
 			},
 			{
 				type: 'number',
-				id: 'level',
-				label: 'Level',
-				min: 1,
-				max: 8,
-				default: 1,
-				required: true,
+				id: 'port',
+				label: 'MFR Port',
+				width: 4,
+				default: 23,
+				regex: Regex.PORT,
 			},
 		]
 	}
@@ -86,7 +87,6 @@ class ForaMfrInstance extends InstanceBase {
 	}
 
 	init_tcp() {
-
 		if (this.socket) {
 			this.socket.destroy()
 			delete this.socket
@@ -106,7 +106,6 @@ class ForaMfrInstance extends InstanceBase {
 				// MFR uses hex throughout but max level is 8 so no conversion needed
 				let level = this.config.level - 1
 				this.socket.send('@ F?' + level + '\r\n')
-	
 			})
 
 			this.socket.on('error', (err) => {
@@ -115,46 +114,48 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('data', (chunk) => {
-
-					let receivebuffer = ''
-					var i = 0,
+				let receivebuffer = ''
+				var i = 0,
 					line = '',
 					offset = 0
 				receivebuffer += chunk
 
 				while ((i = receivebuffer.indexOf('\n', offset)) !== -1) {
-					line = receivebuffer.substr(offset, i - offset)
+					line = receivebuffer.substring(offset, i - offset)
 					offset = i + 1
 					this.socket.emit('receiveline', line.trim())
 				}
-				receivebuffer = receivebuffer.substr(offset)
-
+				receivebuffer = receivebuffer.substring(offset)
 			})
-			
+
 			this.socket.on('receiveline', (line) => {
-				this.log('debug','Received line: ' + line)
+				this.log('debug', 'Received line: ' + line)
 
 				var match
 
-				if(line.startsWith('@ F?' + + (this.config.level -1).toString())) {
+				if (line.startsWith('@ F?' + +(this.config.level - 1).toString())) {
 					match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
 
 					var systemsize = match[1]
-							.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
-							.toString()
-							.split(',')
-					
+						.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
+						.toString()
+						.split(',')
+
 					this.outputs = parseInt(systemsize[0], 16) + 1
+					this.log('debug', `System outputs =\t${this.outputs}`)
 
 					this.inputs = parseInt(systemsize[1], 16) + 1
-					
-					var variable_array =[
+					this.log('debug', `System inputs =\t${this.inputs}`)
 
-						{ variableId: 'input_count', name: 'Input Count' },
-						{ variableId: 'output_count', name: 'Output Count' },
-					]
-					this.setVariableValues({input_count: this.inputs})
-					this.setVariableValues({output_count: this.outputs})
+					// add input and aouput counts to variable_array
+					variable_array.push({ variableId: 'input_count', name: 'Input Count' })
+					variable_array.push({ variableId: 'output_count', name: 'Output Count' })
+
+					this.setVariableDefinitions(variable_array)
+
+					this.setVariableValues({ input_count: this.inputs })
+					this.setVariableValues({ output_count: this.outputs })
+
 					this.updateVariableDefinitions
 				}
 			})
@@ -162,7 +163,6 @@ class ForaMfrInstance extends InstanceBase {
 			this.updateStatus(InstanceStatus.BadConfig)
 		}
 	}
-
 }
 
 runEntrypoint(ForaMfrInstance, UpgradeScripts)
