@@ -4,6 +4,11 @@ const UpdateActions = require('./actions.js')
 const UpdateFeedbacks = require('./feedbacks.js')
 const UpdateVariableDefinitions = require('./variables.js')
 
+var variable_array = []
+
+var level
+var buffer = Buffer.alloc(32)
+
 class ForaMfrInstance extends InstanceBase {
 	constructor(internal) {
 		super(internal)
@@ -127,7 +132,11 @@ class ForaMfrInstance extends InstanceBase {
 				// MFR registers are zero based so decrement by 1
 				// MFR uses hex throughout but max level is 8 so no conversion needed
 				let level = this.config.level - 1
-				this.socket.send('@ F?' + level + '\r\n')
+				// for (level = 0; level < 8; ++level) {
+				this.socket.send(`@ F? ${level}\r`)
+				// }
+
+				this.socket.send(`@ K?DA,000\r`)
 			})
 
 			this.socket.on('error', (err) => {
@@ -135,45 +144,55 @@ class ForaMfrInstance extends InstanceBase {
 				this.log('error', 'Network error: ' + err.message)
 			})
 
-			this.socket.on('data', (chunk) => {
-				let receivebuffer = ''
+			this.socket.on('data', (data) => {
+				// this.log('debug',data)
+
+				// let buffer = ''
 				var i = 0,
 					line = '',
 					offset = 0
-				receivebuffer += chunk
+				buffer += data
 
-				while ((i = receivebuffer.indexOf('\n', offset)) !== -1) {
-					line = receivebuffer.substr(offset, i - offset)
+				while ((i = buffer.indexOf('\n', offset)) !== -1) {
+					line = buffer.substr(offset, i - offset)
 					offset = i + 1
-					this.socket.emit('receiveline', line.trim())
+					// this.log('debug',`on(data) : ${line}`)
+					this.socket.emit('receiveline', line)
 				}
-				receivebuffer = receivebuffer.substr(offset)
+				buffer = buffer.substr(offset)
 			})
 
 			this.socket.on('receiveline', (line) => {
-				this.log('debug', 'Received line: ' + line)
+				// if (line.trim().length > 0) {
+				// 	this.log('debug', `Received line: ${line}`)
+				// }
 
 				var match
 
-				if (line.startsWith('@ F?' + +(this.config.level - 1).toString())) {
+				if (line.indexOf('F:') > 0) {
 					match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
 
-					var systemsize = match[1]
-						.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
-						.toString()
-						.split(',')
+					this.log('debug', `Sys size response : ${line.substring(line.indexOf('F:'))}`)
+
+					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
 
 					this.outputs = parseInt(systemsize[0], 16) + 1
 
 					this.inputs = parseInt(systemsize[1], 16) + 1
 
-					var variable_array = [
-						{ variableId: 'input_count', name: 'Input Count' },
-						{ variableId: 'output_count', name: 'Output Count' },
-					]
+					// add input and aouput counts to variable_array
+					variable_array.push({ variableId: 'input_count', name: 'Input Count' })
+					variable_array.push({ variableId: 'output_count', name: 'Output Count' })
+
+					this.setVariableDefinitions(variable_array)
+
 					this.setVariableValues({ input_count: this.inputs })
 					this.setVariableValues({ output_count: this.outputs })
+
 					this.updateVariableDefinitions
+				}
+				if (line.startsWith('K:')) {
+					this.log('debug', `Dst name response : ${line}`)
 				}
 			})
 		} else {
