@@ -42,7 +42,7 @@ class ForaMfrInstance extends InstanceBase {
 
 		this.init_tcp()
 
-		this.init_variables()
+		// this.init_variables()
 	}
 
 	// Return config fields for web config
@@ -131,12 +131,19 @@ class ForaMfrInstance extends InstanceBase {
 				// request system size
 				// MFR registers are zero based so decrement by 1
 				// MFR uses hex throughout but max level is 8 so no conversion needed
-				let level = this.config.level - 1
-				// for (level = 0; level < 8; ++level) {
-				this.socket.send(`@ F? ${level}\r`)
-				// }
-
-				this.socket.send(`@ K?DA,000\r`)
+				for (level = 0; level < 8; ++level) {
+					this.socket.send(`@ F? ${level}\r`)
+				}
+				// request destination names
+				// MFR returns blocks of 32 inputs
+				// the platform supports upto 256 destinations so request 8 times to get them all
+				// converting i to offset by multiplying by 32 and converting to hex padded to 3 places with zero
+				for (let i = 0; i < 8; i++) {
+					let j = i * 32
+					let offset = j.toString(16).padStart(3, '0')
+					// this.log('debug',`offset = ${offset}`)
+					this.socket.send(`@ K?DA,${offset}\r`)
+				}
 			})
 
 			this.socket.on('error', (err) => {
@@ -172,7 +179,7 @@ class ForaMfrInstance extends InstanceBase {
 				if (line.indexOf('F:') > 0) {
 					match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
 
-					this.log('debug', `Sys size response : ${line.substring(line.indexOf('F:'))}`)
+					// this.log('debug', `Sys size response : ${line.substring(line.indexOf('F:'))}`)
 
 					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
 
@@ -189,11 +196,32 @@ class ForaMfrInstance extends InstanceBase {
 					this.setVariableValues({ input_count: this.inputs })
 					this.setVariableValues({ output_count: this.outputs })
 
-					this.updateVariableDefinitions
 				}
-				if (line.startsWith('K:')) {
-					this.log('debug', `Dst name response : ${line}`)
+				if (line.startsWith('K:D')) {
+					let dst_number = parseInt(line.substring(line.indexOf(',') - 2, line.indexOf(',')), 16) + 1
+
+					let varId = `dst${dst_number.toString().padStart(2, '0')}_name`
+					let varName = `Dest ${dst_number.toString().padStart(2, '0')} Name`
+					
+					variable_array.push({ variableId: `${varId}`, name: `${varName}` })
+					this.setVariableDefinitions(variable_array)
+					let hexString = line.substring(line.indexOf(',') + 1)
+
+					let asciiString = ''
+					for (let i = 0; i < hexString.length; i += 2) {
+						const hexPair = hexString.substr(i, 2)
+						const decimalValue = parseInt(hexPair, 16)
+						asciiString += String.fromCharCode(decimalValue)
+						
+					}
+
+					this.log('debug', `{ ${varId}: ${asciiString} }`)
+
+					this.setVariableValues({ [`${varId}`]: asciiString })
+
 				}
+
+				this.updateVariableDefinitions
 			})
 		} else {
 			this.updateStatus(InstanceStatus.BadConfig)
