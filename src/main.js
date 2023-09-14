@@ -71,33 +71,6 @@ class ForaMfrInstance extends InstanceBase {
 				default: 23,
 				regex: Regex.PORT,
 			},
-			{
-				type: 'number',
-				id: 'level',
-				label: 'MFR Level',
-				width: 4,
-				default: 1,
-				min: 1,
-				max: 8,
-			},
-			// {
-			// 	type: 'number',
-			// 	id: 'inputCount',
-			// 	label: 'Input Count',
-			// 	width: 3,
-			// 	default: 48,
-			// 	min: 0,
-			// 	max: 128,
-			// },
-			// {
-			// 	type: 'number',
-			// 	id: 'outputCount',
-			// 	label: 'Output Count',
-			// 	width: 3,
-			// 	default: 48,
-			// 	min: 0,
-			// 	max: 128,
-			// },
 		]
 	}
 
@@ -141,8 +114,17 @@ class ForaMfrInstance extends InstanceBase {
 				for (let i = 0; i < 8; i++) {
 					let j = i * 32
 					let offset = j.toString(16).padStart(3, '0')
-					// this.log('debug',`offset = ${offset}`)
 					this.socket.send(`@ K?DA,${offset}\r`)
+				}
+
+				// request source names
+				// MFR returns blocks of 32 inputs
+				// the platform supports upto 256 sources so request 8 times to get them all
+				// converting i to offset by multiplying by 32 and converting to hex padded to 3 places with zero
+				for (let i = 0; i < 8; i++) {
+					let j = i * 32
+					let offset = j.toString(16).padStart(3, '0')
+					this.socket.send(`@ K?SA,${offset}\r`)
 				}
 			})
 
@@ -152,9 +134,6 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('data', (data) => {
-				// this.log('debug',data)
-
-				// let buffer = ''
 				var i = 0,
 					line = '',
 					offset = 0
@@ -163,23 +142,18 @@ class ForaMfrInstance extends InstanceBase {
 				while ((i = buffer.indexOf('\n', offset)) !== -1) {
 					line = buffer.substr(offset, i - offset)
 					offset = i + 1
-					// this.log('debug',`on(data) : ${line}`)
 					this.socket.emit('receiveline', line)
 				}
 				buffer = buffer.substr(offset)
 			})
 
 			this.socket.on('receiveline', (line) => {
-				// if (line.trim().length > 0) {
-				// 	this.log('debug', `Received line: ${line}`)
-				// }
 
 				var match
 
 				if (line.indexOf('F:') > 0) {
 					match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
 
-					// this.log('debug', `Sys size response : ${line.substring(line.indexOf('F:'))}`)
 
 					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
 
@@ -215,7 +189,27 @@ class ForaMfrInstance extends InstanceBase {
 						
 					}
 
-					this.log('debug', `{ ${varId}: ${asciiString} }`)
+					this.setVariableValues({ [`${varId}`]: asciiString })
+
+				}
+
+				if (line.startsWith('K:S')) {
+					let src_number = parseInt(line.substring(line.indexOf(',') - 2, line.indexOf(',')), 16) + 1
+
+					let varId = `src${src_number.toString().padStart(2, '0')}_name`
+					let varName = `Source ${src_number.toString().padStart(2, '0')} Name`
+					
+					variable_array.push({ variableId: `${varId}`, name: `${varName}` })
+					this.setVariableDefinitions(variable_array)
+					let hexString = line.substring(line.indexOf(',') + 1)
+
+					let asciiString = ''
+					for (let i = 0; i < hexString.length; i += 2) {
+						const hexPair = hexString.substr(i, 2)
+						const decimalValue = parseInt(hexPair, 16)
+						asciiString += String.fromCharCode(decimalValue)
+						
+					}
 
 					this.setVariableValues({ [`${varId}`]: asciiString })
 
