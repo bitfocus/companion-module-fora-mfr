@@ -16,27 +16,34 @@ class ForaMfrInstance extends InstanceBase {
 	CHOICES_SRC = []
 
 	actions = {
-		action1: {
-			name: 'My first action',
+		setDst: {
+			name: 'Set destination',
 			options: [
 				{
 					type: 'dropdown',
 					id: 'dst',
-					label: 'Set destination:',
-					default: this.CHOICES_DST[0],
+					label: 'Select destination :',
+					default: this.CHOICES_DST[0]?.id || '',
 					choices: this.CHOICES_DST,
 				},
 			],
 			callback: (action) => {
-				this.log('debug', action.options.dst)
-				this.log('debug', `inside action : ${this.CHOICES_DST.length}`)
+				this.log('debug', `Selected destination : ${action.options.dst}`)
 			},
 		},
-		action2: {
-			name: 'My second action',
-			options: [],
+		setSrc: {
+			name: 'Set source',
+			options: [
+				{
+					type: 'dropdown',
+					id: 'src',
+					label: 'Select source :',
+					default: this.CHOICES_SRC[0]?.id || '',
+					choices: this.CHOICES_SRC,
+				},
+			],
 			callback: (action) => {
-				this.log('debug', 'Hello World! (action 2)')
+				this.log('debug', `Selected source : ${action.options.src}`)
 			},
 		},
 		action3: {
@@ -217,8 +224,6 @@ class ForaMfrInstance extends InstanceBase {
 					//convert to decimal for GUI readability
 					let dst_number = parseInt(hex_dst, 16) + 1
 
-					// this.log('debug',`DST decimal = ${dst_number} | DST hex = ${hex_dst}`)
-
 					let varId = `dst${dst_number.toString().padStart(2, '0')}_name`
 					let varName = `DST-${dst_number.toString().padStart(2, '0')}`
 
@@ -243,7 +248,10 @@ class ForaMfrInstance extends InstanceBase {
 				}
 
 				if (line.startsWith('K:S')) {
-					let src_number = parseInt(line.substring(line.indexOf(',') - 2, line.indexOf(',')), 16) + 1
+					// get the hex value for the current dst
+					let hex_src = line.substring(line.indexOf(',') - 2, line.indexOf(','))
+					//convert to decimal for GUI readability
+					let src_number = parseInt(hex_src, 16) + 1
 
 					let varId = `src${src_number.toString().padStart(2, '0')}_name`
 					let varName = `Source ${src_number.toString().padStart(2, '0')} Name`
@@ -260,6 +268,12 @@ class ForaMfrInstance extends InstanceBase {
 					}
 
 					this.setVariableValues({ [`${varId}`]: asciiString })
+					let obj = {}
+					obj.id = hex_src
+					obj.label = asciiString
+					this.CHOICES_SRC.push({ id: [`${hex_src}`], label: asciiString })
+
+					this.updateActions(this.actions)
 				}
 
 				this.updateVariableDefinitions
