@@ -2,17 +2,52 @@ const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = requir
 const UpgradeScripts = require('./upgrades.js')
 // const UpdateActions = require('./actions.js')
 const UpdateFeedbacks = require('./feedbacks.js')
+const actions = require('./actions.js')
 // const actions = require('./actions.js')
 // const UpdateVariableDefinitions = require('./variables.js')
 
-var variable_array = []
-var CHOICES_DST = []
-var CHOICES_SRC = []
 var DST_MAX, SRC_MAX
 var level
 var buffer = Buffer.alloc(32)
 
 class ForaMfrInstance extends InstanceBase {
+	variable_array = []
+	CHOICES_DST = []
+	CHOICES_SRC = []
+
+	actions = {
+		action1: {
+			name: 'My first action',
+			options: [
+				{
+					type: 'dropdown',
+					id: 'dst',
+					label: 'Set destination:',
+					default: this.CHOICES_DST[0],
+					choices: this.CHOICES_DST,
+				},
+			],
+			callback: (action) => {
+				this.log('debug', action.options.dst)
+				this.log('debug', `inside action : ${this.CHOICES_DST.length}`)
+			},
+		},
+		action2: {
+			name: 'My second action',
+			options: [],
+			callback: (action) => {
+				this.log('debug', 'Hello World! (action 2)')
+			},
+		},
+		action3: {
+			name: 'My third action',
+			options: [],
+			callback: (action) => {
+				this.log('debug', 'Hello World! (action 3)')
+			},
+		},
+	}
+
 	constructor(internal) {
 		super(internal)
 	}
@@ -22,7 +57,7 @@ class ForaMfrInstance extends InstanceBase {
 
 		this.updateStatus(InstanceStatus.Ok)
 
-		this.updateActions() // export actions
+		this.updateActions(this.actions) // export actions
 		this.updateFeedbacks() // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 	}
@@ -78,30 +113,9 @@ class ForaMfrInstance extends InstanceBase {
 		]
 	}
 
-	updateActions() {
-		this.setActionDefinitions({
-			action1: {
-				name: 'My first action',
-				options: [],
-				callback: (action) => {
-					this.log('debug', `DST_MAX = ${DST_MAX}\nSRC_MAX = ${SRC_MAX}`)
-				},
-			},
-			action2: {
-				name: 'My second action',
-				options: [],
-				callback: (action) => {
-					this.log('debug', 'Hello World! (action 2)')
-				},
-			},
-			action3: {
-				name: 'My third action',
-				options: [],
-				callback: (action) => {
-					this.log('debug', 'Hello World! (action 3)')
-				},
-			},
-		})
+
+	updateActions(actions) {
+		this.setActionDefinitions(actions)
 	}
 
 	updateFeedbacks() {
@@ -109,7 +123,7 @@ class ForaMfrInstance extends InstanceBase {
 	}
 
 	updateVariableDefinitions() {
-		this.setVariableDefinitions(variable_array)
+		this.setVariableDefinitions(this.variable_array)
 	}
 
 	init_tcp() {
@@ -186,10 +200,10 @@ class ForaMfrInstance extends InstanceBase {
 					this.inputs = parseInt(systemsize[1], 16) + 1
 
 					// add dest and source counts to variable_array
-					variable_array.push({ variableId: 'output_count', name: 'Output Count' })
-					variable_array.push({ variableId: 'input_count', name: 'Input Count' })
+					this.variable_array.push({ variableId: 'output_count', name: 'Output Count' })
+					this.variable_array.push({ variableId: 'input_count', name: 'Input Count' })
 
-					this.setVariableDefinitions(variable_array)
+					this.setVariableDefinitions(this.variable_array)
 
 					this.setVariableValues({ output_count: this.outputs })
 					this.setVariableValues({ input_count: this.inputs })
@@ -198,13 +212,18 @@ class ForaMfrInstance extends InstanceBase {
 					SRC_MAX = this.inputs
 				}
 				if (line.startsWith('K:D')) {
-					let dst_number = parseInt(line.substring(line.indexOf(',') - 2, line.indexOf(',')), 16) + 1
+					// get the hex value for the current dst
+					let hex_dst = line.substring(line.indexOf(',') - 2, line.indexOf(','))
+					//convert to decimal for GUI readability
+					let dst_number = parseInt(hex_dst, 16) + 1
+
+					// this.log('debug',`DST decimal = ${dst_number} | DST hex = ${hex_dst}`)
 
 					let varId = `dst${dst_number.toString().padStart(2, '0')}_name`
-					let varName = `Dest ${dst_number.toString().padStart(2, '0')} Name`
+					let varName = `DST-${dst_number.toString().padStart(2, '0')}`
 
-					variable_array.push({ variableId: `${varId}`, name: `${varName}` })
-					this.setVariableDefinitions(variable_array)
+					this.variable_array.push({ variableId: `${varId}`, name: `${varName}` })
+					this.setVariableDefinitions(this.variable_array)
 					let hexString = line.substring(line.indexOf(',') + 1)
 
 					let asciiString = ''
@@ -215,6 +234,12 @@ class ForaMfrInstance extends InstanceBase {
 					}
 
 					this.setVariableValues({ [`${varId}`]: asciiString })
+					let obj = {}
+					obj.id = hex_dst
+					obj.label = asciiString
+					this.CHOICES_DST.push({ id: [`${hex_dst}`], label: asciiString })
+
+					this.updateActions(this.actions)
 				}
 
 				if (line.startsWith('K:S')) {
@@ -223,8 +248,8 @@ class ForaMfrInstance extends InstanceBase {
 					let varId = `src${src_number.toString().padStart(2, '0')}_name`
 					let varName = `Source ${src_number.toString().padStart(2, '0')} Name`
 
-					variable_array.push({ variableId: `${varId}`, name: `${varName}` })
-					this.setVariableDefinitions(variable_array)
+					this.variable_array.push({ variableId: `${varId}`, name: `${varName}` })
+					this.setVariableDefinitions(this.variable_array)
 					let hexString = line.substring(line.indexOf(',') + 1)
 
 					let asciiString = ''
