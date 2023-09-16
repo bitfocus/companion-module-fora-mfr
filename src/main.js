@@ -1,11 +1,14 @@
 const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades.js')
-const UpdateActions = require('./actions.js')
+// const UpdateActions = require('./actions.js')
 const UpdateFeedbacks = require('./feedbacks.js')
-const UpdateVariableDefinitions = require('./variables.js')
+// const actions = require('./actions.js')
+// const UpdateVariableDefinitions = require('./variables.js')
 
 var variable_array = []
-
+var CHOICES_DST = []
+var CHOICES_SRC = []
+var DST_MAX, SRC_MAX
 var level
 var buffer = Buffer.alloc(32)
 
@@ -23,6 +26,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.updateFeedbacks() // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 	}
+
 	// When module gets deleted
 	async destroy() {
 		if (this.socket) {
@@ -42,7 +46,7 @@ class ForaMfrInstance extends InstanceBase {
 
 		this.init_tcp()
 
-		// this.init_variables()
+		this.updateVariableDefinitions()
 	}
 
 	// Return config fields for web config
@@ -60,7 +64,7 @@ class ForaMfrInstance extends InstanceBase {
 				id: 'host',
 				label: 'MFR IP',
 				width: 6,
-				default: '10.0.1.21',
+				default: '10.0.1.22',
 				regex: Regex.IP,
 			},
 			{
@@ -75,7 +79,29 @@ class ForaMfrInstance extends InstanceBase {
 	}
 
 	updateActions() {
-		UpdateActions(this)
+		this.setActionDefinitions({
+			action1: {
+				name: 'My first action',
+				options: [],
+				callback: (action) => {
+					this.log('debug', `DST_MAX = ${DST_MAX}\nSRC_MAX = ${SRC_MAX}`)
+				},
+			},
+			action2: {
+				name: 'My second action',
+				options: [],
+				callback: (action) => {
+					this.log('debug', 'Hello World! (action 2)')
+				},
+			},
+			action3: {
+				name: 'My third action',
+				options: [],
+				callback: (action) => {
+					this.log('debug', 'Hello World! (action 3)')
+				},
+			},
+		})
 	}
 
 	updateFeedbacks() {
@@ -83,7 +109,7 @@ class ForaMfrInstance extends InstanceBase {
 	}
 
 	updateVariableDefinitions() {
-		UpdateVariableDefinitions(this)
+		this.setVariableDefinitions(variable_array)
 	}
 
 	init_tcp() {
@@ -148,12 +174,10 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('receiveline', (line) => {
-
 				var match
 
 				if (line.indexOf('F:') > 0) {
 					match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
-
 
 					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
 
@@ -161,22 +185,24 @@ class ForaMfrInstance extends InstanceBase {
 
 					this.inputs = parseInt(systemsize[1], 16) + 1
 
-					// add input and aouput counts to variable_array
-					variable_array.push({ variableId: 'input_count', name: 'Input Count' })
+					// add dest and source counts to variable_array
 					variable_array.push({ variableId: 'output_count', name: 'Output Count' })
+					variable_array.push({ variableId: 'input_count', name: 'Input Count' })
 
 					this.setVariableDefinitions(variable_array)
 
-					this.setVariableValues({ input_count: this.inputs })
 					this.setVariableValues({ output_count: this.outputs })
+					this.setVariableValues({ input_count: this.inputs })
 
+					DST_MAX = this.outputs
+					SRC_MAX = this.inputs
 				}
 				if (line.startsWith('K:D')) {
 					let dst_number = parseInt(line.substring(line.indexOf(',') - 2, line.indexOf(',')), 16) + 1
 
 					let varId = `dst${dst_number.toString().padStart(2, '0')}_name`
 					let varName = `Dest ${dst_number.toString().padStart(2, '0')} Name`
-					
+
 					variable_array.push({ variableId: `${varId}`, name: `${varName}` })
 					this.setVariableDefinitions(variable_array)
 					let hexString = line.substring(line.indexOf(',') + 1)
@@ -186,11 +212,9 @@ class ForaMfrInstance extends InstanceBase {
 						const hexPair = hexString.substr(i, 2)
 						const decimalValue = parseInt(hexPair, 16)
 						asciiString += String.fromCharCode(decimalValue)
-						
 					}
 
 					this.setVariableValues({ [`${varId}`]: asciiString })
-
 				}
 
 				if (line.startsWith('K:S')) {
@@ -198,7 +222,7 @@ class ForaMfrInstance extends InstanceBase {
 
 					let varId = `src${src_number.toString().padStart(2, '0')}_name`
 					let varName = `Source ${src_number.toString().padStart(2, '0')} Name`
-					
+
 					variable_array.push({ variableId: `${varId}`, name: `${varName}` })
 					this.setVariableDefinitions(variable_array)
 					let hexString = line.substring(line.indexOf(',') + 1)
@@ -208,11 +232,9 @@ class ForaMfrInstance extends InstanceBase {
 						const hexPair = hexString.substr(i, 2)
 						const decimalValue = parseInt(hexPair, 16)
 						asciiString += String.fromCharCode(decimalValue)
-						
 					}
 
 					this.setVariableValues({ [`${varId}`]: asciiString })
-
 				}
 
 				this.updateVariableDefinitions
