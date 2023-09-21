@@ -23,7 +23,7 @@ class ForaMfrInstance extends InstanceBase {
 					type: 'dropdown',
 					id: 'dst',
 					label: 'Select destination :',
-					default: this.CHOICES_DST[0]?.id || '',
+					default: '',
 					choices: this.CHOICES_DST,
 				},
 			],
@@ -38,7 +38,7 @@ class ForaMfrInstance extends InstanceBase {
 					type: 'dropdown',
 					id: 'src',
 					label: 'Select source :',
-					default: this.CHOICES_SRC[0]?.id || '',
+					default: '',
 					choices: this.CHOICES_SRC,
 				},
 			],
@@ -198,7 +198,15 @@ class ForaMfrInstance extends InstanceBase {
 				var match
 
 				if (line.indexOf('F:') > 0) {
+
 					match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
+
+					level = match.toString().substring(0,1)
+					
+					this.variable_array.push({ variableId: 'lvl', name: 'Switching level' })
+
+					this.setVariableDefinitions(this.variable_array)
+					this.setVariableValues({ lvl: level })
 
 					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
 
