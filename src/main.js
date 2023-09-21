@@ -1,13 +1,7 @@
 const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades.js')
-// const UpdateActions = require('./actions.js')
 const UpdateFeedbacks = require('./feedbacks.js')
 const actions = require('./actions.js')
-// const actions = require('./actions.js')
-// const UpdateVariableDefinitions = require('./variables.js')
-
-var DST_MAX, SRC_MAX
-var level
 var buffer = Buffer.alloc(32)
 
 class ForaMfrInstance extends InstanceBase {
@@ -23,7 +17,7 @@ class ForaMfrInstance extends InstanceBase {
 					type: 'dropdown',
 					id: 'dst',
 					label: 'Select destination :',
-					default: '',
+					default: '00',
 					choices: this.CHOICES_DST,
 				},
 			],
@@ -38,7 +32,7 @@ class ForaMfrInstance extends InstanceBase {
 					type: 'dropdown',
 					id: 'src',
 					label: 'Select source :',
-					default: '',
+					default: '00',
 					choices: this.CHOICES_SRC,
 				},
 			],
@@ -120,7 +114,6 @@ class ForaMfrInstance extends InstanceBase {
 		]
 	}
 
-
 	updateActions(actions) {
 		this.setActionDefinitions(actions)
 	}
@@ -151,8 +144,9 @@ class ForaMfrInstance extends InstanceBase {
 				// request system size
 				// MFR registers are zero based so decrement by 1
 				// MFR uses hex throughout but max level is 8 so no conversion needed
-				for (level = 0; level < 8; ++level) {
-					this.socket.send(`@ F? ${level}\r`)
+				// iterate from 0 to 7 with the request to determine the level set on the matrix
+				for (let i = 0; i < 8; ++i) {
+					this.socket.send(`@ F? ${i}\r`)
 				}
 				// request destination names
 				// MFR returns blocks of 32 inputs
@@ -198,15 +192,12 @@ class ForaMfrInstance extends InstanceBase {
 				var match
 
 				if (line.indexOf('F:') > 0) {
-
 					match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
 
-					level = match.toString().substring(0,1)
-					
-					this.variable_array.push({ variableId: 'lvl', name: 'Switching level' })
+					this.variable_array.push({ variableId: 'level', name: 'Level' })
 
 					this.setVariableDefinitions(this.variable_array)
-					this.setVariableValues({ lvl: level })
+					this.setVariableValues({ level: `${match.toString().substring(0, 1)}` })
 
 					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
 
@@ -215,24 +206,22 @@ class ForaMfrInstance extends InstanceBase {
 					this.inputs = parseInt(systemsize[1], 16) + 1
 
 					// add dest and source counts to variable_array
-					this.variable_array.push({ variableId: 'output_count', name: 'Output Count' })
-					this.variable_array.push({ variableId: 'input_count', name: 'Input Count' })
+					this.variable_array.push({ variableId: 'outputs', name: 'Outputs' })
+					this.variable_array.push({ variableId: 'inputs', name: 'Inputs' })
 
 					this.setVariableDefinitions(this.variable_array)
 
-					this.setVariableValues({ output_count: this.outputs })
-					this.setVariableValues({ input_count: this.inputs })
+					this.setVariableValues({ outputs: this.outputs })
+					this.setVariableValues({ inputs: this.inputs })
 
-					DST_MAX = this.outputs
-					SRC_MAX = this.inputs
 				}
 				if (line.startsWith('K:D')) {
 					// get the hex value for the current dst
 					let hex_dst = line.substring(line.indexOf(',') - 2, line.indexOf(','))
-					//convert to decimal for GUI readability
+					// convert to decimal for GUI readability
 					let dst_number = parseInt(hex_dst, 16) + 1
 
-					let varId = `dst${dst_number.toString().padStart(2, '0')}_name`
+					let varId = `dst${dst_number.toString().padStart(2, '0')}`
 					let varName = `DST-${dst_number.toString().padStart(2, '0')}`
 
 					this.variable_array.push({ variableId: `${varId}`, name: `${varName}` })
@@ -258,11 +247,11 @@ class ForaMfrInstance extends InstanceBase {
 				if (line.startsWith('K:S')) {
 					// get the hex value for the current dst
 					let hex_src = line.substring(line.indexOf(',') - 2, line.indexOf(','))
-					//convert to decimal for GUI readability
+					// convert to decimal for GUI readability
 					let src_number = parseInt(hex_src, 16) + 1
 
-					let varId = `src${src_number.toString().padStart(2, '0')}_name`
-					let varName = `Source ${src_number.toString().padStart(2, '0')} Name`
+					let varId = `src${src_number.toString().padStart(2, '0')}`
+					let varName = `SRC-${src_number.toString().padStart(2, '0')}`
 
 					this.variable_array.push({ variableId: `${varId}`, name: `${varName}` })
 					this.setVariableDefinitions(this.variable_array)
