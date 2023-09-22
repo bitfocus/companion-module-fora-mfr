@@ -5,7 +5,15 @@ const actions = require('./actions.js')
 var buffer = Buffer.alloc(32)
 
 class ForaMfrInstance extends InstanceBase {
-	variable_array = []
+	variable_array = [
+		{ variableId: 'level', name: 'Level' },
+		{ variableId: 'outputs', name: 'Outputs' },
+		{ variableId: 'inputs', name: 'Inputs' },
+		{ variableId: 'selected_dst_id', name: 'Selected dst id' },
+		{ variableId: 'selected_dst_name', name: 'Selected dst name' },
+		{ variableId: 'selected_src', name: 'Selected src' },
+		{ variableId: 'selected_src_name', name: 'Selected src name' },
+	]
 	CHOICES_DST = []
 	CHOICES_SRC = []
 
@@ -21,8 +29,12 @@ class ForaMfrInstance extends InstanceBase {
 					choices: this.CHOICES_DST,
 				},
 			],
+
 			callback: (action) => {
-				this.log('debug', `Selected destination : ${action.options.dst}`)
+				const dst_id = action.options.dst
+				const dst_name = [this.CHOICES_DST[parseInt(dst_id, 16)].label]
+				this.setVariableValues({ selected_dst_id: dst_id })
+				this.setVariableValues({ selected_dst_name: dst_name })
 			},
 		},
 		setSrc: {
@@ -37,14 +49,27 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (action) => {
-				this.log('debug', `Selected source : ${action.options.src}`)
+				const src_id = action.options.src
+				const src_name = [this.CHOICES_SRC[parseInt(src_id, 16)].label]
+				this.setVariableValues({ selected_src_id: src_id })
+				this.setVariableValues({ selected_src_name: src_name })
 			},
 		},
-		action3: {
-			name: 'My third action',
-			options: [],
+		switchXpt: {
+			name: 'Switch crosspoint ',
+			options: [
+				{
+					type: 'static-text',
+					id: 'selected_dst',
+					label: 'this is the switchXpt label',
+					value: 'this is the switchXpt value',
+				},
+			],
 			callback: (action) => {
-				this.log('debug', 'Hello World! (action 3)')
+				this.log(
+					'debug',
+					`Route ${this.getVariableValue('selected_src')} to ${this.getVariableValue('selected_dst_id')}`
+				)
 			},
 		},
 	}
@@ -189,6 +214,10 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('receiveline', (line) => {
+				if (line.length > 1) {
+					this.log('debug', line.trim())
+				}
+
 				var match
 
 				if (line.indexOf('F:') > 0) {
@@ -202,18 +231,11 @@ class ForaMfrInstance extends InstanceBase {
 					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
 
 					this.outputs = parseInt(systemsize[0], 16) + 1
-
 					this.inputs = parseInt(systemsize[1], 16) + 1
 
-					// add dest and source counts to variable_array
-					this.variable_array.push({ variableId: 'outputs', name: 'Outputs' })
-					this.variable_array.push({ variableId: 'inputs', name: 'Inputs' })
-
 					this.setVariableDefinitions(this.variable_array)
-
 					this.setVariableValues({ outputs: this.outputs })
 					this.setVariableValues({ inputs: this.inputs })
-
 				}
 				if (line.startsWith('K:D')) {
 					// get the hex value for the current dst
