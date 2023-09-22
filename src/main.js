@@ -11,7 +11,7 @@ class ForaMfrInstance extends InstanceBase {
 		{ variableId: 'inputs', name: 'Inputs' },
 		{ variableId: 'selected_dst_id', name: 'Selected dst id' },
 		{ variableId: 'selected_dst_name', name: 'Selected dst name' },
-		{ variableId: 'selected_src', name: 'Selected src' },
+		{ variableId: 'selected_src_id', name: 'Selected src' },
 		{ variableId: 'selected_src_name', name: 'Selected src name' },
 	]
 	CHOICES_DST = []
@@ -171,7 +171,7 @@ class ForaMfrInstance extends InstanceBase {
 				// MFR uses hex throughout but max level is 8 so no conversion needed
 				// iterate from 0 to 7 with the request to determine the level set on the matrix
 				for (let i = 0; i < 8; ++i) {
-					this.socket.send(`@ F? ${i}\r`)
+					this.socket.send(`@ F? ${i}\n`)
 				}
 				// request destination names
 				// MFR returns blocks of 32 inputs
@@ -180,7 +180,7 @@ class ForaMfrInstance extends InstanceBase {
 				for (let i = 0; i < 8; i++) {
 					let j = i * 32
 					let offset = j.toString(16).padStart(3, '0')
-					this.socket.send(`@ K?DA,${offset}\r`)
+					this.socket.send(`@ K?DA,${offset}\n`)
 				}
 
 				// request source names
@@ -190,7 +190,7 @@ class ForaMfrInstance extends InstanceBase {
 				for (let i = 0; i < 8; i++) {
 					let j = i * 32
 					let offset = j.toString(16).padStart(3, '0')
-					this.socket.send(`@ K?SA,${offset}\r`)
+					this.socket.send(`@ K?SA,${offset}\n`)
 				}
 			})
 
@@ -215,7 +215,7 @@ class ForaMfrInstance extends InstanceBase {
 
 			this.socket.on('receiveline', (line) => {
 				if (line.length > 1) {
-					this.log('debug', line.trim())
+					this.log('debug', line)
 				}
 
 				var match
