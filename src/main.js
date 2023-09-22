@@ -56,19 +56,39 @@ class ForaMfrInstance extends InstanceBase {
 			},
 		},
 		switchXpt: {
-			name: 'Switch crosspoint ',
-			options: [
-				{
-					type: 'static-text',
-					id: 'selected_dst',
-					label: 'this is the switchXpt label',
-					value: 'this is the switchXpt value',
-				},
-			],
+			name: 'Switch crosspoint',
+			options: [],
 			callback: (action) => {
-				this.log(
-					'debug',
-					`Route ${this.getVariableValue('selected_src')} to ${this.getVariableValue('selected_dst_id')}`
+				// switch a crosspoint
+				// @[sp]X:<Lvls>/<Dest>,<Src>
+				this.sendCmd(
+					`@ X:${this.getVariableValue('level')}/${this.getVariableValue('selected_dst_id')},${this.getVariableValue(
+						'selected_src_id'
+					)}`
+				)
+			},
+		},
+		presetXpt: {
+			name: 'Preset crosspoint',
+			options: [],
+			callback: (action) => {
+				// Preset a crosspoint
+				// @[sp]P:<Lvl>/<Dest>,<Src>
+				this.sendCmd(
+					`@ P:${this.getVariableValue('level')}/${this.getVariableValue('selected_dst_id')},${this.getVariableValue(
+						'selected_src_id'
+					)}`
+				)
+			},
+		},
+		switchPresetXpts: {
+			name: 'Switch preset crosspoint(s)',
+			options: [],
+			callback: (action) => {
+				// Set the preset crosspoints simultaneously.
+				// @[sp]B:E
+				this.sendCmd(
+					`@ B:E`
 				)
 			},
 		},
@@ -107,7 +127,9 @@ class ForaMfrInstance extends InstanceBase {
 
 		this.init_tcp()
 
-		this.updateVariableDefinitions()
+		this.updateActions(this.actions) // export actions
+		this.updateFeedbacks() // export feedbacks
+		this.updateVariableDefinitions() // export variable definitions
 	}
 
 	// Return config fields for web config
@@ -171,7 +193,7 @@ class ForaMfrInstance extends InstanceBase {
 				// MFR uses hex throughout but max level is 8 so no conversion needed
 				// iterate from 0 to 7 with the request to determine the level set on the matrix
 				for (let i = 0; i < 8; ++i) {
-					this.socket.send(`@ F? ${i}\n`)
+					this.sendCmd(`@ F? ${i}`)
 				}
 				// request destination names
 				// MFR returns blocks of 32 inputs
@@ -180,7 +202,7 @@ class ForaMfrInstance extends InstanceBase {
 				for (let i = 0; i < 8; i++) {
 					let j = i * 32
 					let offset = j.toString(16).padStart(3, '0')
-					this.socket.send(`@ K?DA,${offset}\n`)
+					this.sendCmd(`@ K?DA,${offset}`)
 				}
 
 				// request source names
@@ -190,7 +212,7 @@ class ForaMfrInstance extends InstanceBase {
 				for (let i = 0; i < 8; i++) {
 					let j = i * 32
 					let offset = j.toString(16).padStart(3, '0')
-					this.socket.send(`@ K?SA,${offset}\n`)
+					this.sendCmd(`@ K?SA,${offset}`)
 				}
 			})
 
@@ -295,11 +317,20 @@ class ForaMfrInstance extends InstanceBase {
 					this.updateActions(this.actions)
 				}
 
-				this.updateVariableDefinitions
+				this.updateActions(this.actions) // export actions
+				this.updateFeedbacks() // export feedbacks
+				this.updateVariableDefinitions() // export variable definitions
 			})
 		} else {
 			this.updateStatus(InstanceStatus.BadConfig)
 		}
+	}
+
+	sendCmd(cmd) {
+		if (cmd !== undefined) {
+			cmd += '\r'
+		}
+		this.socket.send(cmd)
 	}
 }
 
