@@ -188,6 +188,12 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('connect', () => {
+
+				// request CPU status
+				// MFR returns A:<ID> if CPU is active
+				// <ID> is required value for making some commands possible
+				this.sendCmd('@ A?')
+
 				// request system size
 				// MFR registers are zero based so decrement by 1
 				// MFR uses hex throughout but max level is 8 so no conversion needed
@@ -236,19 +242,24 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('receiveline', (line) => {
-				if (line.length > 1) {
-					this.log('debug', line)
-				}
+				// if (line.length > 1) {
+				// 	this.log('debug', line)
+				// }
 
 				var match
+				
+				if (line.includes('A:') > 0){
+					this.log('debug',`Give me an A >>> ${line}`)
+					let parts = line.split(':')
+					this.setVariableValues({ level: `${parts[1]}` })
+				}
 
 				if (line.indexOf('F:') > 0) {
-					match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
+					var match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
 
-					this.variable_array.push({ variableId: 'level', name: 'Level' })
+					// this.variable_array.push({ variableId: 'level', name: 'Level' })
 
-					this.setVariableDefinitions(this.variable_array)
-					this.setVariableValues({ level: `${match.toString().substring(0, 1)}` })
+					// this.setVariableDefinitions(this.variable_array)
 
 					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
 
@@ -285,6 +296,10 @@ class ForaMfrInstance extends InstanceBase {
 					obj.label = asciiString
 					this.CHOICES_DST.push({ id: [`${hex_dst}`], label: asciiString })
 
+					// set the initial values of selected dst id and value to avoid annoying $NA
+					this.setVariableValues({ 'selected_dst_id': this.CHOICES_DST[0].id})
+					this.setVariableValues({ 'selected_dst_name': this.CHOICES_DST[0].label})
+
 					this.updateActions(this.actions)
 				}
 
@@ -313,6 +328,10 @@ class ForaMfrInstance extends InstanceBase {
 					obj.id = hex_src
 					obj.label = asciiString
 					this.CHOICES_SRC.push({ id: [`${hex_src}`], label: asciiString })
+
+					// set the initial values of selected dst id and value to avoid annoying $NA
+					this.setVariableValues({ 'selected_src_id': this.CHOICES_SRC[0].id})
+					this.setVariableValues({ 'selected_src_name': this.CHOICES_SRC[0].label})
 
 					this.updateActions(this.actions)
 				}
