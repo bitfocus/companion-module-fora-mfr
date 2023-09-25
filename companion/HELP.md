@@ -1,3 +1,38 @@
+## VARIABLES
+
+    * Implemented
+        -   outputs ( available destinations )
+        -   inputs ( available sources )
+        -   level ( router crosspoint level )
+        -   id ( router unit ID )
+        -   dst## ( the ascii name assigned to each available destination )
+        -   src## ( the ascii name assigned to each available source )
+        -   selected_dst_name ( for bank labelling and feedback )
+        -   selected_dst_id ( used for actions requiring hex id of port of destination )
+        -   selected_src_name ( for bank labelling and feedback )
+        -   selected_src_id ( used for actions requiring hex id of port of destination )
+
+    * ToDo
+        -   video_format ( format of video processed by router )
+        -   video_reference ( auto | blackburst | tri-level )
+        -   switching_point ( field | odd | even )
+        
+## ACTIONS
+
+    * Implemented
+        >   Router config
+            -   Preset video format
+            -   Apply preset video format
+            -   Cancel preset video format
+        >   Switching operation
+            -   Set destination
+            -   Set source
+            -   Switch crosspoint
+            -   Preset crosspoint
+            -   Switch preset crosspoint(s)
+
+## COMMAND REFERENCE ##
+
 ##  For.A MFR Series 3G/HD/SD/ASI Routing Switchers
 
      * Basic specification
@@ -133,14 +168,3 @@
          - Control command   
          Cancel preset settings. =>  @[sp]UE:C
          - Command response  <=  UR!C
-
-Write some help for your users here!
-
-     20221130
-         -   F?  =>  request system size  
-     20221201
-         -   K?  =>  Request input/output channel names
-         -   X:  =>  Switch a crosspoint (single channel)
-         -   P:  =>  Preset a crosspoint
-         -   B:E =>  Switch preset crosspoints simultaneously
-         -   B:C =>  Clear preset crosspoints 

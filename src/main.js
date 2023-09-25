@@ -6,6 +6,7 @@ var buffer = Buffer.alloc(32)
 
 class ForaMfrInstance extends InstanceBase {
 	variable_array = [
+		{ variableId: 'id', name: 'ID' },
 		{ variableId: 'level', name: 'Level' },
 		{ variableId: 'outputs', name: 'Outputs' },
 		{ variableId: 'inputs', name: 'Inputs' },
@@ -16,6 +17,39 @@ class ForaMfrInstance extends InstanceBase {
 	]
 	CHOICES_DST = []
 	CHOICES_SRC = []
+	CHOICES_VIDEO_FORMAT = [
+		{ id: '00', label: '1080/59.94i' },
+		{ id: '01', label: '1080/59.94p' },
+		{ id: '02', label: '1080/60i' },
+		{ id: '03', label: '1080/60p' },
+		{ id: '04', label: '1080/50i' },
+		{ id: '05', label: '1080/50p' },
+		{ id: '06', label: '720/60p' },
+		{ id: '07', label: '720/60i' },
+		{ id: '08', label: '720/50p' },
+		{ id: '09', label: '1080/30p' },
+		{ id: '0A', label: '1080/29.97p' },
+		{ id: '0B', label: '1080/25p' },
+		{ id: '0C', label: '1080/24p' },
+		{ id: '0D', label: '1080/23.98p' },
+		{ id: '0E', label: '1080/30PsF' },
+		{ id: '0F', label: '1080/29.97PsF' },
+		{ id: '10', label: '1080/25PsF' },
+		{ id: '11', label: '1080/24PsF' },
+		{ id: '12', label: '1080/23.98PsF' },
+		{ id: '13', label: '525/59.94i' },
+		{ id: '14', label: '625/50i' },
+	]
+	CHOICES_REF = [
+		{ id: 'RA', label: 'Auto' },
+		{ id: 'RB', label: 'B.B' },
+		{ id: 'RT', label: 'Tri-Sync' },
+	]
+	CHOICES_SWITCHING_POINT = [
+		{ id: 'SF', label: 'Field' },
+		{ id: 'SO', label: 'Odd' },
+		{ id: 'SE', label: 'Even' },
+	]
 
 	actions = {
 		setDst: {
@@ -87,9 +121,59 @@ class ForaMfrInstance extends InstanceBase {
 			callback: (action) => {
 				// Set the preset crosspoints simultaneously.
 				// @[sp]B:E
-				this.sendCmd(
-					`@ B:E`
-				)
+				this.sendCmd(`@ B:E`)
+			},
+		},
+		setVideoFormat: {
+			name: 'Preset video format',
+			options: [
+				{
+					type: 'dropdown',
+					id: 'format',
+					label: 'Set video format :',
+					default: '00',
+					choices: this.CHOICES_VIDEO_FORMAT,
+				},
+				{
+					type: 'dropdown',
+					id: 'ref',
+					label: 'Set reference type :',
+					default: 'RA',
+					choices: this.CHOICES_REF,
+					// tooltip? : 'Optional',
+				},
+				{
+					type: 'dropdown',
+					id: 'point',
+					label: 'Set switching point :',
+					default: 'SF',
+					choices: this.CHOICES_SWITCHING_POINT,
+					// tooltip? : 'Optional',
+				},
+			],
+			callback: (action) => {
+				// Set video format, reference and switching point
+				// @[sp]UF:<YY>/<R#>,<S$>
+				// this.log('debug',`@ UF:${action.options.format}/${action.options.ref},${action.options.point}`)
+				this.sendCmd(`@ UF:${action.options.format}/${action.options.ref},${action.options.point}`)
+			},
+		},
+		applyVideoFormat: {
+			name: 'Apply preset video format',
+			options: [],
+			callback: (action) => {
+				// Apply the preset video fromat, reference and switching point.
+				// @[sp]UE:A
+				this.sendCmd(`@ UE:A`)
+			},
+		},
+		cancelVideoFormat: {
+			name: 'Cancel preset video format',
+			options: [],
+			callback: (action) => {
+				// Cancel the preset video fromat, reference and switching point.
+				// @[sp]UE:C
+				this.sendCmd(`@ UE:C`)
 			},
 		},
 	}
@@ -188,7 +272,6 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('connect', () => {
-
 				// request CPU status
 				// MFR returns A:<ID> if CPU is active
 				// <ID> is required value for making some commands possible
@@ -242,24 +325,20 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('receiveline', (line) => {
-				// if (line.length > 1) {
-				// 	this.log('debug', line)
-				// }
+				if (line.length > 1) {
+					this.log('debug', line)
+				}
 
-				var match
-				
-				if (line.includes('A:') > 0){
-					this.log('debug',`Give me an A >>> ${line}`)
+				if (line.includes('A:') > 0) {
 					let parts = line.split(':')
-					this.setVariableValues({ level: `${parts[1]}` })
+					this.setVariableValues({ id: `${parts[1]}` })
 				}
 
 				if (line.indexOf('F:') > 0) {
 					var match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
 
-					// this.variable_array.push({ variableId: 'level', name: 'Level' })
-
-					// this.setVariableDefinitions(this.variable_array)
+					// set level variable value
+					this.setVariableValues({ id: `${line.substring(line.indexOf('F:') + 2, line.indexOf('F:') + 3)}` })
 
 					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
 
@@ -297,8 +376,8 @@ class ForaMfrInstance extends InstanceBase {
 					this.CHOICES_DST.push({ id: [`${hex_dst}`], label: asciiString })
 
 					// set the initial values of selected dst id and value to avoid annoying $NA
-					this.setVariableValues({ 'selected_dst_id': this.CHOICES_DST[0].id})
-					this.setVariableValues({ 'selected_dst_name': this.CHOICES_DST[0].label})
+					this.setVariableValues({ selected_dst_id: this.CHOICES_DST[0].id })
+					this.setVariableValues({ selected_dst_name: this.CHOICES_DST[0].label })
 
 					this.updateActions(this.actions)
 				}
@@ -330,8 +409,8 @@ class ForaMfrInstance extends InstanceBase {
 					this.CHOICES_SRC.push({ id: [`${hex_src}`], label: asciiString })
 
 					// set the initial values of selected dst id and value to avoid annoying $NA
-					this.setVariableValues({ 'selected_src_id': this.CHOICES_SRC[0].id})
-					this.setVariableValues({ 'selected_src_name': this.CHOICES_SRC[0].label})
+					this.setVariableValues({ selected_src_id: this.CHOICES_SRC[0].id })
+					this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
 
 					this.updateActions(this.actions)
 				}
