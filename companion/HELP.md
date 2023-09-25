@@ -30,6 +30,20 @@
             -   Switch crosspoint
             -   Preset crosspoint
             -   Switch preset crosspoint(s)
+    * ToDo
+        >   Router config
+            -   rename a dst or src. Needs to account for updating 'selected' variable values if renamed item matches selections
+        >   Switching operation 
+            -   lock / unlock dst
+            -   reinitialize unit ( advise caution )
+
+##  PRESETS
+
+    ToDo
+
+## FEEDBACKS
+
+    ToDo
 
 ## COMMAND REFERENCE ##
 
