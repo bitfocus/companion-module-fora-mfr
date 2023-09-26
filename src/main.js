@@ -154,7 +154,6 @@ class ForaMfrInstance extends InstanceBase {
 			callback: (action) => {
 				// Set video format, reference and switching point
 				// @[sp]UF:<YY>/<R#>,<S$>
-				// this.log('debug',`@ UF:${action.options.format}/${action.options.ref},${action.options.point}`)
 				this.sendCmd(`@ UF:${action.options.format}/${action.options.ref},${action.options.point}`)
 			},
 		},
@@ -174,6 +173,66 @@ class ForaMfrInstance extends InstanceBase {
 				// Cancel the preset video fromat, reference and switching point.
 				// @[sp]UE:C
 				this.sendCmd(`@ UE:C`)
+			},
+		},
+		renameDst: {
+			name: 'Rename a destination',
+			options: [
+				{
+					type: 'dropdown',
+					id: 'dst',
+					label: 'Select destination :',
+					default: '00',
+					choices: this.CHOICES_DST,
+				},
+				{
+					id: 'name',
+					type: 'textinput',
+					label: 'New name',
+					default: this.CHOICES_DST[0],
+				},
+			],
+
+			callback: (action) => {
+				const dst_id = action.options.dst.padStart(3, '0')
+				const dst_name = action.options.name
+				const dst_name_hex = this.asciiToHexBytes(action.options.name)
+
+				this.sendCmd(`@ K:DA${dst_id},${dst_name_hex}`)
+				// // update selected_dst_name variable if required
+				if (this.getVariableValue('selected_dst_id') === action.options.dst) {
+					this.setVariableValues({ selected_dst_name: `${dst_name}` })
+				}
+			},
+		},
+		renameSrc: {
+			name: 'Rename a source',
+			options: [
+				{
+					type: 'dropdown',
+					id: 'src',
+					label: 'Select source :',
+					default: '00',
+					choices: this.CHOICES_SRC,
+				},
+				{
+					id: 'name',
+					type: 'textinput',
+					label: 'New name',
+					default: this.CHOICES_SRC[0],
+				},
+			],
+
+			callback: (action) => {
+				const src_id = action.options.src.padStart(3, '0')
+				const src_name = action.options.name
+				const src_name_hex = this.asciiToHexBytes(action.options.name)
+
+				this.sendCmd(`@ K:SA${src_id},${src_name_hex}`)
+				// // update selected_src_name variable if required
+				if (this.getVariableValue('selected_src_id') === action.options.src) {
+					this.setVariableValues({ selected_src_name: `${src_name}` })
+				}
 			},
 		},
 	}
@@ -325,43 +384,50 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('receiveline', (line) => {
-				if (line.length > 1) {
-					this.log('debug', line)
+				if (line.length !== 1) {
+					this.log('debug', `Received Line : ${line}`)
 				}
 
+				// set the 'id' variable value
 				if (line.includes('A:') > 0) {
 					let parts = line.split(':')
 					this.setVariableValues({ id: `${parts[1]}` })
 				}
 
-				if (line.indexOf('F:') > 0) {
-					var match = line.match(/[A-Za-z0-9]+,[A-Za-z0-9]+/gm)
+				// Set the 'level' variable value
+				if (line.includes('F:')) {
+					this.setVariableValues({ level: line.charAt(line.indexOf('F:') + 2) })
 
-					// set level variable value
-					this.setVariableValues({ id: `${line.substring(line.indexOf('F:') + 2, line.indexOf('F:') + 3)}` })
+					// Extract and parse 'systemsize' values
+					const systemsizePart = line.substring(line.indexOf('/') + 1)
+					const [hexOutputs, hexInputs] = systemsizePart.split(',')
 
-					var systemsize = line.substring(line.indexOf('/') + 1).split(',')
+					// Calculate outputs and inputs
+					this.outputs = parseInt(hexOutputs, 16) + 1
+					this.inputs = parseInt(hexInputs, 16) + 1
 
-					this.outputs = parseInt(systemsize[0], 16) + 1
-					this.inputs = parseInt(systemsize[1], 16) + 1
-
+					// Set variable definitions and values
 					this.setVariableDefinitions(this.variable_array)
-					this.setVariableValues({ outputs: this.outputs })
-					this.setVariableValues({ inputs: this.inputs })
+					this.setVariableValues({ outputs: this.outputs, inputs: this.inputs })
 				}
-				if (line.startsWith('K:D')) {
-					// get the hex value for the current dst
-					let hex_dst = line.substring(line.indexOf(',') - 2, line.indexOf(','))
-					// convert to decimal for GUI readability
-					let dst_number = parseInt(hex_dst, 16) + 1
 
-					let varId = `dst${dst_number.toString().padStart(2, '0')}`
-					let varName = `DST-${dst_number.toString().padStart(2, '0')}`
+				if (line.includes('K:D')) {
+					this.log('debug', 'parsing dst name')
+					// Extract the hexadecimal value for the current destination
+					const hex_dst = line.substring(line.indexOf(',') - 2, line.indexOf(','))
+					// Convert it to decimal for GUI readability
+					const dst_number = parseInt(hex_dst, 16) + 1
 
-					this.variable_array.push({ variableId: `${varId}`, name: `${varName}` })
+					// Generate variable id and name
+					const varId = `dst${dst_number.toString().padStart(2, '0')}`
+					const varName = `DST-${dst_number.toString().padStart(2, '0')}`
+
+					// Add variable definition to the array
+					this.variable_array.push({ variableId: varId, name: varName })
 					this.setVariableDefinitions(this.variable_array)
-					let hexString = line.substring(line.indexOf(',') + 1)
 
+					// Extract the hex string part and convert it to ASCII
+					const hexString = line.substring(line.indexOf(',') + 1)
 					let asciiString = ''
 					for (let i = 0; i < hexString.length; i += 2) {
 						const hexPair = hexString.substr(i, 2)
@@ -369,32 +435,41 @@ class ForaMfrInstance extends InstanceBase {
 						asciiString += String.fromCharCode(decimalValue)
 					}
 
-					this.setVariableValues({ [`${varId}`]: asciiString })
-					let obj = {}
-					obj.id = hex_dst
-					obj.label = asciiString
-					this.CHOICES_DST.push({ id: [`${hex_dst}`], label: asciiString })
+					// Set the variable value for the destination
+					this.setVariableValues({ [varId]: asciiString })
 
-					// set the initial values of selected dst id and value to avoid annoying $NA
-					this.setVariableValues({ selected_dst_id: this.CHOICES_DST[0].id })
-					this.setVariableValues({ selected_dst_name: this.CHOICES_DST[0].label })
+					// Update CHOICES_DST and selected destination values
+					const obj = { id: hex_dst, label: asciiString }
+					this.insertOrUpdate(this.CHOICES_DST, obj, parseInt(hex_dst, 16))
 
+					// Set initial values of selected destination id and name
+					if (!this.getVariableValue('selected_dst_id')) {
+						this.setVariableValues({ selected_dst_id: this.CHOICES_DST[0].id })
+						this.setVariableValues({ selected_dst_name: this.CHOICES_DST[0].label })
+					}
+
+					// Update actions
 					this.updateActions(this.actions)
 				}
 
-				if (line.startsWith('K:S')) {
-					// get the hex value for the current dst
-					let hex_src = line.substring(line.indexOf(',') - 2, line.indexOf(','))
-					// convert to decimal for GUI readability
-					let src_number = parseInt(hex_src, 16) + 1
+				// set the source variable and choices values
+				if (line.includes('K:S')) {
+					this.log('debug', 'parsing src name')
+					// Extract the hexadecimal value for the current destination
+					const hex_src = line.substring(line.indexOf(',') - 2, line.indexOf(','))
+					// Convert it to decimal for GUI readability
+					const src_number = parseInt(hex_src, 16) + 1
 
-					let varId = `src${src_number.toString().padStart(2, '0')}`
-					let varName = `SRC-${src_number.toString().padStart(2, '0')}`
+					// Generate variable id and name
+					const varId = `src${src_number.toString().padStart(2, '0')}`
+					const varName = `SRC-${src_number.toString().padStart(2, '0')}`
 
-					this.variable_array.push({ variableId: `${varId}`, name: `${varName}` })
+					// Add variable definition to the array
+					this.variable_array.push({ variableId: varId, name: varName })
 					this.setVariableDefinitions(this.variable_array)
-					let hexString = line.substring(line.indexOf(',') + 1)
 
+					// Extract the hex string part and convert it to ASCII
+					const hexString = line.substring(line.indexOf(',') + 1)
 					let asciiString = ''
 					for (let i = 0; i < hexString.length; i += 2) {
 						const hexPair = hexString.substr(i, 2)
@@ -402,16 +477,20 @@ class ForaMfrInstance extends InstanceBase {
 						asciiString += String.fromCharCode(decimalValue)
 					}
 
-					this.setVariableValues({ [`${varId}`]: asciiString })
-					let obj = {}
-					obj.id = hex_src
-					obj.label = asciiString
-					this.CHOICES_SRC.push({ id: [`${hex_src}`], label: asciiString })
+					// Set the variable value for the destination
+					this.setVariableValues({ [varId]: asciiString })
 
-					// set the initial values of selected dst id and value to avoid annoying $NA
-					this.setVariableValues({ selected_src_id: this.CHOICES_SRC[0].id })
-					this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
+					// Update CHOICES_SRC and selected destination values
+					const obj = { id: hex_src, label: asciiString }
+					this.insertOrUpdate(this.CHOICES_SRC, obj, parseInt(hex_src, 16))
 
+					// Set initial values of selected destination id and name
+					if (!this.getVariableValue('selected_src_id')) {
+						this.setVariableValues({ selected_src_id: this.CHOICES_SRC[0].id })
+						this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
+					}
+
+					// Update actions
 					this.updateActions(this.actions)
 				}
 
@@ -429,6 +508,29 @@ class ForaMfrInstance extends InstanceBase {
 			cmd += '\r'
 		}
 		this.socket.send(cmd)
+	}
+
+	asciiToHexBytes(asciiString) {
+		let hexString = ''
+		for (let i = 0; i < asciiString.length; i++) {
+			const charCode = asciiString.charCodeAt(i)
+			const hexByte = charCode.toString(16).padStart(2, '0')
+			hexString += hexByte
+		}
+		return hexString
+	}
+
+	insertOrUpdate(array, newItem, position) {
+		if (position >= 0 && position < array.length) {
+			// Replace the item at the specified position
+			array[position] = newItem
+		} else if (position === array.length) {
+			// Add the item at the end of the array
+			array.push(newItem)
+		} else {
+			// Invalid position, do nothing
+			console.error('Invalid position:', position)
+		}
 	}
 }
 
