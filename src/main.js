@@ -50,6 +50,11 @@ class ForaMfrInstance extends InstanceBase {
 		{ id: 'SO', label: 'Odd' },
 		{ id: 'SE', label: 'Even' },
 	]
+	CHOICES_LOCK = [
+		{ id: '0', label: 'Unlock' },
+		{ id: '1', label: 'Lock up' },
+		// { id: '2', label: 'Lock others' },
+	]
 
 	actions = {
 		setDst: {
@@ -235,6 +240,37 @@ class ForaMfrInstance extends InstanceBase {
 				}
 			},
 		},
+		lockDst: {
+			name: 'Lock/Unlock a destination',
+			options: [
+				{
+					type: 'dropdown',
+					id: 'dst',
+					label: 'Destination :',
+					default: '00',
+					choices: this.CHOICES_DST,
+				},
+				{
+					type: 'dropdown',
+					id: 'mode',
+					label: 'Lock mode :',
+					default: '0',
+					choices: this.CHOICES_LOCK,
+				},
+			],
+
+			callback: (action) => {
+				// const dst_id = action.options.dst.padStart(3, '0')
+				// const dst_name = action.options.name
+				// const dst_name_hex = this.asciiToHexBytes(action.options.name)
+				// this.log('debug',`@ W:${this.getVariableValue('level')}/${action.options.dst},${this.getVariableValue('id')},${action.options.mode}`)
+				this.sendCmd(`@ W:${this.getVariableValue('level')}/${action.options.dst},${this.getVariableValue('id')},${action.options.mode}`)
+				// // update selected_dst_name variable if required
+				// if (this.getVariableValue('selected_dst_id') === action.options.dst) {
+				// 	this.setVariableValues({ selected_dst_name: `${dst_name}` })
+				// }
+			},
+		},
 	}
 
 	constructor(internal) {
@@ -384,13 +420,13 @@ class ForaMfrInstance extends InstanceBase {
 			})
 
 			this.socket.on('receiveline', (line) => {
-				if (line.length !== 1) {
-					this.log('debug', `Received Line : ${line}`)
-				}
+				// if (line.length !== 1) {
+				// 	this.log('debug', `Received Line : ${line}`)
+				// }
 
 				// set the 'id' variable value
 				if (line.includes('A:') > 0) {
-					let parts = line.split(':')
+					let parts = line.trim().split(':')
 					this.setVariableValues({ id: `${parts[1]}` })
 				}
 
@@ -412,7 +448,6 @@ class ForaMfrInstance extends InstanceBase {
 				}
 
 				if (line.includes('K:D')) {
-					this.log('debug', 'parsing dst name')
 					// Extract the hexadecimal value for the current destination
 					const hex_dst = line.substring(line.indexOf(',') - 2, line.indexOf(','))
 					// Convert it to decimal for GUI readability
@@ -454,7 +489,6 @@ class ForaMfrInstance extends InstanceBase {
 
 				// set the source variable and choices values
 				if (line.includes('K:S')) {
-					this.log('debug', 'parsing src name')
 					// Extract the hexadecimal value for the current destination
 					const hex_src = line.substring(line.indexOf(',') - 2, line.indexOf(','))
 					// Convert it to decimal for GUI readability
