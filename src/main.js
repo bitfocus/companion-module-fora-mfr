@@ -55,6 +55,7 @@ class ForaMfrInstance extends InstanceBase {
 		{ id: '1', label: 'Lock up' },
 		// { id: '2', label: 'Lock others' },
 	]
+	CROSSPOINTS =[]
 
 	actions = {
 		setDst: {
@@ -260,15 +261,11 @@ class ForaMfrInstance extends InstanceBase {
 			],
 
 			callback: (action) => {
-				// const dst_id = action.options.dst.padStart(3, '0')
-				// const dst_name = action.options.name
-				// const dst_name_hex = this.asciiToHexBytes(action.options.name)
-				// this.log('debug',`@ W:${this.getVariableValue('level')}/${action.options.dst},${this.getVariableValue('id')},${action.options.mode}`)
-				this.sendCmd(`@ W:${this.getVariableValue('level')}/${action.options.dst},${this.getVariableValue('id')},${action.options.mode}`)
-				// // update selected_dst_name variable if required
-				// if (this.getVariableValue('selected_dst_id') === action.options.dst) {
-				// 	this.setVariableValues({ selected_dst_name: `${dst_name}` })
-				// }
+				this.sendCmd(
+					`@ W:${this.getVariableValue('level')}/${action.options.dst},${this.getVariableValue('id')},${
+						action.options.mode
+					}`
+				)
 			},
 		},
 	}
@@ -398,6 +395,7 @@ class ForaMfrInstance extends InstanceBase {
 					let offset = j.toString(16).padStart(3, '0')
 					this.sendCmd(`@ K?SA,${offset}`)
 				}
+
 			})
 
 			this.socket.on('error', (err) => {
@@ -425,6 +423,31 @@ class ForaMfrInstance extends InstanceBase {
 				// }
 
 				// set the 'id' variable value
+
+				if (line.includes('S:')) {
+					this.log('debug', `Received Line with \'S:\' : ${line}`)
+
+					// Removing leading and trailing whitespace
+					let trimmedString = line.trim()
+
+					// Discarding the first 3 characters
+					let substringAfter3Chars = trimmedString.substring(3)
+
+					// Extracting characters from 4 up to the comma
+					let commaIndex = substringAfter3Chars.indexOf(',')
+					let decimalValue = parseInt(substringAfter3Chars.substring(0, commaIndex), 16)
+
+					// this.log('debug', `crosspoint string = ${decimalValue}`)
+
+					// Extracting characters after the comma as a string
+					let charactersAfterComma = substringAfter3Chars.substring(commaIndex + 1)
+
+					// Creating an array and adding characters after the comma at the specified position
+					// let resultArray = []
+					this.CROSSPOINTS[decimalValue] = charactersAfterComma
+					this.log('debug',`crosspoint ${decimalValue} source is ${this.CROSSPOINTS[decimalValue]}`)
+				}
+
 				if (line.includes('A:') > 0) {
 					let parts = line.trim().split(':')
 					this.setVariableValues({ id: `${parts[1]}` })
@@ -433,6 +456,9 @@ class ForaMfrInstance extends InstanceBase {
 				// Set the 'level' variable value
 				if (line.includes('F:')) {
 					this.setVariableValues({ level: line.charAt(line.indexOf('F:') + 2) })
+					// request initial switchpoint routing
+					// pwerformed here as it is the first place that 'level' is known
+					this.sendCmd(`@ S?${this.getVariableValue('level')}`)
 
 					// Extract and parse 'systemsize' values
 					const systemsizePart = line.substring(line.indexOf('/') + 1)
