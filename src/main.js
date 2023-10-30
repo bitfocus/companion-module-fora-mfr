@@ -1,7 +1,6 @@
-const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = require('@companion-module/base')
+const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper,  } = require('@companion-module/base')
+const { combineRgb } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades.js')
-const UpdateFeedbacks = require('./feedbacks.js')
-const actions = require('./actions.js')
 var buffer = Buffer.alloc(32)
 
 class ForaMfrInstance extends InstanceBase {
@@ -55,7 +54,7 @@ class ForaMfrInstance extends InstanceBase {
 		{ id: '1', label: 'Lock up' },
 		// { id: '2', label: 'Lock others' },
 	]
-	CROSSPOINTS =[]
+	CROSSPOINTS = []
 
 	actions = {
 		setDst: {
@@ -270,6 +269,36 @@ class ForaMfrInstance extends InstanceBase {
 		},
 	}
 
+	feedbacks = {
+		ChannelState: {
+			name: 'Example Feedback',
+			type: 'boolean',
+			label: 'Channel State',
+			defaultStyle: {
+				bgcolor: combineRgb(255, 0, 0),
+				color: combineRgb(0, 0, 0),
+			},
+			options: [
+				{
+					id: 'num',
+					type: 'number',
+					label: 'Test',
+					default: 5,
+					min: 0,
+					max: 10,
+				},
+			],
+			callback: (feedback) => {
+				console.log('Hello world!', feedback.options.num)
+				if (feedback.options.num > 5) {
+					return true
+				} else {
+					return false
+				}
+			},
+		},
+	}
+
 	constructor(internal) {
 		super(internal)
 	}
@@ -280,7 +309,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.updateStatus(InstanceStatus.Ok)
 
 		this.updateActions(this.actions) // export actions
-		this.updateFeedbacks() // export feedbacks
+		this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 	}
 
@@ -304,7 +333,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.init_tcp()
 
 		this.updateActions(this.actions) // export actions
-		this.updateFeedbacks() // export feedbacks
+		this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 	}
 
@@ -341,8 +370,8 @@ class ForaMfrInstance extends InstanceBase {
 		this.setActionDefinitions(actions)
 	}
 
-	updateFeedbacks() {
-		UpdateFeedbacks(this)
+	updateFeedbacks(feedbacks) {
+		this.setFeedbackDefinitions(feedbacks)
 	}
 
 	updateVariableDefinitions() {
@@ -395,7 +424,6 @@ class ForaMfrInstance extends InstanceBase {
 					let offset = j.toString(16).padStart(3, '0')
 					this.sendCmd(`@ K?SA,${offset}`)
 				}
-
 			})
 
 			this.socket.on('error', (err) => {
@@ -445,7 +473,7 @@ class ForaMfrInstance extends InstanceBase {
 					// Creating an array and adding characters after the comma at the specified position
 					// let resultArray = []
 					this.CROSSPOINTS[decimalValue] = charactersAfterComma
-					this.log('debug',`crosspoint ${decimalValue} source is ${this.CROSSPOINTS[decimalValue]}`)
+					this.log('debug', `crosspoint ${decimalValue} source is ${this.CROSSPOINTS[decimalValue]}`)
 				}
 
 				if (line.includes('A:') > 0) {
@@ -555,7 +583,7 @@ class ForaMfrInstance extends InstanceBase {
 				}
 
 				this.updateActions(this.actions) // export actions
-				this.updateFeedbacks() // export feedbacks
+				this.updateFeedbacks(this.feedbacks) // export feedbacks
 				this.updateVariableDefinitions() // export variable definitions
 			})
 		} else {
