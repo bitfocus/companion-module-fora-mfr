@@ -1,4 +1,4 @@
-const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper,  } = require('@companion-module/base')
+const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = require('@companion-module/base')
 const { combineRgb } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades.js')
 var buffer = Buffer.alloc(32)
@@ -11,7 +11,9 @@ class ForaMfrInstance extends InstanceBase {
 		{ variableId: 'inputs', name: 'Inputs' },
 		{ variableId: 'selected_dst_id', name: 'Selected dst id' },
 		{ variableId: 'selected_dst_name', name: 'Selected dst name' },
-		{ variableId: 'selected_src_id', name: 'Selected src' },
+		{ variableId: 'selected_dst_src_id', name: 'Selected destination src id' },
+		{ variableId: 'selected_dst_src_name', name: 'Selected destination src name' },
+		{ variableId: 'selected_src_id', name: 'Selected src id' },
 		{ variableId: 'selected_src_name', name: 'Selected src name' },
 	]
 	CHOICES_DST = []
@@ -72,8 +74,16 @@ class ForaMfrInstance extends InstanceBase {
 			callback: (action) => {
 				const dst_id = action.options.dst
 				const dst_name = [this.CHOICES_DST[parseInt(dst_id, 16)].label]
+
 				this.setVariableValues({ selected_dst_id: dst_id })
 				this.setVariableValues({ selected_dst_name: dst_name })
+
+				// also set the variable values for the source routed to the destination
+				const varIdXpt = (parseInt(dst_id, 16) + 1).toString().padStart(2, '0')
+				const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16) + 1
+				const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
+				this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
+				this.setVariableValues({ selected_dst_src_name: xpt_src_name })
 			},
 		},
 		setSrc: {
@@ -207,6 +217,7 @@ class ForaMfrInstance extends InstanceBase {
 				// // update selected_dst_name variable if required
 				if (this.getVariableValue('selected_dst_id') === action.options.dst) {
 					this.setVariableValues({ selected_dst_name: `${dst_name}` })
+					// this.checkFeedbacks('RoutedSource')
 				}
 			},
 		},
@@ -269,35 +280,64 @@ class ForaMfrInstance extends InstanceBase {
 		},
 	}
 
-	feedbacks = {
-		ChannelState: {
-			name: 'Example Feedback',
-			type: 'boolean',
-			label: 'Channel State',
-			defaultStyle: {
-				bgcolor: combineRgb(255, 0, 0),
-				color: combineRgb(0, 0, 0),
-			},
-			options: [
-				{
-					id: 'num',
-					type: 'number',
-					label: 'Test',
-					default: 5,
-					min: 0,
-					max: 10,
-				},
-			],
-			callback: (feedback) => {
-				console.log('Hello world!', feedback.options.num)
-				if (feedback.options.num > 5) {
-					return true
-				} else {
-					return false
-				}
-			},
-		},
-	}
+	// feedbacks = {
+	// 	RoutedSource: {
+	// 		name: 'Routed source',
+	// 		type: 'boolean',
+	// 		label: 'True if selected source is routed to $(fora-mfr:selected_dst_id)',
+	// 		defaultStyle: {
+	// 			bgcolor: combineRgb(255, 255, 0),
+	// 			color: combineRgb(0, 0, 0),
+	// 		},
+	// 		options: [
+	// 			{
+	// 				type: 'dropdown',
+	// 				id: 'src',
+	// 				label: 'Source :',
+	// 				default: '00',
+	// 				choices: this.CHOICES_SRC,
+	// 			},
+	// 		],
+	// 		callback: (feedback) => {
+
+	// 			if (
+	// 				parseInt(feedback.options.src, 16) == this.CHOICES_DST[parseInt(this.getVariableValue('selected_dst_id'), 16)].xpt
+	// 			) {
+	// 				return true
+	// 			} else {
+	// 				return false
+	// 			}
+	// 		},
+	// 	},
+	// 	RoutedDestination: {
+	// 		name: 'Routed destination',
+	// 		type: 'boolean',
+	// 		label: 'True if selected destination is routed to $(fora-mfr:selected_src_id)',
+	// 		defaultStyle: {
+	// 			bgcolor: combineRgb(255, 255, 0),
+	// 			color: combineRgb(0, 0, 0),
+	// 		},
+	// 		options: [
+	// 			{
+	// 				type: 'dropdown',
+	// 				id: 'dst',
+	// 				label: 'Destination :',
+	// 				default: '00',
+	// 				choices: this.CHOICES_DST,
+	// 			},
+	// 		],
+	// 		callback: (feedback) => {
+
+	// 			if (
+	// 				parseInt(feedback.options.dst, 16) == this.CHOICES_SRC[parseInt(this.getVariableValue('selected_src_id'), 16)].xpt
+	// 			) {
+	// 				return true
+	// 			} else {
+	// 				return false
+	// 			}
+	// 		},
+	// 	},
+	// }
 
 	constructor(internal) {
 		super(internal)
@@ -309,7 +349,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.updateStatus(InstanceStatus.Ok)
 
 		this.updateActions(this.actions) // export actions
-		this.updateFeedbacks(this.feedbacks) // export feedbacks
+		// this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 	}
 
@@ -333,7 +373,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.init_tcp()
 
 		this.updateActions(this.actions) // export actions
-		this.updateFeedbacks(this.feedbacks) // export feedbacks
+		// this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 	}
 
@@ -405,16 +445,6 @@ class ForaMfrInstance extends InstanceBase {
 				for (let i = 0; i < 8; ++i) {
 					this.sendCmd(`@ F? ${i}`)
 				}
-				// request destination names
-				// MFR returns blocks of 32 inputs
-				// the platform supports upto 256 destinations so request 8 times to get them all
-				// converting i to offset by multiplying by 32 and converting to hex padded to 3 places with zero
-				for (let i = 0; i < 8; i++) {
-					let j = i * 32
-					let offset = j.toString(16).padStart(3, '0')
-					this.sendCmd(`@ K?DA,${offset}`)
-				}
-
 				// request source names
 				// MFR returns blocks of 32 inputs
 				// the platform supports upto 256 sources so request 8 times to get them all
@@ -423,6 +453,16 @@ class ForaMfrInstance extends InstanceBase {
 					let j = i * 32
 					let offset = j.toString(16).padStart(3, '0')
 					this.sendCmd(`@ K?SA,${offset}`)
+				}
+
+				// request destination names
+				// MFR returns blocks of 32 inputs
+				// the platform supports upto 256 destinations so request 8 times to get them all
+				// converting i to offset by multiplying by 32 and converting to hex padded to 3 places with zero
+				for (let i = 0; i < 8; i++) {
+					let j = i * 32
+					let offset = j.toString(16).padStart(3, '0')
+					this.sendCmd(`@ K?DA,${offset}`)
 				}
 			})
 
@@ -453,8 +493,6 @@ class ForaMfrInstance extends InstanceBase {
 				// set the 'id' variable value
 
 				if (line.includes('S:')) {
-					this.log('debug', `Received Line with \'S:\' : ${line}`)
-
 					// Removing leading and trailing whitespace
 					let trimmedString = line.trim()
 
@@ -463,17 +501,27 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Extracting characters from 4 up to the comma
 					let commaIndex = substringAfter3Chars.indexOf(',')
-					let decimalValue = parseInt(substringAfter3Chars.substring(0, commaIndex), 16)
 
-					// this.log('debug', `crosspoint string = ${decimalValue}`)
+					let destination_decimal = parseInt(substringAfter3Chars.substring(0, commaIndex), 16) + 1
+					// let destination = substringAfter3Chars.substring(0, commaIndex).padStart(2, '0')
 
 					// Extracting characters after the comma as a string
-					let charactersAfterComma = substringAfter3Chars.substring(commaIndex + 1)
+					// let source = parseInt(substringAfter3Chars.substring(commaIndex + 1), 16)
+					let source = substringAfter3Chars.substring(commaIndex + 1).padStart(2, '0')
 
-					// Creating an array and adding characters after the comma at the specified position
-					// let resultArray = []
-					this.CROSSPOINTS[decimalValue] = charactersAfterComma
-					this.log('debug', `crosspoint ${decimalValue} source is ${this.CROSSPOINTS[decimalValue]}`)
+					// Generate variable id and name
+					const varIdXpt = `xpt${destination_decimal.toString().padStart(2, '0')}`
+
+					this.setVariableValues({ [varIdXpt]: source })
+
+					if (!this.getVariableValue('selected_dst_src_id')) {
+						const dst_id = this.getVariableValue('selected_dst_id')
+						const varIdXpt = (parseInt(dst_id, 16) + 1).toString().padStart(2, '0')
+						const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16) + 1
+						const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
+						this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
+						this.setVariableValues({ selected_dst_src_name: xpt_src_name })
+					}
 				}
 
 				if (line.includes('A:') > 0) {
@@ -497,7 +545,7 @@ class ForaMfrInstance extends InstanceBase {
 					this.inputs = parseInt(hexInputs, 16) + 1
 
 					// Set variable definitions and values
-					this.setVariableDefinitions(this.variable_array)
+					// this.setVariableDefinitions(this.variable_array)
 					this.setVariableValues({ outputs: this.outputs, inputs: this.inputs })
 				}
 
@@ -511,8 +559,14 @@ class ForaMfrInstance extends InstanceBase {
 					const varId = `dst${dst_number.toString().padStart(2, '0')}`
 					const varName = `DST-${dst_number.toString().padStart(2, '0')}`
 
+					// generate xpt variable names and IDs for rouing feedback
+
+					const varIdXpt = `xpt${dst_number.toString().padStart(2, '0')}`
+					const varNameXpt = `XPT-${dst_number.toString().padStart(2, '0')}`
+
 					// Add variable definition to the array
 					this.variable_array.push({ variableId: varId, name: varName })
+					this.variable_array.push({ variableId: varIdXpt, name: varNameXpt })
 					this.setVariableDefinitions(this.variable_array)
 
 					// Extract the hex string part and convert it to ASCII
@@ -554,6 +608,7 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Add variable definition to the array
 					this.variable_array.push({ variableId: varId, name: varName })
+
 					this.setVariableDefinitions(this.variable_array)
 
 					// Extract the hex string part and convert it to ASCII
@@ -578,12 +633,19 @@ class ForaMfrInstance extends InstanceBase {
 						this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
 					}
 
+					// // update feedback 'RoutedSource'
+					// this.checkFeedbacks('RoutedSource')
+
 					// Update actions
 					this.updateActions(this.actions)
 				}
 
+				// update feedbacks
+				// this.checkFeedbacks('RoutedSource')
+				// this.checkFeedbacks('RoutedDestination')
+
 				this.updateActions(this.actions) // export actions
-				this.updateFeedbacks(this.feedbacks) // export feedbacks
+				// this.updateFeedbacks(this.feedbacks) // export feedbacks
 				this.updateVariableDefinitions() // export variable definitions
 			})
 		} else {
@@ -618,6 +680,12 @@ class ForaMfrInstance extends InstanceBase {
 		} else {
 			// Invalid position, do nothing
 			console.error('Invalid position:', position)
+		}
+	}
+
+	logCrosspoints() {
+		for (let i = 0; i < this.CROSSPOINTS.length; i++) {
+			this.log('DEBUG', `${i} == ${this.CROSSPOINTS[i]}`)
 		}
 	}
 }
