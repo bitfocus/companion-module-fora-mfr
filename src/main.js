@@ -92,6 +92,10 @@ class ForaMfrInstance extends InstanceBase {
 				const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
 				this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
 				this.setVariableValues({ selected_dst_src_name: xpt_src_name })
+
+			
+				this.checkFeedbacks('RoutedSource')
+				this.checkFeedbacks('RoutedDestination')
 			},
 		},
 		setSrc: {
@@ -128,6 +132,9 @@ class ForaMfrInstance extends InstanceBase {
 						'selected_src_id'
 					)}`
 				)
+
+				this.checkFeedbacks('RoutedSource')
+				this.checkFeedbacks('RoutedDestination')
 			},
 		},
 		presetXpt: {
@@ -150,6 +157,9 @@ class ForaMfrInstance extends InstanceBase {
 				// Set the preset crosspoints simultaneously.
 				// @[sp]B:E
 				this.sendCmd(`@ B:E`)
+
+				this.checkFeedbacks('RoutedSource')
+				this.checkFeedbacks('RoutedDestination')
 			},
 		},
 		setVideoFormat: {
@@ -230,7 +240,6 @@ class ForaMfrInstance extends InstanceBase {
 				// // update selected_dst_name variable if required
 				if (this.getVariableValue('selected_dst_id') === action.options.dst) {
 					this.setVariableValues({ selected_dst_name: `${dst_name}` })
-					// this.checkFeedbacks('RoutedSource')
 				}
 			},
 		},
@@ -297,9 +306,9 @@ class ForaMfrInstance extends InstanceBase {
 		RoutedSource: {
 			name: 'Routed source',
 			type: 'boolean',
-			description: 'True if selected source is routed to $(fora-mfr:selected_dst_src_id)',
+			description: 'True if selected source is routed to the selected destination',
 			defaultStyle: {
-				bgcolor: combineRgb(255, 255, 0),
+				bgcolor: combineRgb(64, 255, 64),
 				color: combineRgb(0, 0, 0),
 			},
 			options: [
@@ -312,8 +321,20 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				// includes($(fora-mfr:active_selected_type),"dst") && $(fora-mfr:selected_dst_src_name) === $(fora-mfr:src01)  ||  $(fora-mfr:selected_src_name) === $(fora-mfr:active_selected_name)
-				if (feedback.options.src == this.getVariableValue('selected_dst_src_id')) {
+				// best yet from GUI tinkering
+				// includes($(fora-mfr:active_selected_type),"dst") && $(fora-mfr:selected_dst_src_name) === $(fora-mfr:src01)|| includes($(fora-mfr:active_selected_type),"src") && $(fora-mfr:active_selected_name) ===$(fora-mfr:src01)
+
+				// the active_selected_type
+				const this_selected_type = this.getVariableValue('active_selected_type')
+				// the source selected in feedback option's name
+				const this_feedback_src_name = `src${(parseInt(feedback.options.src, 16) + 1).toString().padStart(2, '0')}`
+
+				if (
+					(this_selected_type === 'dst' &&
+						this.getVariableValue('selected_dst_src_name') == this.getVariableValue(this_feedback_src_name)) ||
+					(this_selected_type === 'src' &&
+						this.getVariableValue('active_selected_name') == this.getVariableValue(this_feedback_src_name))
+				) {
 					return true
 				} else {
 					return false
@@ -325,21 +346,37 @@ class ForaMfrInstance extends InstanceBase {
 			type: 'boolean',
 			description: 'True if selected destination is routed to the selected crosspoint',
 			defaultStyle: {
-				bgcolor: combineRgb(255, 255, 0),
+				bgcolor: combineRgb(255, 255, 64),
 				color: combineRgb(0, 0, 0),
 			},
 			options: [
 				{
 					type: 'dropdown',
 					id: 'dst',
-					label: 'Crosspoint :',
-					// default: '00',
+					label: 'Destination :',
+					default: '00',
 					choices: this.CHOICES_DST,
 				},
 			],
 			callback: (feedback) => {
-				// includes($(fora-mfr:active_selected_type),"src") && $(fora-mfr:active_selected_id) === $(fora-mfr:xpt01) ||  $(fora-mfr:selected_dst_name) === $(fora-mfr:active_selected_name)
-				if (this.getVariableValue(`xpt${dst_decimal}`) == this.getVariableValue('selected_src_id')) {
+				// best yet
+				// includes($(fora-mfr:active_selected_type),"src") && $(fora-mfr:active_selected_id) === $(fora-mfr:xpt05) || includes($(fora-mfr:active_selected_type),"dst") && $(fora-mfr:active_selected_name) === $(fora-mfr:dst05) || includes($(fora-mfr:active_selected_type),"dst") && $(fora-mfr:active_selected_name) === $(fora-mfr:dst05)
+
+				// the active_selected_type
+				const this_selected_type = this.getVariableValue('active_selected_type')
+				// the source selected in feedback option's name
+				const this_feedback_dst_name = `dst${(parseInt(feedback.options.dst, 16) + 1).toString().padStart(2, '0')}`
+				// the source assigned to the selectwed destination' crosspoint feedback option's name
+				const this_feedback_dst_xpt_src_name = `xpt${(parseInt(feedback.options.dst, 16) + 1)
+					.toString()
+					.padStart(2, '0')}`
+
+				if (
+					(this_selected_type === 'src' &&
+						this.getVariableValue('active_selected_id') == this.getVariableValue(this_feedback_dst_xpt_src_name)) ||
+					(this_selected_type === 'dst' &&
+						this.getVariableValue('active_selected_name') == this.getVariableValue(this_feedback_dst_name))
+				) {
 					return true
 				} else {
 					return false
@@ -442,6 +479,14 @@ class ForaMfrInstance extends InstanceBase {
 			this.socket.on('status_change', (status, message) => {
 				this.updateStatus(status, message)
 			})
+			// // Get the current time in milliseconds
+			// const currentTime = Date.now()
+
+			// // Calculate the modulus with 500
+			// const result = currentTime % 500
+
+			// this.log('debug','Current Time in Milliseconds: ' + currentTime)
+			// console.log('debug','Modulus with 500: ' + result)
 
 			this.socket.on('connect', () => {
 				// request CPU status
@@ -539,6 +584,8 @@ class ForaMfrInstance extends InstanceBase {
 						this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
 						this.setVariableValues({ selected_dst_src_name: xpt_src_name })
 					}
+					this.checkFeedbacks('RoutedDestination')
+					this.checkFeedbacks('RoutedSource')
 				}
 
 				if (line.includes('A:') > 0) {
@@ -617,6 +664,8 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Update actions
 					this.updateActions(this.actions)
+					this.checkFeedbacks('RoutedDestination')
+					this.checkFeedbacks('RoutedSource')
 				}
 
 				// set the source variable and choices values
@@ -657,16 +706,17 @@ class ForaMfrInstance extends InstanceBase {
 						this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
 					}
 
-					// update feedback 'RoutedSource'
+					// update feedbacks
 					this.checkFeedbacks('RoutedSource')
+					this.checkFeedbacks('RoutedDestination')
 
 					// Update actions
 					this.updateActions(this.actions)
 				}
 
 				// update feedbacks
-				this.checkFeedbacks('RoutedSource')
-				// this.checkFeedbacks('RoutedDestination')
+					this.checkFeedbacks('RoutedSource')
+					this.checkFeedbacks('RoutedDestination')
 
 				this.updateActions(this.actions) // export actions
 				this.updateFeedbacks(this.feedbacks) // export feedbacks
