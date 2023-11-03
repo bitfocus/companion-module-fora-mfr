@@ -15,6 +15,9 @@ class ForaMfrInstance extends InstanceBase {
 		{ variableId: 'selected_dst_src_name', name: 'Selected destination src name' },
 		{ variableId: 'selected_src_id', name: 'Selected src id' },
 		{ variableId: 'selected_src_name', name: 'Selected src name' },
+		{ variableId: 'active_selected_id', name: 'Active selected id' },
+		{ variableId: 'active_selected_name', name: 'Active selected name' },
+		{ variableId: 'active_selected_type', name: 'Active selected type' },
 	]
 	CHOICES_DST = []
 	CHOICES_SRC = []
@@ -78,6 +81,11 @@ class ForaMfrInstance extends InstanceBase {
 				this.setVariableValues({ selected_dst_id: dst_id })
 				this.setVariableValues({ selected_dst_name: dst_name })
 
+				// set the active selection variable values
+				this.setVariableValues({ active_selected_id: dst_id })
+				this.setVariableValues({ active_selected_name: dst_name })
+				this.setVariableValues({ active_selected_type: 'dst' })
+
 				// also set the variable values for the source routed to the destination
 				const varIdXpt = (parseInt(dst_id, 16) + 1).toString().padStart(2, '0')
 				const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16) + 1
@@ -102,6 +110,11 @@ class ForaMfrInstance extends InstanceBase {
 				const src_name = [this.CHOICES_SRC[parseInt(src_id, 16)].label]
 				this.setVariableValues({ selected_src_id: src_id })
 				this.setVariableValues({ selected_src_name: src_name })
+
+				// set the active selection variable values
+				this.setVariableValues({ active_selected_id: src_id })
+				this.setVariableValues({ active_selected_name: src_name })
+				this.setVariableValues({ active_selected_type: 'src' })
 			},
 		},
 		switchXpt: {
@@ -280,64 +293,60 @@ class ForaMfrInstance extends InstanceBase {
 		},
 	}
 
-	// feedbacks = {
-	// 	RoutedSource: {
-	// 		name: 'Routed source',
-	// 		type: 'boolean',
-	// 		label: 'True if selected source is routed to $(fora-mfr:selected_dst_id)',
-	// 		defaultStyle: {
-	// 			bgcolor: combineRgb(255, 255, 0),
-	// 			color: combineRgb(0, 0, 0),
-	// 		},
-	// 		options: [
-	// 			{
-	// 				type: 'dropdown',
-	// 				id: 'src',
-	// 				label: 'Source :',
-	// 				default: '00',
-	// 				choices: this.CHOICES_SRC,
-	// 			},
-	// 		],
-	// 		callback: (feedback) => {
-
-	// 			if (
-	// 				parseInt(feedback.options.src, 16) == this.CHOICES_DST[parseInt(this.getVariableValue('selected_dst_id'), 16)].xpt
-	// 			) {
-	// 				return true
-	// 			} else {
-	// 				return false
-	// 			}
-	// 		},
-	// 	},
-	// 	RoutedDestination: {
-	// 		name: 'Routed destination',
-	// 		type: 'boolean',
-	// 		label: 'True if selected destination is routed to $(fora-mfr:selected_src_id)',
-	// 		defaultStyle: {
-	// 			bgcolor: combineRgb(255, 255, 0),
-	// 			color: combineRgb(0, 0, 0),
-	// 		},
-	// 		options: [
-	// 			{
-	// 				type: 'dropdown',
-	// 				id: 'dst',
-	// 				label: 'Destination :',
-	// 				default: '00',
-	// 				choices: this.CHOICES_DST,
-	// 			},
-	// 		],
-	// 		callback: (feedback) => {
-
-	// 			if (
-	// 				parseInt(feedback.options.dst, 16) == this.CHOICES_SRC[parseInt(this.getVariableValue('selected_src_id'), 16)].xpt
-	// 			) {
-	// 				return true
-	// 			} else {
-	// 				return false
-	// 			}
-	// 		},
-	// 	},
-	// }
+	feedbacks = {
+		RoutedSource: {
+			name: 'Routed source',
+			type: 'boolean',
+			description: 'True if selected source is routed to $(fora-mfr:selected_dst_src_id)',
+			defaultStyle: {
+				bgcolor: combineRgb(255, 255, 0),
+				color: combineRgb(0, 0, 0),
+			},
+			options: [
+				{
+					type: 'dropdown',
+					id: 'src',
+					label: 'Source :',
+					default: '00',
+					choices: this.CHOICES_SRC,
+				},
+			],
+			callback: (feedback) => {
+				// includes($(fora-mfr:active_selected_type),"dst") && $(fora-mfr:selected_dst_src_name) === $(fora-mfr:src01)  ||  $(fora-mfr:selected_src_name) === $(fora-mfr:active_selected_name)
+				if (feedback.options.src == this.getVariableValue('selected_dst_src_id')) {
+					return true
+				} else {
+					return false
+				}
+			},
+		},
+		RoutedDestination: {
+			name: 'Routed destination',
+			type: 'boolean',
+			description: 'True if selected destination is routed to the selected crosspoint',
+			defaultStyle: {
+				bgcolor: combineRgb(255, 255, 0),
+				color: combineRgb(0, 0, 0),
+			},
+			options: [
+				{
+					type: 'dropdown',
+					id: 'dst',
+					label: 'Crosspoint :',
+					// default: '00',
+					choices: this.CHOICES_DST,
+				},
+			],
+			callback: (feedback) => {
+				// includes($(fora-mfr:active_selected_type),"src") && $(fora-mfr:active_selected_id) === $(fora-mfr:xpt01) ||  $(fora-mfr:selected_dst_name) === $(fora-mfr:active_selected_name)
+				if (this.getVariableValue(`xpt${dst_decimal}`) == this.getVariableValue('selected_src_id')) {
+					return true
+				} else {
+					return false
+				}
+			},
+		},
+	}
 
 	constructor(internal) {
 		super(internal)
@@ -348,8 +357,10 @@ class ForaMfrInstance extends InstanceBase {
 
 		this.updateStatus(InstanceStatus.Ok)
 
+		this.init_tcp()
+
 		this.updateActions(this.actions) // export actions
-		// this.updateFeedbacks(this.feedbacks) // export feedbacks
+		this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 	}
 
@@ -373,7 +384,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.init_tcp()
 
 		this.updateActions(this.actions) // export actions
-		// this.updateFeedbacks(this.feedbacks) // export feedbacks
+		this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 	}
 
@@ -514,10 +525,16 @@ class ForaMfrInstance extends InstanceBase {
 
 					this.setVariableValues({ [varIdXpt]: source })
 
+					// update or populate the CROSSPOINTS array
+					const obj = { id: source, label: `${this.CHOICES_DST[destination_decimal - 1].label}` }
+					// const obj = { id: source, label: 'foo' }
+
+					this.insertOrUpdate(this.CROSSPOINTS, obj, destination_decimal - 1)
+
 					if (!this.getVariableValue('selected_dst_src_id')) {
 						const dst_id = this.getVariableValue('selected_dst_id')
 						const varIdXpt = (parseInt(dst_id, 16) + 1).toString().padStart(2, '0')
-						const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16) + 1
+						const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16)
 						const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
 						this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
 						this.setVariableValues({ selected_dst_src_name: xpt_src_name })
@@ -591,6 +608,13 @@ class ForaMfrInstance extends InstanceBase {
 						this.setVariableValues({ selected_dst_name: this.CHOICES_DST[0].label })
 					}
 
+					if (!this.getVariableValue('active_selected_id')) {
+						// set initial active selection variable values
+						this.setVariableValues({ active_selected_id: this.CHOICES_DST[0].id })
+						this.setVariableValues({ active_selected_name: this.CHOICES_DST[0].label })
+						this.setVariableValues({ active_selected_type: 'dst' })
+					}
+
 					// Update actions
 					this.updateActions(this.actions)
 				}
@@ -633,19 +657,19 @@ class ForaMfrInstance extends InstanceBase {
 						this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
 					}
 
-					// // update feedback 'RoutedSource'
-					// this.checkFeedbacks('RoutedSource')
+					// update feedback 'RoutedSource'
+					this.checkFeedbacks('RoutedSource')
 
 					// Update actions
 					this.updateActions(this.actions)
 				}
 
 				// update feedbacks
-				// this.checkFeedbacks('RoutedSource')
+				this.checkFeedbacks('RoutedSource')
 				// this.checkFeedbacks('RoutedDestination')
 
 				this.updateActions(this.actions) // export actions
-				// this.updateFeedbacks(this.feedbacks) // export feedbacks
+				this.updateFeedbacks(this.feedbacks) // export feedbacks
 				this.updateVariableDefinitions() // export variable definitions
 			})
 		} else {
