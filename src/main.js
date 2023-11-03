@@ -650,17 +650,17 @@ class ForaMfrInstance extends InstanceBase {
 					this.insertOrUpdate(this.CHOICES_DST, obj, parseInt(hex_dst, 16))
 
 					// Set initial values of selected destination id and name
-					if (!this.getVariableValue('selected_dst_id')) {
-						this.setVariableValues({ selected_dst_id: this.CHOICES_DST[0].id })
-						this.setVariableValues({ selected_dst_name: this.CHOICES_DST[0].label })
-					}
+					// if (!this.getVariableValue('selected_dst_id')) {
+					// 	this.setVariableValues({ selected_dst_id: this.CHOICES_DST[0].id })
+					// 	this.setVariableValues({ selected_dst_name: this.CHOICES_DST[0].label })
+					// }
 
-					if (!this.getVariableValue('active_selected_id')) {
-						// set initial active selection variable values
-						this.setVariableValues({ active_selected_id: this.CHOICES_DST[0].id })
-						this.setVariableValues({ active_selected_name: this.CHOICES_DST[0].label })
-						this.setVariableValues({ active_selected_type: 'dst' })
-					}
+					// if (!this.getVariableValue('active_selected_id')) {
+					// 	// set initial active selection variable values
+					// 	this.setVariableValues({ active_selected_id: this.CHOICES_DST[0].id })
+					// 	this.setVariableValues({ active_selected_name: this.CHOICES_DST[0].label })
+					// 	this.setVariableValues({ active_selected_type: 'dst' })
+					// }
 
 					// Update actions
 					this.updateActions(this.actions)
@@ -701,10 +701,10 @@ class ForaMfrInstance extends InstanceBase {
 					this.insertOrUpdate(this.CHOICES_SRC, obj, parseInt(hex_src, 16))
 
 					// Set initial values of selected destination id and name
-					if (!this.getVariableValue('selected_src_id')) {
-						this.setVariableValues({ selected_src_id: this.CHOICES_SRC[0].id })
-						this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
-					}
+					// if (!this.getVariableValue('selected_src_id')) {
+					// 	this.setVariableValues({ selected_src_id: this.CHOICES_SRC[0].id })
+					// 	this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
+					// }
 
 					// update feedbacks
 					this.checkFeedbacks('RoutedSource')
