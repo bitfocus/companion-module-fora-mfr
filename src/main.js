@@ -60,6 +60,7 @@ class ForaMfrInstance extends InstanceBase {
 		// { id: '2', label: 'Lock others' },
 	]
 	CROSSPOINTS = []
+	CUT_PENDING = true
 
 	actions = {
 		setDst: {
@@ -93,9 +94,10 @@ class ForaMfrInstance extends InstanceBase {
 				this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
 				this.setVariableValues({ selected_dst_src_name: xpt_src_name })
 
-			
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
+				this.checkFeedbacks('SelectedSource')
+				this.checkFeedbacks('SelectedDestination')
 			},
 		},
 		setSrc: {
@@ -119,6 +121,11 @@ class ForaMfrInstance extends InstanceBase {
 				this.setVariableValues({ active_selected_id: src_id })
 				this.setVariableValues({ active_selected_name: src_name })
 				this.setVariableValues({ active_selected_type: 'src' })
+
+				this.checkFeedbacks('RoutedSource')
+				this.checkFeedbacks('RoutedDestination')
+				this.checkFeedbacks('SelectedSource')
+				this.checkFeedbacks('SelectedDestination')
 			},
 		},
 		switchXpt: {
@@ -135,6 +142,10 @@ class ForaMfrInstance extends InstanceBase {
 
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
+
+				this.CUT_PENDING = false
+				this.checkFeedbacks('SelectedSource')
+				this.checkFeedbacks('SelectedDestination')
 			},
 		},
 		presetXpt: {
@@ -148,6 +159,9 @@ class ForaMfrInstance extends InstanceBase {
 						'selected_src_id'
 					)}`
 				)
+				this.CUT_PENDING = true
+				this.checkFeedbacks('SelectedSource')
+				this.checkFeedbacks('SelectedDestination')
 			},
 		},
 		switchPresetXpts: {
@@ -160,6 +174,10 @@ class ForaMfrInstance extends InstanceBase {
 
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
+
+				this.CUT_PENDING = false
+				this.checkFeedbacks('SelectedSource')
+				this.checkFeedbacks('SelectedDestination')
 			},
 		},
 		setVideoFormat: {
@@ -303,6 +321,67 @@ class ForaMfrInstance extends InstanceBase {
 	}
 
 	feedbacks = {
+		SelectedSource: {
+			name: 'Show selected source',
+			type: 'boolean',
+			description: 'If this source is selected the bank will be highlighted ireespctive of routing',
+			defaultStyle: {
+				bgcolor: combineRgb(255, 64, 255),
+				color: combineRgb(0, 0, 0),
+			},
+			options: [
+				{
+					type: 'dropdown',
+					id: 'src',
+					label: 'Source :',
+					default: '00',
+					choices: this.CHOICES_SRC,
+				},
+			],
+			callback: (feedback) => {
+				// the active_selected_type
+				const this_selected_type = this.getVariableValue('active_selected_type')
+				if (
+					this.CUT_PENDING &&
+					this.getVariableValue('selected_src_id') === feedback.options.src
+				) {
+					return true
+				} else {
+					return false
+				}
+			},
+		},
+		SelectedDestination: {
+			name: 'Show selected destination',
+			type: 'boolean',
+			description: 'If this destination is selected the bank will be highlighted ireespctive of routing',
+			defaultStyle: {
+				bgcolor: combineRgb(64, 64, 255),
+				color: combineRgb(0, 0, 0),
+			},
+			options: [
+				{
+					type: 'dropdown',
+					id: 'dst',
+					label: 'Destination :',
+					default: '00',
+					choices: this.CHOICES_DST,
+				},
+			],
+			callback: (feedback) => {
+				// the active_selected_type
+				const this_selected_type = this.getVariableValue('active_selected_type')
+
+				if (
+					this.CUT_PENDING &&
+					this.getVariableValue('selected_dst_id') === feedback.options.dst
+				) {
+					return true
+				} else {
+					return false
+				}
+			},
+		},
 		RoutedSource: {
 			name: 'Routed source',
 			type: 'boolean',
@@ -321,9 +400,6 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				// best yet from GUI tinkering
-				// includes($(fora-mfr:active_selected_type),"dst") && $(fora-mfr:selected_dst_src_name) === $(fora-mfr:src01)|| includes($(fora-mfr:active_selected_type),"src") && $(fora-mfr:active_selected_name) ===$(fora-mfr:src01)
-
 				// the active_selected_type
 				const this_selected_type = this.getVariableValue('active_selected_type')
 				// the source selected in feedback option's name
@@ -359,9 +435,6 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				// best yet
-				// includes($(fora-mfr:active_selected_type),"src") && $(fora-mfr:active_selected_id) === $(fora-mfr:xpt05) || includes($(fora-mfr:active_selected_type),"dst") && $(fora-mfr:active_selected_name) === $(fora-mfr:dst05) || includes($(fora-mfr:active_selected_type),"dst") && $(fora-mfr:active_selected_name) === $(fora-mfr:dst05)
-
 				// the active_selected_type
 				const this_selected_type = this.getVariableValue('active_selected_type')
 				// the source selected in feedback option's name
@@ -715,8 +788,8 @@ class ForaMfrInstance extends InstanceBase {
 				}
 
 				// update feedbacks
-					this.checkFeedbacks('RoutedSource')
-					this.checkFeedbacks('RoutedDestination')
+				this.checkFeedbacks('RoutedSource')
+				this.checkFeedbacks('RoutedDestination')
 
 				this.updateActions(this.actions) // export actions
 				this.updateFeedbacks(this.feedbacks) // export feedbacks
