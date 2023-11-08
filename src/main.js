@@ -58,10 +58,8 @@ class ForaMfrInstance extends InstanceBase {
 	CHOICES_LOCK = [
 		{ id: '0', label: 'Unlock' },
 		{ id: '1', label: 'Lock' },
-		// { id: '2', label: 'Lock others' },
+		// { id: '2', label: 'Lock others' }, // only valid if multiple router system
 	]
-	// CROSSPOINTS = []
-	// CUT_PENDING = true
 
 	actions = {
 		setDst: {
@@ -94,7 +92,7 @@ class ForaMfrInstance extends InstanceBase {
 				const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
 				this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
 				this.setVariableValues({ selected_dst_src_name: xpt_src_name })
-				// this.CUT_PENDING = true
+				// update feedbacks
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
 				this.checkFeedbacks('SelectedSource')
@@ -122,7 +120,7 @@ class ForaMfrInstance extends InstanceBase {
 				this.setVariableValues({ active_selected_id: src_id })
 				this.setVariableValues({ active_selected_name: src_name })
 				this.setVariableValues({ active_selected_type: 'src' })
-				// this.CUT_PENDING = true
+				// update feedbacks
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
 				this.checkFeedbacks('SelectedSource')
@@ -140,11 +138,9 @@ class ForaMfrInstance extends InstanceBase {
 						'selected_src_id'
 					)}`
 				)
-
+				// update feedbacks
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
-
-				// this.CUT_PENDING = false
 				this.checkFeedbacks('SelectedSource')
 				this.checkFeedbacks('SelectedDestination')
 			},
@@ -160,7 +156,6 @@ class ForaMfrInstance extends InstanceBase {
 						'selected_src_id'
 					)}`
 				)
-				// this.CUT_PENDING = true
 				this.checkFeedbacks('SelectedSource')
 				this.checkFeedbacks('SelectedDestination')
 			},
@@ -176,7 +171,6 @@ class ForaMfrInstance extends InstanceBase {
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
 
-				// this.CUT_PENDING = false
 				this.checkFeedbacks('SelectedSource')
 				this.checkFeedbacks('SelectedDestination')
 			},
@@ -197,7 +191,6 @@ class ForaMfrInstance extends InstanceBase {
 					label: 'Set reference type :',
 					default: 'RA',
 					choices: this.CHOICES_REF,
-					// tooltip? : 'Optional',
 				},
 				{
 					type: 'dropdown',
@@ -205,7 +198,6 @@ class ForaMfrInstance extends InstanceBase {
 					label: 'Set switching point :',
 					default: 'SF',
 					choices: this.CHOICES_SWITCHING_POINT,
-					// tooltip? : 'Optional',
 				},
 			],
 			callback: (action) => {
@@ -256,7 +248,7 @@ class ForaMfrInstance extends InstanceBase {
 				const dst_name_hex = this.asciiToHexBytes(action.options.name)
 
 				this.sendCmd(`@ K:DA${dst_id},${dst_name_hex}`)
-				// // update selected_dst_name variable if required
+				// update selected_dst_name variable if required
 				if (this.getVariableValue('selected_dst_id') === action.options.dst) {
 					this.setVariableValues({ selected_dst_name: `${dst_name}` })
 				}
@@ -286,7 +278,7 @@ class ForaMfrInstance extends InstanceBase {
 				const src_name_hex = this.asciiToHexBytes(action.options.name)
 
 				this.sendCmd(`@ K:SA${src_id},${src_name_hex}`)
-				// // update selected_src_name variable if required
+				// update selected_src_name variable if required
 				if (this.getVariableValue('selected_src_id') === action.options.src) {
 					this.setVariableValues({ selected_src_name: `${src_name}` })
 				}
@@ -662,6 +654,44 @@ class ForaMfrInstance extends InstanceBase {
 			],
 			feedbacks: [],
 		},
+		// Dst01: {
+		// 	name: 'Destination 1',
+		// 	category: 'Destinations',
+		// 	type: 'button',
+		// 	style: {
+		// 		text: '$(fora-mfr:dst01)',
+		// 		size: '14',
+		// 		color: combineRgb(0, 0, 0),
+		// 		png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+		// 		bgcolor: combineRgb(218, 218, 218),
+		// 	},
+		// 	steps: [
+		// 		{
+		// 			down: [
+		// 				{
+		// 					actionId: 'setDst',
+		// 					options: {
+		// 						// options values to use
+		// 						dst: '00',
+		// 					},
+		// 				},
+		// 			],
+		// 			up: [],
+		// 		},
+		// 	],
+		// 	feedbacks: [
+		// 		{
+		// 			feedbackId: 'RoutedDestination',
+		// 			options: {
+		// 				dst: '00',
+		// 			},
+		// 			style: {
+		// 				bgcolor: combineRgb(255, 255, 64),
+		// 				color: combineRgb(0, 0, 0),
+		// 			},
+		// 		},
+		// 	],
+		// },
 	}
 
 	constructor(internal) {
@@ -703,7 +733,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.updateActions(this.actions) // export actions
 		this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
-		this.setPresetDefinitions(this.presets) // export feedbacks
+		// this.setPresetDefinitions(this.presets) // set preset definitions
 	}
 
 	// Return config fields for web config
@@ -760,14 +790,6 @@ class ForaMfrInstance extends InstanceBase {
 			this.socket.on('status_change', (status, message) => {
 				this.updateStatus(status, message)
 			})
-			// // Get the current time in milliseconds
-			// const currentTime = Date.now()
-
-			// // Calculate the modulus with 500
-			// const result = currentTime % 500
-
-			// this.log('debug','Current Time in Milliseconds: ' + currentTime)
-			// console.log('debug','Modulus with 500: ' + result)
 
 			this.socket.on('connect', () => {
 				// request CPU status
@@ -824,11 +846,10 @@ class ForaMfrInstance extends InstanceBase {
 
 			this.socket.on('receiveline', (line) => {
 				// if (line.length !== 1) {
-				// 	this.log('debug', `Received Line : ${line}`)
+				// 	this.log('info', `Received Line : ${line}`)
 				// }
 
 				// set the 'id' variable value
-
 				if (line.includes('S:')) {
 					// Removing leading and trailing whitespace
 					let trimmedString = line.trim()
@@ -840,10 +861,8 @@ class ForaMfrInstance extends InstanceBase {
 					let commaIndex = substringAfter3Chars.indexOf(',')
 
 					let destination_decimal = parseInt(substringAfter3Chars.substring(0, commaIndex), 16) + 1
-					// let destination = substringAfter3Chars.substring(0, commaIndex).padStart(2, '0')
 
 					// Extracting characters after the comma as a string
-					// let source = parseInt(substringAfter3Chars.substring(commaIndex + 1), 16)
 					let source = substringAfter3Chars.substring(commaIndex + 1).padStart(2, '0')
 
 					// Generate variable id and name
@@ -853,9 +872,6 @@ class ForaMfrInstance extends InstanceBase {
 
 					// update or populate the CROSSPOINTS array
 					const obj = { id: source, label: `${this.CHOICES_DST[destination_decimal - 1].label}` }
-					// const obj = { id: source, label: 'foo' }
-
-					// this.insertOrUpdate(this.CROSSPOINTS, obj, destination_decimal - 1)
 
 					if (!this.getVariableValue('selected_dst_src_id')) {
 						const dst_id = this.getVariableValue('selected_dst_id')
@@ -890,7 +906,6 @@ class ForaMfrInstance extends InstanceBase {
 					this.inputs = parseInt(hexInputs, 16) + 1
 
 					// Set variable definitions and values
-					// this.setVariableDefinitions(this.variable_array)
 					this.setVariableValues({ outputs: this.outputs, inputs: this.inputs })
 				}
 
@@ -905,7 +920,6 @@ class ForaMfrInstance extends InstanceBase {
 					const varName = `DST-${dst_number.toString().padStart(2, '0')}`
 
 					// generate xpt variable names and IDs for rouing feedback
-
 					const varIdXpt = `xpt${dst_number.toString().padStart(2, '0')}`
 					const varNameXpt = `XPT-${dst_number.toString().padStart(2, '0')}`
 
@@ -931,17 +945,17 @@ class ForaMfrInstance extends InstanceBase {
 					this.insertOrUpdate(this.CHOICES_DST, obj, parseInt(hex_dst, 16))
 
 					// Set initial values of selected destination id and name
-					// if (!this.getVariableValue('selected_dst_id')) {
-					// 	this.setVariableValues({ selected_dst_id: this.CHOICES_DST[0].id })
-					// 	this.setVariableValues({ selected_dst_name: this.CHOICES_DST[0].label })
-					// }
+					if (!this.getVariableValue('selected_dst_id')) {
+						this.setVariableValues({ selected_dst_id: this.CHOICES_DST[0].id })
+						this.setVariableValues({ selected_dst_name: this.CHOICES_DST[0].label })
+					}
 
-					// if (!this.getVariableValue('active_selected_id')) {
-					// 	// set initial active selection variable values
-					// 	this.setVariableValues({ active_selected_id: this.CHOICES_DST[0].id })
-					// 	this.setVariableValues({ active_selected_name: this.CHOICES_DST[0].label })
-					// 	this.setVariableValues({ active_selected_type: 'dst' })
-					// }
+					if (!this.getVariableValue('active_selected_id')) {
+						// set initial active selection variable values
+						this.setVariableValues({ active_selected_id: this.CHOICES_DST[0].id })
+						this.setVariableValues({ active_selected_name: this.CHOICES_DST[0].label })
+						this.setVariableValues({ active_selected_type: 'dst' })
+					}
 
 					// Update actions
 					this.updateActions(this.actions)
@@ -982,10 +996,10 @@ class ForaMfrInstance extends InstanceBase {
 					this.insertOrUpdate(this.CHOICES_SRC, obj, parseInt(hex_src, 16))
 
 					// Set initial values of selected destination id and name
-					// if (!this.getVariableValue('selected_src_id')) {
-					// 	this.setVariableValues({ selected_src_id: this.CHOICES_SRC[0].id })
-					// 	this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
-					// }
+					if (!this.getVariableValue('selected_src_id')) {
+						this.setVariableValues({ selected_src_id: this.CHOICES_SRC[0].id })
+						this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
+					}
 
 					// update feedbacks
 					this.checkFeedbacks('RoutedSource')
@@ -993,6 +1007,10 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Update actions
 					this.updateActions(this.actions)
+					this.generatePresetsDestinations()
+					this.generatePresetsSources() 
+
+					this.setPresetDefinitions(this.presets)
 				}
 
 				// update feedbacks
@@ -1037,12 +1055,94 @@ class ForaMfrInstance extends InstanceBase {
 			console.error('Invalid position:', position)
 		}
 	}
+	generatePresetsDestinations() {
+		for (let dst = 0; dst < this.outputs; ++dst) {
+			let dst_string = (dst + 1).toString().padStart(2, '0')
+			this.presets[`dst${dst_string}`] = {
+				name: `Dest ${dst_string}`,
+				category: 'Destinations',
+				type: 'button',
+				style: {
+					text: `$(fora-mfr:dst${dst_string})`,
+					size: '14',
+					color: combineRgb(0, 0, 0),
+					png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+					bgcolor: combineRgb(218, 218, 218),
+				},
+				steps: [
+					{
+						down: [
+							{
+								actionId: 'setDst',
+								options: {
+									// options values to use
+									dst: dst.toString(16).padStart(2,'0'),
+								},
+							},
+						],
+						up: [],
+					},
+				],
+				feedbacks: [
+					{
+						feedbackId: 'RoutedDestination',
+						options: {
+							dst: dst.toString(16).padStart(2,'0'),
+						},
+						style: {
+							bgcolor: combineRgb(255, 255, 64),
+							color: combineRgb(0, 0, 0),
+						},
+					},
+				],
+			}
+		}
 
-	// logCrosspoints() {
-	// 	for (let i = 0; i < this.CROSSPOINTS.length; i++) {
-	// 		this.log('DEBUG', `${i} == ${this.CROSSPOINTS[i]}`)
-	// 	}
-	// }
+	}
+	generatePresetsSources() {
+		for (let src = 0; src < this.inputs; ++src) {
+			let src_string = (src + 1).toString().padStart(2, '0')
+			this.presets[`src${src_string}`] = {
+				name: `Src ${src_string}`,
+				category: 'Sources',
+				type: 'button',
+				style: {
+					text: `$(fora-mfr:src${src_string})`,
+					size: '14',
+					color: combineRgb(0, 0, 0),
+					png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+					bgcolor: combineRgb(218, 218, 218),
+				},
+				steps: [
+					{
+						down: [
+							{
+								actionId: 'setSrc',
+								options: {
+									// options values to use
+									src: src.toString(16).padStart(2,'0'),
+								},
+							},
+						],
+						up: [],
+					},
+				],
+				feedbacks: [
+					{
+						feedbackId: 'RoutedSource',
+						options: {
+							src: src.toString(16).padStart(2,'0'),
+						},
+						style: {
+							bgcolor: combineRgb(64, 255, 64),
+							color: combineRgb(0, 0, 0),
+						},
+					},
+				],
+			}
+		}
+
+	}
 }
 
 runEntrypoint(ForaMfrInstance, UpgradeScripts)
