@@ -1,6 +1,7 @@
 const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = require('@companion-module/base')
 const { combineRgb } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades.js')
+const fs = require('fs')
 var buffer = Buffer.alloc(32)
 
 class ForaMfrInstance extends InstanceBase {
@@ -56,11 +57,11 @@ class ForaMfrInstance extends InstanceBase {
 	]
 	CHOICES_LOCK = [
 		{ id: '0', label: 'Unlock' },
-		{ id: '1', label: 'Lock up' },
+		{ id: '1', label: 'Lock' },
 		// { id: '2', label: 'Lock others' },
 	]
-	CROSSPOINTS = []
-	CUT_PENDING = true
+	// CROSSPOINTS = []
+	// CUT_PENDING = true
 
 	actions = {
 		setDst: {
@@ -93,7 +94,7 @@ class ForaMfrInstance extends InstanceBase {
 				const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
 				this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
 				this.setVariableValues({ selected_dst_src_name: xpt_src_name })
-
+				// this.CUT_PENDING = true
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
 				this.checkFeedbacks('SelectedSource')
@@ -121,7 +122,7 @@ class ForaMfrInstance extends InstanceBase {
 				this.setVariableValues({ active_selected_id: src_id })
 				this.setVariableValues({ active_selected_name: src_name })
 				this.setVariableValues({ active_selected_type: 'src' })
-
+				// this.CUT_PENDING = true
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
 				this.checkFeedbacks('SelectedSource')
@@ -143,7 +144,7 @@ class ForaMfrInstance extends InstanceBase {
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
 
-				this.CUT_PENDING = false
+				// this.CUT_PENDING = false
 				this.checkFeedbacks('SelectedSource')
 				this.checkFeedbacks('SelectedDestination')
 			},
@@ -159,7 +160,7 @@ class ForaMfrInstance extends InstanceBase {
 						'selected_src_id'
 					)}`
 				)
-				this.CUT_PENDING = true
+				// this.CUT_PENDING = true
 				this.checkFeedbacks('SelectedSource')
 				this.checkFeedbacks('SelectedDestination')
 			},
@@ -175,7 +176,7 @@ class ForaMfrInstance extends InstanceBase {
 				this.checkFeedbacks('RoutedSource')
 				this.checkFeedbacks('RoutedDestination')
 
-				this.CUT_PENDING = false
+				// this.CUT_PENDING = false
 				this.checkFeedbacks('SelectedSource')
 				this.checkFeedbacks('SelectedDestination')
 			},
@@ -321,67 +322,61 @@ class ForaMfrInstance extends InstanceBase {
 	}
 
 	feedbacks = {
-		SelectedSource: {
-			name: 'Show selected source',
-			type: 'boolean',
-			description: 'If this source is selected the bank will be highlighted ireespctive of routing',
-			defaultStyle: {
-				bgcolor: combineRgb(255, 64, 255),
-				color: combineRgb(0, 0, 0),
-			},
-			options: [
-				{
-					type: 'dropdown',
-					id: 'src',
-					label: 'Source :',
-					default: '00',
-					choices: this.CHOICES_SRC,
-				},
-			],
-			callback: (feedback) => {
-				// the active_selected_type
-				const this_selected_type = this.getVariableValue('active_selected_type')
-				if (
-					this.CUT_PENDING &&
-					this.getVariableValue('selected_src_id') === feedback.options.src
-				) {
-					return true
-				} else {
-					return false
-				}
-			},
-		},
-		SelectedDestination: {
-			name: 'Show selected destination',
-			type: 'boolean',
-			description: 'If this destination is selected the bank will be highlighted ireespctive of routing',
-			defaultStyle: {
-				bgcolor: combineRgb(64, 64, 255),
-				color: combineRgb(0, 0, 0),
-			},
-			options: [
-				{
-					type: 'dropdown',
-					id: 'dst',
-					label: 'Destination :',
-					default: '00',
-					choices: this.CHOICES_DST,
-				},
-			],
-			callback: (feedback) => {
-				// the active_selected_type
-				const this_selected_type = this.getVariableValue('active_selected_type')
+		// SelectedSource: {
+		// 	name: 'Show selected source',
+		// 	type: 'boolean',
+		// 	description: 'If this source is selected the bank will be highlighted ireespctive of routing',
+		// 	defaultStyle: {
+		// 		bgcolor: combineRgb(255, 64, 255),
+		// 		color: combineRgb(0, 0, 0),
+		// 	},
+		// 	options: [
+		// 		{
+		// 			type: 'dropdown',
+		// 			id: 'src',
+		// 			label: 'Source :',
+		// 			default: '00',
+		// 			choices: this.CHOICES_SRC,
+		// 		},
+		// 	],
+		// 	callback: (feedback) => {
+		// 		// the active_selected_type
+		// 		const this_selected_type = this.getVariableValue('active_selected_type')
+		// 		if (this.CUT_PENDING && this.getVariableValue('selected_src_id') === feedback.options.src) {
+		// 			return true
+		// 		} else {
+		// 			return false
+		// 		}
+		// 	},
+		// },
+		// SelectedDestination: {
+		// 	name: 'Show selected destination',
+		// 	type: 'boolean',
+		// 	description: 'If this destination is selected the bank will be highlighted ireespctive of routing',
+		// 	defaultStyle: {
+		// 		bgcolor: combineRgb(64, 64, 255),
+		// 		color: combineRgb(0, 0, 0),
+		// 	},
+		// 	options: [
+		// 		{
+		// 			type: 'dropdown',
+		// 			id: 'dst',
+		// 			label: 'Destination :',
+		// 			default: '00',
+		// 			choices: this.CHOICES_DST,
+		// 		},
+		// 	],
+		// 	callback: (feedback) => {
+		// 		// the active_selected_type
+		// 		const this_selected_type = this.getVariableValue('active_selected_type')
 
-				if (
-					this.CUT_PENDING &&
-					this.getVariableValue('selected_dst_id') === feedback.options.dst
-				) {
-					return true
-				} else {
-					return false
-				}
-			},
-		},
+		// 		if (this.CUT_PENDING && this.getVariableValue('selected_dst_id') === feedback.options.dst) {
+		// 			return true
+		// 		} else {
+		// 			return false
+		// 		}
+		// 	},
+		// },
 		RoutedSource: {
 			name: 'Routed source',
 			type: 'boolean',
@@ -458,6 +453,217 @@ class ForaMfrInstance extends InstanceBase {
 		},
 	}
 
+	presets = {
+		CutXpt: {
+			name: 'Cut selected source to selected destination',
+			category: 'Control',
+			type: 'button',
+			style: {
+				text: 'CUT\n$(fora-mfr:selected_src_name)\n>\n$(fora-mfr:selected_dst_name)',
+				size: '7',
+				color: combineRgb(0, 0, 0),
+				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				bgcolor: combineRgb(218, 218, 218),
+			},
+			steps: [
+				{
+					down: [{ actionId: 'switchXpt' }],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+		PresetXpt: {
+			name: 'Preset routing of selected source to selected destination',
+			category: 'Control',
+			type: 'button',
+			style: {
+				text: 'PRESET\n$(fora-mfr:selected_src_name)\n>\n$(fora-mfr:selected_dst_name)',
+				size: '7',
+				color: combineRgb(0, 0, 0),
+				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				bgcolor: combineRgb(218, 218, 218),
+			},
+			steps: [
+				{
+					down: [{ actionId: 'presetXpt' }],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+		SwitchPresetXpt: {
+			name: 'Salvo switch preset routes',
+			category: 'Control',
+			type: 'button',
+			style: {
+				text: 'CUT\nPRESET\nXPTs',
+				size: '7',
+				color: combineRgb(0, 0, 0),
+				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				bgcolor: combineRgb(218, 218, 218),
+			},
+			steps: [
+				{
+					down: [{ actionId: 'switchPresetXpts' }],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+		PresetVideoFormat: {
+			name: 'Set the router video format',
+			category: 'Control',
+			type: 'button',
+			style: {
+				text: 'PRESET\nVIDEO\nFORMAT',
+				size: '7',
+				color: combineRgb(0, 0, 0),
+				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				bgcolor: combineRgb(218, 218, 218),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'setVideoFormat',
+							options: {
+								// options values to use
+								format: '04',
+								ref: 'RA',
+								point: 'SO',
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+		ApplyVideoFormat: {
+			name: 'Apply the preset Video Format',
+			category: 'Control',
+			type: 'button',
+			style: {
+				text: 'APPLY\nPRESET\nVIDEO\nFORMAT',
+				size: '7',
+				color: combineRgb(0, 0, 0),
+				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				bgcolor: combineRgb(218, 218, 218),
+			},
+			steps: [
+				{
+					down: [{ actionId: 'applyVideoFormat' }],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+		CancelVideoFormat: {
+			name: 'Cancel the preset Video Format',
+			category: 'Control',
+			type: 'button',
+			style: {
+				text: 'CANCEL\nPRESET\nVIDEO\nFORMAT',
+				size: '7',
+				color: combineRgb(0, 0, 0),
+				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				bgcolor: combineRgb(218, 218, 218),
+			},
+			steps: [
+				{
+					down: [{ actionId: 'cancelVideoFormat' }],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+		RenameDst: {
+			name: 'Rename a destination',
+			category: 'Control',
+			type: 'button',
+			style: {
+				text: 'RENAME\nDST',
+				size: '7',
+				color: combineRgb(0, 0, 0),
+				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				bgcolor: combineRgb(218, 218, 218),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'renameDst',
+							options: {
+								// options values to use
+								dst: '00',
+								name: `new name`,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+		RenameSrc: {
+			name: 'Rename a source',
+			category: 'Control',
+			type: 'button',
+			style: {
+				text: 'RENAME\nSRC',
+				size: '7',
+				color: combineRgb(0, 0, 0),
+				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				bgcolor: combineRgb(218, 218, 218),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'renameSrc',
+							options: {
+								// options values to use
+								src: '00',
+								name: `new name`,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+		LockDst: {
+			name: 'Lock / unlock a destination',
+			category: 'Control',
+			type: 'button',
+			style: {
+				text: '(UN)LOCK\nDST',
+				size: '7',
+				color: combineRgb(0, 0, 0),
+				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				bgcolor: combineRgb(218, 218, 218),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'lockDst',
+							options: {
+								// options values to use
+								dst: '00',
+								mode: `0`,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+	}
+
 	constructor(internal) {
 		super(internal)
 	}
@@ -472,6 +678,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.updateActions(this.actions) // export actions
 		this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
+		this.setPresetDefinitions(this.presets) // export feedbacks
 	}
 
 	// When module gets deleted
@@ -496,6 +703,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.updateActions(this.actions) // export actions
 		this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
+		this.setPresetDefinitions(this.presets) // export feedbacks
 	}
 
 	// Return config fields for web config
@@ -647,7 +855,7 @@ class ForaMfrInstance extends InstanceBase {
 					const obj = { id: source, label: `${this.CHOICES_DST[destination_decimal - 1].label}` }
 					// const obj = { id: source, label: 'foo' }
 
-					this.insertOrUpdate(this.CROSSPOINTS, obj, destination_decimal - 1)
+					// this.insertOrUpdate(this.CROSSPOINTS, obj, destination_decimal - 1)
 
 					if (!this.getVariableValue('selected_dst_src_id')) {
 						const dst_id = this.getVariableValue('selected_dst_id')
@@ -830,11 +1038,11 @@ class ForaMfrInstance extends InstanceBase {
 		}
 	}
 
-	logCrosspoints() {
-		for (let i = 0; i < this.CROSSPOINTS.length; i++) {
-			this.log('DEBUG', `${i} == ${this.CROSSPOINTS[i]}`)
-		}
-	}
+	// logCrosspoints() {
+	// 	for (let i = 0; i < this.CROSSPOINTS.length; i++) {
+	// 		this.log('DEBUG', `${i} == ${this.CROSSPOINTS[i]}`)
+	// 	}
+	// }
 }
 
 runEntrypoint(ForaMfrInstance, UpgradeScripts)
