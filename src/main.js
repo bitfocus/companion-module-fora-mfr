@@ -22,6 +22,7 @@ class ForaMfrInstance extends InstanceBase {
 	]
 	CHOICES_DST = []
 	CHOICES_SRC = []
+	CHOICES_XPT = []
 	CHOICES_VIDEO_FORMAT = [
 		{ id: '00', label: '1080/59.94i' },
 		{ id: '01', label: '1080/59.94p' },
@@ -314,67 +315,12 @@ class ForaMfrInstance extends InstanceBase {
 	}
 
 	feedbacks = {
-		// SelectedSource: {
-		// 	name: 'Show selected source',
-		// 	type: 'boolean',
-		// 	description: 'If this source is selected the bank will be highlighted ireespctive of routing',
-		// 	defaultStyle: {
-		// 		bgcolor: combineRgb(255, 64, 255),
-		// 		color: combineRgb(0, 0, 0),
-		// 	},
-		// 	options: [
-		// 		{
-		// 			type: 'dropdown',
-		// 			id: 'src',
-		// 			label: 'Source :',
-		// 			default: '00',
-		// 			choices: this.CHOICES_SRC,
-		// 		},
-		// 	],
-		// 	callback: (feedback) => {
-		// 		// the active_selected_type
-		// 		const this_selected_type = this.getVariableValue('active_selected_type')
-		// 		if (this.CUT_PENDING && this.getVariableValue('selected_src_id') === feedback.options.src) {
-		// 			return true
-		// 		} else {
-		// 			return false
-		// 		}
-		// 	},
-		// },
-		// SelectedDestination: {
-		// 	name: 'Show selected destination',
-		// 	type: 'boolean',
-		// 	description: 'If this destination is selected the bank will be highlighted ireespctive of routing',
-		// 	defaultStyle: {
-		// 		bgcolor: combineRgb(64, 64, 255),
-		// 		color: combineRgb(0, 0, 0),
-		// 	},
-		// 	options: [
-		// 		{
-		// 			type: 'dropdown',
-		// 			id: 'dst',
-		// 			label: 'Destination :',
-		// 			default: '00',
-		// 			choices: this.CHOICES_DST,
-		// 		},
-		// 	],
-		// 	callback: (feedback) => {
-		// 		// the active_selected_type
-		// 		const this_selected_type = this.getVariableValue('active_selected_type')
-
-		// 		if (this.CUT_PENDING && this.getVariableValue('selected_dst_id') === feedback.options.dst) {
-		// 			return true
-		// 		} else {
-		// 			return false
-		// 		}
-		// 	},
-		// },
-		RoutedSource: {
-			name: 'Routed source',
+		SelectedSource: {
+			name: 'Show selected source',
 			type: 'boolean',
-			description: 'True if selected source is routed to the selected destination',
+			description: 'If this source is selected the bank will be highlighted ireespctive of routing',
 			defaultStyle: {
-				bgcolor: combineRgb(64, 255, 64),
+				bgcolor: combineRgb(0, 0, 255),
 				color: combineRgb(0, 0, 0),
 			},
 			options: [
@@ -387,16 +333,11 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				// the active_selected_type
-				const this_selected_type = this.getVariableValue('active_selected_type')
-				// the source selected in feedback option's name
-				const this_feedback_src_name = `src${(parseInt(feedback.options.src, 16) + 1).toString().padStart(2, '0')}`
-
 				if (
-					(this_selected_type === 'dst' &&
-						this.getVariableValue('selected_dst_src_name') == this.getVariableValue(this_feedback_src_name)) ||
-					(this_selected_type === 'src' &&
-						this.getVariableValue('active_selected_name') == this.getVariableValue(this_feedback_src_name))
+					// this.getVariableValue('selected_src_id') === this.getVariableValue('active_selected_id') &&
+					this.getVariableValue('selected_src_id') === feedback.options.src &&
+					// this.getVariableValue('active_selected_type') === 'src' &&
+					this.blink_button
 				) {
 					return true
 				} else {
@@ -404,12 +345,12 @@ class ForaMfrInstance extends InstanceBase {
 				}
 			},
 		},
-		RoutedDestination: {
-			name: 'Routed destination',
+		SelectedDestination: {
+			name: 'Show selected destination',
 			type: 'boolean',
-			description: 'True if selected destination is routed to the selected crosspoint',
+			description: 'If this destination is selected the bank will be highlighted ireespctive of routing',
 			defaultStyle: {
-				bgcolor: combineRgb(255, 255, 64),
+				bgcolor: combineRgb(0, 0, 255),
 				color: combineRgb(0, 0, 0),
 			},
 			options: [
@@ -422,21 +363,71 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				// the active_selected_type
-				const this_selected_type = this.getVariableValue('active_selected_type')
-				// the source selected in feedback option's name
-				const this_feedback_dst_name = `dst${(parseInt(feedback.options.dst, 16) + 1).toString().padStart(2, '0')}`
-				// the source assigned to the selectwed destination' crosspoint feedback option's name
-				const this_feedback_dst_xpt_src_name = `xpt${(parseInt(feedback.options.dst, 16) + 1)
-					.toString()
-					.padStart(2, '0')}`
-
 				if (
-					(this_selected_type === 'src' &&
-						this.getVariableValue('active_selected_id') == this.getVariableValue(this_feedback_dst_xpt_src_name)) ||
-					(this_selected_type === 'dst' &&
-						this.getVariableValue('active_selected_name') == this.getVariableValue(this_feedback_dst_name))
+					// this.getVariableValue('selected_dst_id') === this.getVariableValue('active_selected_id') &&
+					this.getVariableValue('selected_dst_id') === feedback.options.dst &&
+					// this.getVariableValue('active_selected_type') === 'dst' &&
+					this.blink_button
 				) {
+					return true
+				} else {
+					return false
+				}
+			},
+		},
+		RoutedSource: {
+			name: 'Routed source',
+			type: 'boolean',
+			description: 'True if selected source is routed to the selected destination',
+			defaultStyle: {
+				bgcolor: combineRgb(255, 0, 0),
+				color: combineRgb(0, 0, 0),
+			},
+			options: [
+				{
+					type: 'dropdown',
+					id: 'src',
+					label: 'Source :',
+					default: '00',
+					choices: this.CHOICES_SRC,
+				},
+			],
+			callback: (feedback) => {
+				if (this.getVariableValue('selected_dst_src_id') === feedback.options.src) {
+					return true
+				} else {
+					return false
+				}
+			},
+		},
+		RoutedDestination: {
+			name: 'Routed destination',
+			type: 'boolean',
+			description: 'True if selected destination is routed to the selected crosspoint',
+			defaultStyle: {
+				bgcolor: combineRgb(255, 0, 0),
+				color: combineRgb(0, 0, 0),
+			},
+			options: [
+				{
+					type: 'dropdown',
+					id: 'dst',
+					label: 'Destination :',
+					default: '00',
+					choices: this.CHOICES_DST,
+				},
+			],
+			callback: (feedback) => {
+				// !!! NEEDS BIT TO COVER NON-SELECTRED BUT ROUTED !!!
+				
+				// const varIdXpt = (parseInt(feedback.options.dst, 16) + 1).toString().padStart(2, '0')
+				// this.getVariableValue(`xpt${varIdXpt}`)
+				// the source assigned to the selectwed destination' crosspoint feedback option's name
+				// let this_feedback_dst_xpt_src_id = `xpt${(parseInt(feedback.options.dst, 16) + 1)
+				// 	.toString()
+				// 	.padStart(2, '0')}`
+				// 	let string_xpt_val = this.getVariableValue(this_feedback_dst_xpt_src_id)
+				if (this.getVariableValue('selected_src_id') === this.getVariableValue('selected_dst_src_id') && this.getVariableValue('selected_dst_id') === feedback.options.dst) {
 					return true
 				} else {
 					return false
@@ -654,44 +645,6 @@ class ForaMfrInstance extends InstanceBase {
 			],
 			feedbacks: [],
 		},
-		// Dst01: {
-		// 	name: 'Destination 1',
-		// 	category: 'Destinations',
-		// 	type: 'button',
-		// 	style: {
-		// 		text: '$(fora-mfr:dst01)',
-		// 		size: '14',
-		// 		color: combineRgb(0, 0, 0),
-		// 		png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
-		// 		bgcolor: combineRgb(218, 218, 218),
-		// 	},
-		// 	steps: [
-		// 		{
-		// 			down: [
-		// 				{
-		// 					actionId: 'setDst',
-		// 					options: {
-		// 						// options values to use
-		// 						dst: '00',
-		// 					},
-		// 				},
-		// 			],
-		// 			up: [],
-		// 		},
-		// 	],
-		// 	feedbacks: [
-		// 		{
-		// 			feedbackId: 'RoutedDestination',
-		// 			options: {
-		// 				dst: '00',
-		// 			},
-		// 			style: {
-		// 				bgcolor: combineRgb(255, 255, 64),
-		// 				color: combineRgb(0, 0, 0),
-		// 			},
-		// 		},
-		// 	],
-		// },
 	}
 
 	constructor(internal) {
@@ -709,6 +662,12 @@ class ForaMfrInstance extends InstanceBase {
 		this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 		this.setPresetDefinitions(this.presets) // export feedbacks
+
+		this.blink_button = setInterval(() => {
+			this.blink_button = !this.blink_button
+
+			this.checkFeedbacks('SelectedSource', 'SelectedDestination')
+		}, 1000)
 	}
 
 	// When module gets deleted
@@ -733,7 +692,7 @@ class ForaMfrInstance extends InstanceBase {
 		this.updateActions(this.actions) // export actions
 		this.updateFeedbacks(this.feedbacks) // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
-		// this.setPresetDefinitions(this.presets) // set preset definitions
+		this.setPresetDefinitions(this.presets) // set preset definitions
 	}
 
 	// Return config fields for web config
@@ -1008,7 +967,7 @@ class ForaMfrInstance extends InstanceBase {
 					// Update actions
 					this.updateActions(this.actions)
 					this.generatePresetsDestinations()
-					this.generatePresetsSources() 
+					this.generatePresetsSources()
 
 					this.setPresetDefinitions(this.presets)
 				}
@@ -1067,7 +1026,7 @@ class ForaMfrInstance extends InstanceBase {
 					size: '14',
 					color: combineRgb(0, 0, 0),
 					png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
-					bgcolor: combineRgb(218, 218, 218),
+					bgcolor: combineRgb(255, 255, 0),
 				},
 				steps: [
 					{
@@ -1076,7 +1035,7 @@ class ForaMfrInstance extends InstanceBase {
 								actionId: 'setDst',
 								options: {
 									// options values to use
-									dst: dst.toString(16).padStart(2,'0'),
+									dst: dst.toString(16).padStart(2, '0'),
 								},
 							},
 						],
@@ -1087,17 +1046,26 @@ class ForaMfrInstance extends InstanceBase {
 					{
 						feedbackId: 'RoutedDestination',
 						options: {
-							dst: dst.toString(16).padStart(2,'0'),
+							dst: dst.toString(16).padStart(2, '0'),
 						},
 						style: {
-							bgcolor: combineRgb(255, 255, 64),
+							bgcolor: combineRgb(255, 0, 0),
+							color: combineRgb(0, 0, 0),
+						},
+					},
+					{
+						feedbackId: 'SelectedDestination',
+						options: {
+							dst: dst.toString(16).padStart(2, '0'),
+						},
+						style: {
+							bgcolor: combineRgb(0, 0, 255),
 							color: combineRgb(0, 0, 0),
 						},
 					},
 				],
 			}
 		}
-
 	}
 	generatePresetsSources() {
 		for (let src = 0; src < this.inputs; ++src) {
@@ -1111,7 +1079,7 @@ class ForaMfrInstance extends InstanceBase {
 					size: '14',
 					color: combineRgb(0, 0, 0),
 					png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
-					bgcolor: combineRgb(218, 218, 218),
+					bgcolor: combineRgb(0, 255, 0),
 				},
 				steps: [
 					{
@@ -1120,7 +1088,7 @@ class ForaMfrInstance extends InstanceBase {
 								actionId: 'setSrc',
 								options: {
 									// options values to use
-									src: src.toString(16).padStart(2,'0'),
+									src: src.toString(16).padStart(2, '0'),
 								},
 							},
 						],
@@ -1131,17 +1099,26 @@ class ForaMfrInstance extends InstanceBase {
 					{
 						feedbackId: 'RoutedSource',
 						options: {
-							src: src.toString(16).padStart(2,'0'),
+							src: src.toString(16).padStart(2, '0'),
 						},
 						style: {
-							bgcolor: combineRgb(64, 255, 64),
+							bgcolor: combineRgb(255, 0, 0),
+							color: combineRgb(0, 0, 0),
+						},
+					},
+					{
+						feedbackId: 'SelectedSource',
+						options: {
+							src: src.toString(16).padStart(2, '0'),
+						},
+						style: {
+							bgcolor: combineRgb(0, 0, 255),
 							color: combineRgb(0, 0, 0),
 						},
 					},
 				],
 			}
 		}
-
 	}
 }
 
