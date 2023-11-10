@@ -94,10 +94,7 @@ class ForaMfrInstance extends InstanceBase {
 				this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
 				this.setVariableValues({ selected_dst_src_name: xpt_src_name })
 				// update feedbacks
-				this.checkFeedbacks('RoutedSource')
-				this.checkFeedbacks('RoutedDestination')
-				this.checkFeedbacks('SelectedSource')
-				this.checkFeedbacks('SelectedDestination')
+				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
 			},
 		},
 		setSrc: {
@@ -122,11 +119,8 @@ class ForaMfrInstance extends InstanceBase {
 				this.setVariableValues({ active_selected_name: src_name })
 				this.setVariableValues({ active_selected_type: 'src' })
 				// update feedbacks
-				this.checkFeedbacks('RoutedSource')
-				this.checkFeedbacks('RoutedDestination')
-				this.checkFeedbacks('SelectedSource')
-				this.checkFeedbacks('SelectedDestination')
-			},
+				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
+				},
 		},
 		switchXpt: {
 			name: 'Switch crosspoint',
@@ -140,10 +134,7 @@ class ForaMfrInstance extends InstanceBase {
 					)}`
 				)
 				// update feedbacks
-				this.checkFeedbacks('RoutedSource')
-				this.checkFeedbacks('RoutedDestination')
-				this.checkFeedbacks('SelectedSource')
-				this.checkFeedbacks('SelectedDestination')
+				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
 			},
 		},
 		presetXpt: {
@@ -157,8 +148,7 @@ class ForaMfrInstance extends InstanceBase {
 						'selected_src_id'
 					)}`
 				)
-				this.checkFeedbacks('SelectedSource')
-				this.checkFeedbacks('SelectedDestination')
+				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
 			},
 		},
 		switchPresetXpts: {
@@ -169,11 +159,7 @@ class ForaMfrInstance extends InstanceBase {
 				// @[sp]B:E
 				this.sendCmd(`@ B:E`)
 
-				this.checkFeedbacks('RoutedSource')
-				this.checkFeedbacks('RoutedDestination')
-
-				this.checkFeedbacks('SelectedSource')
-				this.checkFeedbacks('SelectedDestination')
+				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
 			},
 		},
 		setVideoFormat: {
@@ -333,12 +319,7 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				if (
-					// this.getVariableValue('selected_src_id') === this.getVariableValue('active_selected_id') &&
-					this.getVariableValue('selected_src_id') === feedback.options.src &&
-					// this.getVariableValue('active_selected_type') === 'src' &&
-					this.blink_button
-				) {
+				if (this.getVariableValue('selected_src_id') === feedback.options.src && this.blink_button) {
 					return true
 				} else {
 					return false
@@ -363,12 +344,7 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				if (
-					// this.getVariableValue('selected_dst_id') === this.getVariableValue('active_selected_id') &&
-					this.getVariableValue('selected_dst_id') === feedback.options.dst &&
-					// this.getVariableValue('active_selected_type') === 'dst' &&
-					this.blink_button
-				) {
+				if (this.getVariableValue('selected_dst_id') === feedback.options.dst && this.blink_button) {
 					return true
 				} else {
 					return false
@@ -393,7 +369,9 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				if (this.getVariableValue('selected_dst_src_id') === feedback.options.src) {
+				if (
+					this.getVariableValue('selected_src_id') === feedback.options.src
+				) {
 					return true
 				} else {
 					return false
@@ -418,16 +396,8 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				// !!! NEEDS BIT TO COVER NON-SELECTRED BUT ROUTED !!!
-				
-				// const varIdXpt = (parseInt(feedback.options.dst, 16) + 1).toString().padStart(2, '0')
-				// this.getVariableValue(`xpt${varIdXpt}`)
-				// the source assigned to the selectwed destination' crosspoint feedback option's name
-				// let this_feedback_dst_xpt_src_id = `xpt${(parseInt(feedback.options.dst, 16) + 1)
-				// 	.toString()
-				// 	.padStart(2, '0')}`
-				// 	let string_xpt_val = this.getVariableValue(this_feedback_dst_xpt_src_id)
-				if (this.getVariableValue('selected_src_id') === this.getVariableValue('selected_dst_src_id') && this.getVariableValue('selected_dst_id') === feedback.options.dst) {
+				const varIdXpt = (parseInt(feedback.options.dst, 16) + 1).toString().padStart(2, '0')
+				if (this.getVariableValue('selected_src_id') === this.getVariableValue(`xpt${varIdXpt}`)) {
 					return true
 				} else {
 					return false
@@ -840,8 +810,7 @@ class ForaMfrInstance extends InstanceBase {
 						this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
 						this.setVariableValues({ selected_dst_src_name: xpt_src_name })
 					}
-					this.checkFeedbacks('RoutedDestination')
-					this.checkFeedbacks('RoutedSource')
+					this.checkFeedbacks('RoutedDestination','RoutedSource')
 				}
 
 				if (line.includes('A:') > 0) {
@@ -918,8 +887,7 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Update actions
 					this.updateActions(this.actions)
-					this.checkFeedbacks('RoutedDestination')
-					this.checkFeedbacks('RoutedSource')
+					this.checkFeedbacks('RoutedDestination','RoutedSource')
 				}
 
 				// set the source variable and choices values
@@ -961,8 +929,7 @@ class ForaMfrInstance extends InstanceBase {
 					}
 
 					// update feedbacks
-					this.checkFeedbacks('RoutedSource')
-					this.checkFeedbacks('RoutedDestination')
+					this.checkFeedbacks('RoutedSource','RoutedDestination')
 
 					// Update actions
 					this.updateActions(this.actions)
@@ -973,8 +940,7 @@ class ForaMfrInstance extends InstanceBase {
 				}
 
 				// update feedbacks
-				this.checkFeedbacks('RoutedSource')
-				this.checkFeedbacks('RoutedDestination')
+				this.checkFeedbacks('RoutedSource','RoutedDestination')
 
 				this.updateActions(this.actions) // export actions
 				this.updateFeedbacks(this.feedbacks) // export feedbacks
