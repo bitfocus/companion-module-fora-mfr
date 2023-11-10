@@ -306,7 +306,7 @@ class ForaMfrInstance extends InstanceBase {
 			type: 'boolean',
 			description: 'If this source is selected the bank will be highlighted ireespctive of routing',
 			defaultStyle: {
-				bgcolor: combineRgb(0, 0, 255),
+				bgcolor: combineRgb(0, 255, 0),
 				color: combineRgb(0, 0, 0),
 			},
 			options: [
@@ -331,7 +331,7 @@ class ForaMfrInstance extends InstanceBase {
 			type: 'boolean',
 			description: 'If this destination is selected the bank will be highlighted ireespctive of routing',
 			defaultStyle: {
-				bgcolor: combineRgb(0, 0, 255),
+				bgcolor: combineRgb(255, 0, 0),
 				color: combineRgb(0, 0, 0),
 			},
 			options: [
@@ -356,7 +356,7 @@ class ForaMfrInstance extends InstanceBase {
 			type: 'boolean',
 			description: 'True if selected source is routed to the selected destination',
 			defaultStyle: {
-				bgcolor: combineRgb(255, 0, 0),
+				bgcolor: combineRgb(0, 255, 0),
 				color: combineRgb(0, 0, 0),
 			},
 			options: [
@@ -1025,7 +1025,7 @@ class ForaMfrInstance extends InstanceBase {
 							dst: dst.toString(16).padStart(2, '0'),
 						},
 						style: {
-							bgcolor: combineRgb(0, 0, 255),
+							bgcolor: combineRgb(255, 0, 0),
 							color: combineRgb(0, 0, 0),
 						},
 					},
@@ -1078,7 +1078,7 @@ class ForaMfrInstance extends InstanceBase {
 							src: src.toString(16).padStart(2, '0'),
 						},
 						style: {
-							bgcolor: combineRgb(0, 0, 255),
+							bgcolor: combineRgb(0, 255, 0),
 							color: combineRgb(0, 0, 0),
 						},
 					},
