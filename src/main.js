@@ -78,22 +78,22 @@ class ForaMfrInstance extends InstanceBase {
 				const dst_id = action.options.dst
 				const dst_name = [this.CHOICES_DST[parseInt(dst_id, 16)].label]
 
-				this.setVariableValues(
-					{ selected_dst_id: dst_id },
-					{ selected_dst_name: dst_name },
-					{ active_selected_id: dst_id },
-					{ active_selected_name: dst_name },
-					{ active_selected_type: 'dst' }
-				)
+				this.setVariableValues({
+					selected_dst_id: dst_id,
+					selected_dst_name: dst_name,
+					active_selected_id: dst_id,
+					active_selected_name: dst_name,
+					active_selected_type: 'dst',
+				})
 
 				// also set the variable values for the source routed to the destination
 				const varIdXpt = (parseInt(dst_id, 16) + 1).toString().padStart(2, '0')
 				const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16) + 1
 				const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
-				this.setVariableValues(
-					{ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) },
-					{ selected_dst_src_name: xpt_src_name }
-				)
+				this.setVariableValues({
+					selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`),
+					selected_dst_src_name: xpt_src_name,
+				})
 				// update feedbacks
 				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'SelectedSource', 'SelectedDestination')
 			},
@@ -112,13 +112,13 @@ class ForaMfrInstance extends InstanceBase {
 			callback: (action) => {
 				const src_id = action.options.src
 				const src_name = [this.CHOICES_SRC[parseInt(src_id, 16)].label]
-				this.setVariableValues(
-					{ selected_src_id: src_id },
-					{ selected_src_name: src_name },
-					{ active_selected_id: src_id },
-					{ active_selected_name: src_name },
-					{ active_selected_type: 'src' }
-				)
+				this.setVariableValues({
+					selected_src_id: src_id,
+					selected_src_name: src_name,
+					active_selected_id: src_id,
+					active_selected_name: src_name,
+					active_selected_type: 'src',
+				})
 				// update feedbacks
 				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'SelectedSource', 'SelectedDestination')
 			},
@@ -839,8 +839,8 @@ class ForaMfrInstance extends InstanceBase {
 						const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16)
 						const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
 						this.setVariableValues(
-							{ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) },
-							{ selected_dst_src_name: xpt_src_name }
+							{ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) ,
+							 selected_dst_src_name: xpt_src_name }
 						)
 					}
 					this.checkFeedbacks('RoutedDestination', 'RoutedSource')
@@ -908,17 +908,17 @@ class ForaMfrInstance extends InstanceBase {
 					// Set initial values of selected destination id and name
 					if (!this.getVariableValue('selected_dst_id')) {
 						this.setVariableValues(
-							{ selected_dst_id: this.CHOICES_DST[0].id },
-							{ selected_dst_name: this.CHOICES_DST[0].label }
+							{ selected_dst_id: this.CHOICES_DST[0].id ,
+							selected_dst_name: this.CHOICES_DST[0].label }
 						)
 					}
 
 					if (!this.getVariableValue('active_selected_id')) {
 						// set initial active selection variable values
 						this.setVariableValues(
-							{ active_selected_id: this.CHOICES_DST[0].id },
-							{ active_selected_name: this.CHOICES_DST[0].label },
-							{ active_selected_type: 'dst' }
+							{ active_selected_id: this.CHOICES_DST[0].id ,
+							 active_selected_name: this.CHOICES_DST[0].label,
+							 active_selected_type: 'dst' }
 						)
 					}
 
@@ -962,8 +962,8 @@ class ForaMfrInstance extends InstanceBase {
 					// Set initial values of selected destination id and name
 					if (!this.getVariableValue('selected_src_id')) {
 						this.setVariableValues(
-							{ selected_src_id: this.CHOICES_SRC[0].id },
-							{ selected_src_name: this.CHOICES_SRC[0].label }
+							{ selected_src_id: this.CHOICES_SRC[0].id ,
+							 selected_src_name: this.CHOICES_SRC[0].label }
 						)
 					}
 
