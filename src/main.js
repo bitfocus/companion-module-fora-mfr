@@ -22,7 +22,6 @@ class ForaMfrInstance extends InstanceBase {
 	]
 	CHOICES_DST = []
 	CHOICES_SRC = []
-	CHOICES_XPT = []
 	CHOICES_VIDEO_FORMAT = [
 		{ id: '00', label: '1080/59.94i' },
 		{ id: '01', label: '1080/59.94p' },
@@ -79,22 +78,24 @@ class ForaMfrInstance extends InstanceBase {
 				const dst_id = action.options.dst
 				const dst_name = [this.CHOICES_DST[parseInt(dst_id, 16)].label]
 
-				this.setVariableValues({ selected_dst_id: dst_id })
-				this.setVariableValues({ selected_dst_name: dst_name })
-
-				// set the active selection variable values
-				this.setVariableValues({ active_selected_id: dst_id })
-				this.setVariableValues({ active_selected_name: dst_name })
-				this.setVariableValues({ active_selected_type: 'dst' })
+				this.setVariableValues(
+					{ selected_dst_id: dst_id },
+					{ selected_dst_name: dst_name },
+					{ active_selected_id: dst_id },
+					{ active_selected_name: dst_name },
+					{ active_selected_type: 'dst' }
+				)
 
 				// also set the variable values for the source routed to the destination
 				const varIdXpt = (parseInt(dst_id, 16) + 1).toString().padStart(2, '0')
 				const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16) + 1
 				const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
-				this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
-				this.setVariableValues({ selected_dst_src_name: xpt_src_name })
+				this.setVariableValues(
+					{ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) },
+					{ selected_dst_src_name: xpt_src_name }
+				)
 				// update feedbacks
-				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
+				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'SelectedSource', 'SelectedDestination')
 			},
 		},
 		setSrc: {
@@ -111,16 +112,16 @@ class ForaMfrInstance extends InstanceBase {
 			callback: (action) => {
 				const src_id = action.options.src
 				const src_name = [this.CHOICES_SRC[parseInt(src_id, 16)].label]
-				this.setVariableValues({ selected_src_id: src_id })
-				this.setVariableValues({ selected_src_name: src_name })
-
-				// set the active selection variable values
-				this.setVariableValues({ active_selected_id: src_id })
-				this.setVariableValues({ active_selected_name: src_name })
-				this.setVariableValues({ active_selected_type: 'src' })
+				this.setVariableValues(
+					{ selected_src_id: src_id },
+					{ selected_src_name: src_name },
+					{ active_selected_id: src_id },
+					{ active_selected_name: src_name },
+					{ active_selected_type: 'src' }
+				)
 				// update feedbacks
-				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
-				},
+				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'SelectedSource', 'SelectedDestination')
+			},
 		},
 		switchXpt: {
 			name: 'Switch crosspoint',
@@ -134,7 +135,7 @@ class ForaMfrInstance extends InstanceBase {
 					)}`
 				)
 				// update feedbacks
-				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
+				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'SelectedSource', 'SelectedDestination')
 			},
 		},
 		presetXpt: {
@@ -148,7 +149,7 @@ class ForaMfrInstance extends InstanceBase {
 						'selected_src_id'
 					)}`
 				)
-				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
+				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'SelectedSource', 'SelectedDestination')
 			},
 		},
 		switchPresetXpts: {
@@ -159,7 +160,7 @@ class ForaMfrInstance extends InstanceBase {
 				// @[sp]B:E
 				this.sendCmd(`@ B:E`)
 
-				this.checkFeedbacks('RoutedSource','RoutedDestination','SelectedSource','SelectedDestination')
+				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'SelectedSource', 'SelectedDestination')
 			},
 		},
 		setVideoFormat: {
@@ -369,9 +370,7 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				if (
-					this.getVariableValue('selected_src_id') === feedback.options.src
-				) {
+				if (this.getVariableValue('selected_src_id') === feedback.options.src) {
 					return true
 				} else {
 					return false
@@ -398,6 +397,32 @@ class ForaMfrInstance extends InstanceBase {
 			callback: (feedback) => {
 				const varIdXpt = (parseInt(feedback.options.dst, 16) + 1).toString().padStart(2, '0')
 				if (this.getVariableValue('selected_src_id') === this.getVariableValue(`xpt${varIdXpt}`)) {
+					return true
+				} else {
+					return false
+				}
+			},
+		},
+		LockedDestination: {
+			name: 'Locked destination',
+			type: 'boolean',
+			description: 'True if selected destination is locked',
+			defaultStyle: {
+				bgcolor: combineRgb(128, 0, 0),
+				color: combineRgb(0, 0, 0),
+			},
+			options: [
+				{
+					type: 'dropdown',
+					id: 'dst',
+					label: 'Destination :',
+					default: '00',
+					choices: this.CHOICES_DST,
+				},
+			],
+			callback: (feedback) => {
+				const varIdDst = (parseInt(feedback.options.dst, 16) + 1).toString().padStart(2, '0')
+				if (this.getVariableValue(`dst${varIdDst}_locked`) === 1) {
 					return true
 				} else {
 					return false
@@ -752,6 +777,12 @@ class ForaMfrInstance extends InstanceBase {
 					let offset = j.toString(16).padStart(3, '0')
 					this.sendCmd(`@ K?DA,${offset}`)
 				}
+
+				// request lock status of destinations
+				// @[sp]W?<Lvl>,<Dest>
+				for (let i = 0; i < this.outputs; i++) {
+					this.sendCmd(`@ W?${this.getVariableValue('level')},${i.toString(16).padStart(2, '0')}`)
+				}
 			})
 
 			this.socket.on('error', (err) => {
@@ -807,10 +838,12 @@ class ForaMfrInstance extends InstanceBase {
 						const varIdXpt = (parseInt(dst_id, 16) + 1).toString().padStart(2, '0')
 						const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16)
 						const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
-						this.setVariableValues({ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) })
-						this.setVariableValues({ selected_dst_src_name: xpt_src_name })
+						this.setVariableValues(
+							{ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) },
+							{ selected_dst_src_name: xpt_src_name }
+						)
 					}
-					this.checkFeedbacks('RoutedDestination','RoutedSource')
+					this.checkFeedbacks('RoutedDestination', 'RoutedSource')
 				}
 
 				if (line.includes('A:') > 0) {
@@ -874,20 +907,24 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Set initial values of selected destination id and name
 					if (!this.getVariableValue('selected_dst_id')) {
-						this.setVariableValues({ selected_dst_id: this.CHOICES_DST[0].id })
-						this.setVariableValues({ selected_dst_name: this.CHOICES_DST[0].label })
+						this.setVariableValues(
+							{ selected_dst_id: this.CHOICES_DST[0].id },
+							{ selected_dst_name: this.CHOICES_DST[0].label }
+						)
 					}
 
 					if (!this.getVariableValue('active_selected_id')) {
 						// set initial active selection variable values
-						this.setVariableValues({ active_selected_id: this.CHOICES_DST[0].id })
-						this.setVariableValues({ active_selected_name: this.CHOICES_DST[0].label })
-						this.setVariableValues({ active_selected_type: 'dst' })
+						this.setVariableValues(
+							{ active_selected_id: this.CHOICES_DST[0].id },
+							{ active_selected_name: this.CHOICES_DST[0].label },
+							{ active_selected_type: 'dst' }
+						)
 					}
 
 					// Update actions
 					this.updateActions(this.actions)
-					this.checkFeedbacks('RoutedDestination','RoutedSource')
+					this.checkFeedbacks('RoutedDestination', 'RoutedSource')
 				}
 
 				// set the source variable and choices values
@@ -924,12 +961,14 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Set initial values of selected destination id and name
 					if (!this.getVariableValue('selected_src_id')) {
-						this.setVariableValues({ selected_src_id: this.CHOICES_SRC[0].id })
-						this.setVariableValues({ selected_src_name: this.CHOICES_SRC[0].label })
+						this.setVariableValues(
+							{ selected_src_id: this.CHOICES_SRC[0].id },
+							{ selected_src_name: this.CHOICES_SRC[0].label }
+						)
 					}
 
 					// update feedbacks
-					this.checkFeedbacks('RoutedSource','RoutedDestination')
+					this.checkFeedbacks('RoutedSource', 'RoutedDestination')
 
 					// Update actions
 					this.updateActions(this.actions)
@@ -938,9 +977,40 @@ class ForaMfrInstance extends InstanceBase {
 
 					this.setPresetDefinitions(this.presets)
 				}
+				if (line.includes('W!')) {
+					// this.log('debug',(`LOCK INFO >>> ${line}`))
+					let dec_dst = parseInt(line.substring(3, 5), 16) + 1
+					// Split the string by commas
+					let parts = line.split(',')
+
+					// Get the last part of the array (after the final comma)
+					let lastPart = parts[parts.length - 1]
+
+					// Get the first character of the last part
+					let lock_status = lastPart.charAt(0) //=== 1 ? 'true' : 'false'
+
+					// Generate variable id and name
+					let varId = `dst${dec_dst.toString().padStart(2, '0')}_locked`
+					let varName = `DST-${dec_dst.toString().padStart(2, '0')}-locked`
+
+					// Add variable definition to the array
+					this.variable_array.push({ variableId: varId, name: varName })
+
+					this.setVariableDefinitions(this.variable_array)
+					this.setVariableValues({ [varId]: parseInt(lock_status) })
+					// update feedbacks
+					this.checkFeedbacks('LockedDestination')
+
+					// Update actions
+					this.updateActions(this.actions)
+					// this.generatePresetsDestinations()
+					// this.generatePresetsSources()
+
+					this.setPresetDefinitions(this.presets)
+				}
 
 				// update feedbacks
-				this.checkFeedbacks('RoutedSource','RoutedDestination')
+				this.checkFeedbacks('RoutedSource', 'RoutedDestination')
 
 				this.updateActions(this.actions) // export actions
 				this.updateFeedbacks(this.feedbacks) // export feedbacks
@@ -1026,6 +1096,16 @@ class ForaMfrInstance extends InstanceBase {
 						},
 						style: {
 							bgcolor: combineRgb(255, 0, 0),
+							color: combineRgb(0, 0, 0),
+						},
+					},
+					{
+						feedbackId: 'LockedDestination',
+						options: {
+							dst: dst.toString(16).padStart(2, '0'),
+						},
+						style: {
+							bgcolor: combineRgb(128, 0, 0),
 							color: combineRgb(0, 0, 0),
 						},
 					},
