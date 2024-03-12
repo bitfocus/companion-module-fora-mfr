@@ -662,7 +662,7 @@ class ForaMfrInstance extends InstanceBase {
 			this.blink_button = !this.blink_button
 
 			this.checkFeedbacks('SelectedSource', 'SelectedDestination')
-		}, 1000)
+		}, 500)
 	}
 
 	// When module gets deleted
@@ -838,10 +838,10 @@ class ForaMfrInstance extends InstanceBase {
 						const varIdXpt = (parseInt(dst_id, 16) + 1).toString().padStart(2, '0')
 						const dst_src_id_decimal = parseInt(this.getVariableValue(`xpt${varIdXpt}`), 16)
 						const xpt_src_name = this.getVariableValue(`src${dst_src_id_decimal.toString().padStart(2, '0')}`)
-						this.setVariableValues(
-							{ selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`) ,
-							 selected_dst_src_name: xpt_src_name }
-						)
+						this.setVariableValues({
+							selected_dst_src_id: this.getVariableValue(`xpt${varIdXpt}`),
+							selected_dst_src_name: xpt_src_name,
+						})
 					}
 					this.checkFeedbacks('RoutedDestination', 'RoutedSource')
 				}
@@ -907,19 +907,19 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Set initial values of selected destination id and name
 					if (!this.getVariableValue('selected_dst_id')) {
-						this.setVariableValues(
-							{ selected_dst_id: this.CHOICES_DST[0].id ,
-							selected_dst_name: this.CHOICES_DST[0].label }
-						)
+						this.setVariableValues({
+							selected_dst_id: this.CHOICES_DST[0].id,
+							selected_dst_name: this.CHOICES_DST[0].label,
+						})
 					}
 
 					if (!this.getVariableValue('active_selected_id')) {
 						// set initial active selection variable values
-						this.setVariableValues(
-							{ active_selected_id: this.CHOICES_DST[0].id ,
-							 active_selected_name: this.CHOICES_DST[0].label,
-							 active_selected_type: 'dst' }
-						)
+						this.setVariableValues({
+							active_selected_id: this.CHOICES_DST[0].id,
+							active_selected_name: this.CHOICES_DST[0].label,
+							active_selected_type: 'dst',
+						})
 					}
 
 					// Update actions
@@ -961,10 +961,10 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Set initial values of selected destination id and name
 					if (!this.getVariableValue('selected_src_id')) {
-						this.setVariableValues(
-							{ selected_src_id: this.CHOICES_SRC[0].id ,
-							 selected_src_name: this.CHOICES_SRC[0].label }
-						)
+						this.setVariableValues({
+							selected_src_id: this.CHOICES_SRC[0].id,
+							selected_src_name: this.CHOICES_SRC[0].label,
+						})
 					}
 
 					// update feedbacks
