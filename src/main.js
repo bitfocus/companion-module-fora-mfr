@@ -136,6 +136,16 @@ class ForaMfrInstance extends InstanceBase {
 				)
 				// update feedbacks
 				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'SelectedSource', 'SelectedDestination')
+				// deselect src and dst
+				this.setVariableValues({
+					selected_src_id: null,
+					selected_src_name: null,
+					selected_dst_id: null,
+					selected_dst_name: null,
+					active_selected_id: null,
+					active_selected_name: null,
+					active_selected_type: null,
+				})
 			},
 		},
 		presetXpt: {
@@ -161,6 +171,16 @@ class ForaMfrInstance extends InstanceBase {
 				this.sendCmd(`@ B:E`)
 
 				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'SelectedSource', 'SelectedDestination')
+				// deselect src and dst
+				this.setVariableValues({
+					selected_src_id: null,
+					selected_src_name: null,
+					selected_dst_id: null,
+					selected_dst_name: null,
+					active_selected_id: null,
+					active_selected_name: null,
+					active_selected_type: null,
+				})
 			},
 		},
 		setVideoFormat: {
@@ -320,7 +340,13 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				if (this.getVariableValue('selected_src_id') === feedback.options.src && this.blink_button) {
+				if (
+					(this.getVariableValue('selected_src_id') === feedback.options.src &&
+						this.getVariableValue('active_selected_type') === 'src') ||
+					(this.getVariableValue('selected_src_id') === feedback.options.src &&
+						this.getVariableValue('active_selected_type') === 'dst' &&
+						this.blink_button)
+				) {
 					return true
 				} else {
 					return false
@@ -345,7 +371,13 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				if (this.getVariableValue('selected_dst_id') === feedback.options.dst && this.blink_button) {
+				if (
+					(this.getVariableValue('selected_dst_id') === feedback.options.dst &&
+						this.getVariableValue('active_selected_type') === 'dst') ||
+					(this.getVariableValue('selected_dst_id') === feedback.options.dst &&
+						this.getVariableValue('active_selected_type') === 'src' &&
+						this.blink_button)
+				) {
 					return true
 				} else {
 					return false
@@ -370,7 +402,10 @@ class ForaMfrInstance extends InstanceBase {
 				},
 			],
 			callback: (feedback) => {
-				if (this.getVariableValue('selected_src_id') === feedback.options.src) {
+				if (
+					this.getVariableValue('selected_dst_src_id') === feedback.options.src &&
+					this.getVariableValue('active_selected_type') === 'dst'
+				) {
 					return true
 				} else {
 					return false
@@ -396,7 +431,10 @@ class ForaMfrInstance extends InstanceBase {
 			],
 			callback: (feedback) => {
 				const varIdXpt = (parseInt(feedback.options.dst, 16) + 1).toString().padStart(2, '0')
-				if (this.getVariableValue('selected_src_id') === this.getVariableValue(`xpt${varIdXpt}`)) {
+				if (
+					this.getVariableValue('selected_src_id') === this.getVariableValue(`xpt${varIdXpt}`) &&
+					this.getVariableValue('active_selected_type') === 'src'
+				) {
 					return true
 				} else {
 					return false
@@ -906,21 +944,21 @@ class ForaMfrInstance extends InstanceBase {
 					this.insertOrUpdate(this.CHOICES_DST, obj, parseInt(hex_dst, 16))
 
 					// Set initial values of selected destination id and name
-					if (!this.getVariableValue('selected_dst_id')) {
-						this.setVariableValues({
-							selected_dst_id: this.CHOICES_DST[0].id,
-							selected_dst_name: this.CHOICES_DST[0].label,
-						})
-					}
+					// if (!this.getVariableValue('selected_dst_id')) {
+					// 	this.setVariableValues({
+					// 		selected_dst_id: this.CHOICES_DST[0].id,
+					// 		selected_dst_name: this.CHOICES_DST[0].label,
+					// 	})
+					// }
 
-					if (!this.getVariableValue('active_selected_id')) {
-						// set initial active selection variable values
-						this.setVariableValues({
-							active_selected_id: this.CHOICES_DST[0].id,
-							active_selected_name: this.CHOICES_DST[0].label,
-							active_selected_type: 'dst',
-						})
-					}
+					// if (!this.getVariableValue('active_selected_id')) {
+					// 	// set initial active selection variable values
+					// 	this.setVariableValues({
+					// 		active_selected_id: this.CHOICES_DST[0].id,
+					// 		active_selected_name: this.CHOICES_DST[0].label,
+					// 		active_selected_type: 'dst',
+					// 	})
+					// }
 
 					// Update actions
 					this.updateActions(this.actions)
@@ -959,13 +997,13 @@ class ForaMfrInstance extends InstanceBase {
 					const obj = { id: hex_src, label: asciiString }
 					this.insertOrUpdate(this.CHOICES_SRC, obj, parseInt(hex_src, 16))
 
-					// Set initial values of selected destination id and name
-					if (!this.getVariableValue('selected_src_id')) {
-						this.setVariableValues({
-							selected_src_id: this.CHOICES_SRC[0].id,
-							selected_src_name: this.CHOICES_SRC[0].label,
-						})
-					}
+					// // Set initial values of selected destination id and name
+					// if (!this.getVariableValue('selected_src_id')) {
+					// 	this.setVariableValues({
+					// 		selected_src_id: this.CHOICES_SRC[0].id,
+					// 		selected_src_name: this.CHOICES_SRC[0].label,
+					// 	})
+					// }
 
 					// update feedbacks
 					this.checkFeedbacks('RoutedSource', 'RoutedDestination')
