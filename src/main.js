@@ -84,6 +84,8 @@ class ForaMfrInstance extends InstanceBase {
 					active_selected_id: dst_id,
 					active_selected_name: dst_name,
 					active_selected_type: 'dst',
+					selected_src_id: null,
+					selected_src_name: null,
 				})
 
 				// also set the variable values for the source routed to the destination
@@ -1100,7 +1102,7 @@ class ForaMfrInstance extends InstanceBase {
 					size: '14',
 					color: combineRgb(0, 0, 0),
 					png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
-					bgcolor: combineRgb(255, 255, 0),
+					bgcolor: combineRgb(128, 128, 0),
 				},
 				steps: [
 					{
@@ -1123,7 +1125,7 @@ class ForaMfrInstance extends InstanceBase {
 							dst: dst.toString(16).padStart(2, '0').toUpperCase(),
 						},
 						style: {
-							bgcolor: combineRgb(255, 0, 0),
+							bgcolor: combineRgb(255, 255, 0),
 							color: combineRgb(0, 0, 0),
 						},
 					},
@@ -1133,7 +1135,7 @@ class ForaMfrInstance extends InstanceBase {
 							dst: dst.toString(16).padStart(2, '0').toUpperCase(),
 						},
 						style: {
-							bgcolor: combineRgb(255, 0, 0),
+							bgcolor: combineRgb(255, 255, 0),
 							color: combineRgb(0, 0, 0),
 						},
 					},
@@ -1143,7 +1145,7 @@ class ForaMfrInstance extends InstanceBase {
 							dst: dst.toString(16).padStart(2, '0').toUpperCase(),
 						},
 						style: {
-							bgcolor: combineRgb(128, 0, 0),
+							bgcolor: combineRgb(255, 0, 0),
 							color: combineRgb(0, 0, 0),
 						},
 					},
@@ -1163,7 +1165,7 @@ class ForaMfrInstance extends InstanceBase {
 					size: '14',
 					color: combineRgb(0, 0, 0),
 					png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
-					bgcolor: combineRgb(0, 255, 0),
+					bgcolor: combineRgb(0, 128, 0),
 				},
 				steps: [
 					{
@@ -1186,7 +1188,7 @@ class ForaMfrInstance extends InstanceBase {
 							src: src.toString(16).padStart(2, '0').toUpperCase(),
 						},
 						style: {
-							bgcolor: combineRgb(255, 0, 0),
+							bgcolor: combineRgb(0, 255, 0),
 							color: combineRgb(0, 0, 0),
 						},
 					},
