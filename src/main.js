@@ -1109,7 +1109,7 @@ class ForaMfrInstance extends InstanceBase {
 								actionId: 'setDst',
 								options: {
 									// options values to use
-									dst: dst.toString(16).padStart(2, '0'),
+									dst: dst.toString(16).padStart(2, '0').toUpperCase(),
 								},
 							},
 						],
@@ -1120,7 +1120,7 @@ class ForaMfrInstance extends InstanceBase {
 					{
 						feedbackId: 'RoutedDestination',
 						options: {
-							dst: dst.toString(16).padStart(2, '0'),
+							dst: dst.toString(16).padStart(2, '0').toUpperCase(),
 						},
 						style: {
 							bgcolor: combineRgb(255, 0, 0),
@@ -1130,7 +1130,7 @@ class ForaMfrInstance extends InstanceBase {
 					{
 						feedbackId: 'SelectedDestination',
 						options: {
-							dst: dst.toString(16).padStart(2, '0'),
+							dst: dst.toString(16).padStart(2, '0').toUpperCase(),
 						},
 						style: {
 							bgcolor: combineRgb(255, 0, 0),
@@ -1140,7 +1140,7 @@ class ForaMfrInstance extends InstanceBase {
 					{
 						feedbackId: 'LockedDestination',
 						options: {
-							dst: dst.toString(16).padStart(2, '0'),
+							dst: dst.toString(16).padStart(2, '0').toUpperCase(),
 						},
 						style: {
 							bgcolor: combineRgb(128, 0, 0),
@@ -1172,7 +1172,7 @@ class ForaMfrInstance extends InstanceBase {
 								actionId: 'setSrc',
 								options: {
 									// options values to use
-									src: src.toString(16).padStart(2, '0'),
+									src: src.toString(16).padStart(2, '0').toUpperCase(),
 								},
 							},
 						],
@@ -1183,7 +1183,7 @@ class ForaMfrInstance extends InstanceBase {
 					{
 						feedbackId: 'RoutedSource',
 						options: {
-							src: src.toString(16).padStart(2, '0'),
+							src: src.toString(16).padStart(2, '0').toUpperCase(),
 						},
 						style: {
 							bgcolor: combineRgb(255, 0, 0),
@@ -1193,7 +1193,7 @@ class ForaMfrInstance extends InstanceBase {
 					{
 						feedbackId: 'SelectedSource',
 						options: {
-							src: src.toString(16).padStart(2, '0'),
+							src: src.toString(16).padStart(2, '0').toUpperCase(),
 						},
 						style: {
 							bgcolor: combineRgb(0, 255, 0),
