@@ -11,8 +11,6 @@
         -   selected_dst_id ( used for actions requiring hex id of port of destination )
         -   selected_src_name ( for bank labelling and feedback )
         -   selected_src_id ( used for actions requiring hex id of port of destination )
-
-    * ToDo
         -   video_format ( format of video processed by router )
         -   video_reference ( auto | blackburst | tri-level )
         -   switching_point ( field | odd | even )
@@ -25,26 +23,61 @@
             -   Preset video format
             -   Apply preset video format
             -   Cancel preset video format
+            -   rename a dst or src. Needs to account for updating 'selected' variable values if renamed item matches selections
         >   Switching operation
             -   Set destination
             -   Set source
             -   Switch crosspoint
             -   Preset crosspoint
             -   Switch preset crosspoint(s)
-    * ToDo
-        >   Router config
-            -   rename a dst or src. Needs to account for updating 'selected' variable values if renamed item matches selections
-        >   Switching operation
             -   lock / unlock dst
+    * ToDo (?)
+        >   Switching operation
             -   reinitialize unit ( advise caution )
 
-## PRESETS
-
-    ToDo
 
 ## FEEDBACKS
 
-    ToDo
+    * Implemented
+        - Routed destination ( true if selected source is routed to this destination xpt - blinbks if selected destination is not routed to selected source)
+        - Selected destination ( true if this destination is currently selected/pressed)
+        - Locked destination ( true if this destination is locked )
+        - Routed source ( true if this source is routed to the selected destination xpt )
+        - Selected source ( true if this source is currently selected/pressed)
+                       
+    * ToDo
+        - general improvements - not particularly happy with certain behaviours but it's good enough for now 
+
+## PRESETS
+
+    * Implemented
+        > Control
+            - Cut selected src to selected dst (shows selection values)
+            - Preset xpt with selected src and dst (shows selection values)
+            - Cut all preset xpts
+            - Preset video format
+            - Apply preset video format
+            - Cancel preset video format
+            - Rename destination
+            - Rename source
+            - Lock / unlock destination
+        > Destinations
+            - Preset for each available destination with the following properties;
+                > Actions
+                    - select destination
+                > Feedbacks
+                    - Routed destination ( true if selected source is routed to this destination xpt - blinbks if selected destination is not routed to selected source)
+                    - Selected destination ( true if this destination is currently selected/pressed)
+                    - Locked destination ( true if this destination is locked )
+        > Source
+             - Preset for each available source with the following properties;
+                > Actions
+                    - select source
+                > Feedbacks
+                    - Routed source ( true if this source is routed to the selected destination xpt )
+                    - Selected source ( true if this source is currently selected/pressed)
+    * ToDo
+
 
 ## COMMAND REFERENCE
 
