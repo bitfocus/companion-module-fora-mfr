@@ -945,23 +945,6 @@ class ForaMfrInstance extends InstanceBase {
 					const obj = { id: hex_dst, label: asciiString }
 					this.insertOrUpdate(this.CHOICES_DST, obj, parseInt(hex_dst, 16))
 
-					// Set initial values of selected destination id and name
-					// if (!this.getVariableValue('selected_dst_id')) {
-					// 	this.setVariableValues({
-					// 		selected_dst_id: this.CHOICES_DST[0].id,
-					// 		selected_dst_name: this.CHOICES_DST[0].label,
-					// 	})
-					// }
-
-					// if (!this.getVariableValue('active_selected_id')) {
-					// 	// set initial active selection variable values
-					// 	this.setVariableValues({
-					// 		active_selected_id: this.CHOICES_DST[0].id,
-					// 		active_selected_name: this.CHOICES_DST[0].label,
-					// 		active_selected_type: 'dst',
-					// 	})
-					// }
-
 					// Update actions
 					this.updateActions(this.actions)
 					this.checkFeedbacks('RoutedDestination', 'RoutedSource')
@@ -998,14 +981,6 @@ class ForaMfrInstance extends InstanceBase {
 					// Update CHOICES_SRC and selected destination values
 					const obj = { id: hex_src, label: asciiString }
 					this.insertOrUpdate(this.CHOICES_SRC, obj, parseInt(hex_src, 16))
-
-					// // Set initial values of selected destination id and name
-					// if (!this.getVariableValue('selected_src_id')) {
-					// 	this.setVariableValues({
-					// 		selected_src_id: this.CHOICES_SRC[0].id,
-					// 		selected_src_name: this.CHOICES_SRC[0].label,
-					// 	})
-					// }
 
 					// update feedbacks
 					this.checkFeedbacks('RoutedSource', 'RoutedDestination')
