@@ -1,3 +1,3 @@
 # companion-module-fora-mfr
 
-See HELP.md and LICENSE
+See [HELP.md](./HELP.md) and [LICENSE](./LICENSE)
