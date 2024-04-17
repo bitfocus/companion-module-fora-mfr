@@ -480,7 +480,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'CUT\n$(fora-mfr:selected_src_name)\n>\n$(fora-mfr:selected_dst_name)',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -499,7 +499,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'PRESET\n$(fora-mfr:selected_src_name)\n>\n$(fora-mfr:selected_dst_name)',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -518,7 +518,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'CUT\nPRESET\nXPTs',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -537,7 +537,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'PRESET\nVIDEO\nFORMAT',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -566,7 +566,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'APPLY\nPRESET\nVIDEO\nFORMAT',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -585,7 +585,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'CANCEL\nPRESET\nVIDEO\nFORMAT',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -604,7 +604,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'RENAME\nDST',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -632,7 +632,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'RENAME\nSRC',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -660,7 +660,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: '(UN)LOCK\nDST',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -1076,7 +1076,7 @@ class ForaMfrInstance extends InstanceBase {
 					text: `$(fora-mfr:dst${dst_string})`,
 					size: '14',
 					color: combineRgb(0, 0, 0),
-					png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+					png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 					bgcolor: combineRgb(128, 128, 0),
 				},
 				steps: [
@@ -1139,7 +1139,7 @@ class ForaMfrInstance extends InstanceBase {
 					text: `$(fora-mfr:src${src_string})`,
 					size: '14',
 					color: combineRgb(0, 0, 0),
-					png64: fs.readFileSync('src/MFR_button_66pc.png', 'base64'),
+					png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
 					bgcolor: combineRgb(0, 128, 0),
 				},
 				steps: [
