@@ -131,7 +131,7 @@ class ForaMfrInstance extends InstanceBase {
 			},
 		},
 		switchXpt: {
-			name: 'Switch crosspoint',
+			name: 'Cut selected source to selected destination',
 			options: [],
 			callback: (action) => {
 				// switch a crosspoint
@@ -156,7 +156,7 @@ class ForaMfrInstance extends InstanceBase {
 			},
 		},
 		presetXpt: {
-			name: 'Preset crosspoint',
+			name: 'Preset selected source to selected destination',
 			options: [],
 			callback: (action) => {
 				// Preset a crosspoint
@@ -936,18 +936,22 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Extract the hex string part and convert it to ASCII
 					const hexString = line.substring(line.indexOf(',') + 1)
-					let asciiString = ''
-					for (let i = 0; i < hexString.length; i += 2) {
-						const hexPair = hexString.substr(i, 2)
-						const decimalValue = parseInt(hexPair, 16)
-						asciiString += String.fromCharCode(decimalValue)
-					}
+
+					// this.log('debug', hexString)
+					const result = Buffer.from(hexString, 'hex').toString('utf8')
+					// this.log('debug', result)
+					// let asciiString = ''
+					// for (let i = 0; i < hexString.length; i += 2) {
+					// 	const hexPair = hexString.substr(i, 2)
+					// 	const decimalValue = parseInt(hexPair, 16)
+					// 	asciiString += String.fromCharCode(decimalValue)
+					// }
 
 					// Set the variable value for the destination
-					this.setVariableValues({ [varId]: asciiString })
+					this.setVariableValues({ [varId]: result })
 
 					// Update CHOICES_DST and selected destination values
-					const obj = { id: hex_dst, label: asciiString }
+					const obj = { id: hex_dst, label: result }
 					this.insertOrUpdate(this.CHOICES_DST, obj, parseInt(hex_dst, 16))
 
 					// Update actions
@@ -973,18 +977,21 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Extract the hex string part and convert it to ASCII
 					const hexString = line.substring(line.indexOf(',') + 1)
-					let asciiString = ''
-					for (let i = 0; i < hexString.length; i += 2) {
-						const hexPair = hexString.substr(i, 2)
-						const decimalValue = parseInt(hexPair, 16)
-						asciiString += String.fromCharCode(decimalValue)
-					}
+
+					const result = Buffer.from(hexString, 'hex').toString('utf8')
+
+					// let asciiString = ''
+					// for (let i = 0; i < hexString.length; i += 2) {
+					// 	const hexPair = hexString.substr(i, 2)
+					// 	const decimalValue = parseInt(hexPair, 16)
+					// 	asciiString += String.fromCharCode(decimalValue)
+					// }
 
 					// Set the variable value for the destination
-					this.setVariableValues({ [varId]: asciiString })
+					this.setVariableValues({ [varId]: result })
 
 					// Update CHOICES_SRC and selected destination values
-					const obj = { id: hex_src, label: asciiString }
+					const obj = { id: hex_src, label: result }
 					this.insertOrUpdate(this.CHOICES_SRC, obj, parseInt(hex_src, 16))
 
 					// update feedbacks
