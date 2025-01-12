@@ -11,13 +11,13 @@
 		"url": "git+https://github.com/bitfocus/companion-module-fora-mfr.git"
 	},
 	"engines": {
-		"node": "^18.18 || ^22.8"
+		"node": "^18.12 || ^22.13"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.10.0"
+		"@companion-module/base": "~1.11.0"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "~2.0.4"
+		"@companion-module/tools": "~2.0.0"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json"
 }

@@ -2,22 +2,22 @@
 # yarn lockfile v1
 
 
-"@companion-module/base@~1.10.0":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@companion-module/base/-/base-1.10.0.tgz#fbfe5822422f30c6e4ad04dc2e4e0559a8166571"
-  integrity sha512-ij5eBISaSwr0lfNwNDLB52jYaY66Kna0I6BdbwtCm634XeZtbm3n1gYyUSUdzJQ6z97ImbIKJPIKEn6laxCGxA==
+"@companion-module/base@~1.11.0":
+  version "1.11.3"
+  resolved "https://registry.yarnpkg.com/@companion-module/base/-/base-1.11.3.tgz#12e54056d1873c588d47869917fbbb850871651c"
+  integrity sha512-6oVmvtLguDly+zcSN86D0Z++yI60oeH3X/gumJ1FdBkZjdozlKFAsSykIvYQ0QIs+SMFRh1C9M/F6egOVT/RMA==
   dependencies:
     ajv "^8.17.1"
     colord "^2.9.3"
     ejson "^2.2.3"
-    eventemitter3 "^4.0.7"
+    eventemitter3 "^5.0.1"
     mimic-fn "^3.1.0"
-    nanoid "^3.3.7"
+    nanoid "^3.3.8"
     p-queue "^6.6.2"
     p-timeout "^4.1.0"
-    tslib "^2.7.0"
+    tslib "^2.8.1"
 
-"@companion-module/tools@~2.0.4":
+"@companion-module/tools@~2.0.0":
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/@companion-module/tools/-/tools-2.0.4.tgz#dff55d394f7b7ea9fc3ac96a95c6f53074d3db97"
   integrity sha512-gm22oe62JiUFXpdan7x5J1Iq8vpMJAU++oMPp0Gy1dxtj6d4KdaH1QMLaicdH6H5ZpPmvBpMFF7Ag5Og6TU/xQ==
@@ -633,10 +633,15 @@ estraverse@^5.2.0:
   resolved "https://registry.npmjs.org/estraverse/-/estraverse-5.3.0.tgz"
   integrity sha512-MMdARuVEQziNTeJD8DgMqmhwR11BRQ/cBP+pLtYdSTnf3MIO8fFeiINEbX36ZdNlfU/7A9f3gUw49B3oQsvwBA==
 
-eventemitter3@^4.0.4, eventemitter3@^4.0.7:
+eventemitter3@^4.0.4:
   version "4.0.7"
   resolved "https://registry.npmjs.org/eventemitter3/-/eventemitter3-4.0.7.tgz"
   integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
+
+eventemitter3@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-5.0.1.tgz#53f5ffd0a492ac800721bb42c66b841de96423c4"
+  integrity sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==
 
 events@^3.2.0:
   version "3.3.0"
@@ -905,7 +910,7 @@ mkdirp@^3.0.1:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-3.0.1.tgz#e44e4c5607fb279c168241713cc6e0fea9adcb50"
   integrity sha512-+NsyUUAZDmo6YVHzL/stxSu3t9YS1iljliy3BSDrXJ/dkn1KYdmtZODGGjLcc9XLgVVpH4KshHB8XmZgMhaBXg==
 
-nanoid@^3.3.7:
+nanoid@^3.3.8:
   version "3.3.8"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.8.tgz#b1be3030bee36aaff18bacb375e5cce521684baf"
   integrity sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==
@@ -1167,6 +1172,7 @@ source-map@^0.6.0:
   integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
 
 "string-width-cjs@npm:string-width@^4.2.0", string-width@^4.1.0:
+  name string-width-cjs
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -1268,7 +1274,7 @@ tslib@^2.6.2:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.6.2.tgz#703ac29425e7b37cd6fd456e92404d46d1f3e4ae"
   integrity sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==
 
-tslib@^2.7.0:
+tslib@^2.8.1:
   version "2.8.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.8.1.tgz#612efe4ed235d567e8aba5f2a5fab70280ade83f"
   integrity sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
