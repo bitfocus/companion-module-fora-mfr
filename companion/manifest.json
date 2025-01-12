@@ -3,7 +3,7 @@
 	"name": "fora-mfr",
 	"shortname": "fora-mfr",
 	"description": "Control ForA MFR routers",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-fora-mfr.git",
 	"bugs": "https://github.com/bitfocus/companion-module-fora-mfr/issues",

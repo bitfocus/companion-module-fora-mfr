@@ -2,6 +2,11 @@ const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = requir
 const { combineRgb } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades.js')
 const fs = require('fs')
+const path = require('path')
+
+// Path to button image directory
+const imageDir = path.join(__dirname, '/images')
+
 var buffer = Buffer.alloc(32)
 
 class ForaMfrInstance extends InstanceBase {
@@ -126,7 +131,7 @@ class ForaMfrInstance extends InstanceBase {
 			},
 		},
 		switchXpt: {
-			name: 'Switch crosspoint',
+			name: 'Cut selected source to selected destination',
 			options: [],
 			callback: (action) => {
 				// switch a crosspoint
@@ -151,7 +156,7 @@ class ForaMfrInstance extends InstanceBase {
 			},
 		},
 		presetXpt: {
-			name: 'Preset crosspoint',
+			name: 'Preset selected source to selected destination',
 			options: [],
 			callback: (action) => {
 				// Preset a crosspoint
@@ -480,7 +485,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'CUT\n$(fora-mfr:selected_src_name)\n>\n$(fora-mfr:selected_dst_name)',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -499,7 +504,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'PRESET\n$(fora-mfr:selected_src_name)\n>\n$(fora-mfr:selected_dst_name)',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -518,7 +523,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'CUT\nPRESET\nXPTs',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -537,7 +542,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'PRESET\nVIDEO\nFORMAT',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -566,7 +571,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'APPLY\nPRESET\nVIDEO\nFORMAT',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -585,7 +590,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'CANCEL\nPRESET\nVIDEO\nFORMAT',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -604,7 +609,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'RENAME\nDST',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -632,7 +637,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: 'RENAME\nSRC',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -660,7 +665,7 @@ class ForaMfrInstance extends InstanceBase {
 				text: '(UN)LOCK\nDST',
 				size: '7',
 				color: combineRgb(0, 0, 0),
-				png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+				png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 				bgcolor: combineRgb(218, 218, 218),
 			},
 			steps: [
@@ -931,18 +936,22 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Extract the hex string part and convert it to ASCII
 					const hexString = line.substring(line.indexOf(',') + 1)
-					let asciiString = ''
-					for (let i = 0; i < hexString.length; i += 2) {
-						const hexPair = hexString.substr(i, 2)
-						const decimalValue = parseInt(hexPair, 16)
-						asciiString += String.fromCharCode(decimalValue)
-					}
+
+					// this.log('debug', hexString)
+					const result = Buffer.from(hexString, 'hex').toString('utf8')
+					// this.log('debug', result)
+					// let asciiString = ''
+					// for (let i = 0; i < hexString.length; i += 2) {
+					// 	const hexPair = hexString.substr(i, 2)
+					// 	const decimalValue = parseInt(hexPair, 16)
+					// 	asciiString += String.fromCharCode(decimalValue)
+					// }
 
 					// Set the variable value for the destination
-					this.setVariableValues({ [varId]: asciiString })
+					this.setVariableValues({ [varId]: result })
 
 					// Update CHOICES_DST and selected destination values
-					const obj = { id: hex_dst, label: asciiString }
+					const obj = { id: hex_dst, label: result }
 					this.insertOrUpdate(this.CHOICES_DST, obj, parseInt(hex_dst, 16))
 
 					// Update actions
@@ -968,18 +977,21 @@ class ForaMfrInstance extends InstanceBase {
 
 					// Extract the hex string part and convert it to ASCII
 					const hexString = line.substring(line.indexOf(',') + 1)
-					let asciiString = ''
-					for (let i = 0; i < hexString.length; i += 2) {
-						const hexPair = hexString.substr(i, 2)
-						const decimalValue = parseInt(hexPair, 16)
-						asciiString += String.fromCharCode(decimalValue)
-					}
+
+					const result = Buffer.from(hexString, 'hex').toString('utf8')
+
+					// let asciiString = ''
+					// for (let i = 0; i < hexString.length; i += 2) {
+					// 	const hexPair = hexString.substr(i, 2)
+					// 	const decimalValue = parseInt(hexPair, 16)
+					// 	asciiString += String.fromCharCode(decimalValue)
+					// }
 
 					// Set the variable value for the destination
-					this.setVariableValues({ [varId]: asciiString })
+					this.setVariableValues({ [varId]: result })
 
 					// Update CHOICES_SRC and selected destination values
-					const obj = { id: hex_src, label: asciiString }
+					const obj = { id: hex_src, label: result }
 					this.insertOrUpdate(this.CHOICES_SRC, obj, parseInt(hex_src, 16))
 
 					// update feedbacks
@@ -1076,7 +1088,7 @@ class ForaMfrInstance extends InstanceBase {
 					text: `$(fora-mfr:dst${dst_string})`,
 					size: '14',
 					color: combineRgb(0, 0, 0),
-					png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+					png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 					bgcolor: combineRgb(128, 128, 0),
 				},
 				steps: [
@@ -1139,7 +1151,7 @@ class ForaMfrInstance extends InstanceBase {
 					text: `$(fora-mfr:src${src_string})`,
 					size: '14',
 					color: combineRgb(0, 0, 0),
-					png64: fs.readFileSync('MFR_button_66pc.png', 'base64'),
+					png64: fs.readFileSync(`${imageDir}/MFR_button_66pc.png`, 'base64'),
 					bgcolor: combineRgb(0, 128, 0),
 				},
 				steps: [
