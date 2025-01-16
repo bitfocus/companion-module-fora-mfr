@@ -891,7 +891,7 @@ class ForaMfrInstance extends InstanceBase {
 					this.checkFeedbacks('RoutedDestination', 'RoutedSource')
 				}
 
-				if (line.includes('A:') > 0) {
+				if (line.includes('A:')) {
 					let parts = line.trim().split(':')
 					this.setVariableValues({ id: `${parts[1]}` })
 				}
@@ -1052,7 +1052,11 @@ class ForaMfrInstance extends InstanceBase {
 		if (cmd !== undefined) {
 			cmd += '\r'
 		}
-		this.socket.send(cmd)
+		if (this.socket) {
+			this.socket.send(cmd)
+		} else {
+			this.log('error', 'Socket is not defined')
+		}
 	}
 
 	asciiToHexBytes(asciiString) {
