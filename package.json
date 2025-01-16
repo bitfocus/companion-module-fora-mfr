@@ -1,7 +1,7 @@
 {
 	"name": "fora-mfr",
 	"version": "1.0.2",
-	"main":"src/main.js",
+	"main": "src/main.js",
 	"scripts": {
 		"format": "prettier -w ."
 	},
@@ -11,7 +11,7 @@
 		"url": "git+https://github.com/bitfocus/companion-module-fora-mfr.git"
 	},
 	"engines": {
-		"node": "^18.12 || ^22.13"
+		"node": "^18.12"
 	},
 	"dependencies": {
 		"@companion-module/base": "~1.11.0"
@@ -19,5 +19,6 @@
 	"devDependencies": {
 		"@companion-module/tools": "~2.0.0"
 	},
-	"prettier": "@companion-module/tools/.prettierrc.json"
+	"prettier": "@companion-module/tools/.prettierrc.json",
+	"packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }
