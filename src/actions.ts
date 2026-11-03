@@ -1,5 +1,7 @@
 import {
+	AUTO_ROUTE_MODES,
 	LOCK_MODES,
+	NEXT_AUTO_ROUTE,
 	REFERENCE_CHOICES,
 	SWITCHING_POINT_CHOICES,
 	USE_DEFAULT,
@@ -18,6 +20,7 @@ export type ActionsSchema = {
 	presetXpt: { options: NoOptions }
 	switchPresetXpts: { options: NoOptions }
 	clearPresetXpts: { options: NoOptions }
+	setAutoRoute: { options: { mode: string } }
 	presetRoute: { options: { dst: string; src: string } }
 	cutRoute: { options: { dst: string; src: string } }
 	setVideoFormat: { options: { format: string; ref: string; point: string; apply?: boolean } }
@@ -79,6 +82,20 @@ export function UpdateActions(self: ModuleInstance): void {
 			name: 'Clear preset crosspoint(s)',
 			options: [],
 			callback: () => self.clearPresets(),
+		},
+		setAutoRoute: {
+			name: 'Set auto-route mode',
+			description: 'What happens when a destination and a source are both selected. Saved in the connection settings.',
+			options: [
+				{
+					type: 'dropdown',
+					id: 'mode',
+					label: 'Mode :',
+					default: NEXT_AUTO_ROUTE,
+					choices: [{ id: NEXT_AUTO_ROUTE, label: 'Next mode (off, preset, cut, off)' }, ...AUTO_ROUTE_MODES],
+				},
+			],
+			callback: (action) => self.setAutoRouteMode(action.options.mode),
 		},
 		setVideoFormat: {
 			name: 'Preset video format',

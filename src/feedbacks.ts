@@ -1,4 +1,4 @@
-import { destinationChoices, sourceChoices } from './choices.js'
+import { AUTO_ROUTE_MODES, destinationChoices, sourceChoices } from './choices.js'
 import type ModuleInstance from './main.js'
 import { parseHex } from './protocol.js'
 
@@ -18,6 +18,7 @@ export type FeedbacksSchema = {
 	PresetSource: { type: 'boolean'; options: { src: string } }
 	PresetDestination: { type: 'boolean'; options: { dst: string } }
 	LockedDestination: { type: 'boolean'; options: { dst: string } }
+	AutoRouteMode: { type: 'boolean'; options: { mode: string } }
 }
 
 export function UpdateFeedbacks(self: ModuleInstance): void {
@@ -102,6 +103,14 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				const port = parseHex(feedback.options.dst)
 				return port !== undefined && state.isLocked(port)
 			},
+		},
+		AutoRouteMode: {
+			name: 'Auto-route mode',
+			type: 'boolean',
+			description: 'True if the auto-route mode is this one',
+			defaultStyle: { bgcolor: 0xff0000, color: 0x000000 },
+			options: [{ type: 'dropdown', id: 'mode', label: 'Mode :', default: 'cut', choices: AUTO_ROUTE_MODES }],
+			callback: (feedback) => feedback.options.mode === self.autoRouteMode,
 		},
 	})
 }

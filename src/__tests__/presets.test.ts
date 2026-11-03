@@ -38,6 +38,18 @@ describe('presets', () => {
 		}
 	})
 
+	it('steps the auto-route mode from one button that shows and colours the mode', () => {
+		const [layered, simple] = build(2, 2).auto_route.variants
+		expect(layered.steps).toEqual([{ down: [{ actionId: 'setAutoRoute', options: { mode: 'next' } }], up: [] }])
+		expect(layered.elements.at(-1).text).toBe('AUTO\n$(fora-mfr:auto_route_mode)')
+		expect(layered.elements.at(-1).fontsize).toBe(32)
+		expect(layered.feedbacks.map((f: any) => [f.options.mode, f.styleOverrides[0].override])).toEqual([
+			['preset', 0xff8000],
+			['cut', 0xff0000],
+		])
+		expect(simple.feedbacks).toHaveLength(2)
+	})
+
 	it('keeps stable preset ids', () => {
 		const presets = build(2, 3)
 		expect(Object.keys(presets).sort()).toEqual(
@@ -48,6 +60,7 @@ describe('presets', () => {
 				'switch_preset_xpts',
 				'clear_preset_xpts',
 				'lock_dst',
+				'auto_route',
 				'rename_dst',
 				'rename_src',
 				'dst_0',

@@ -6,8 +6,8 @@ import {
 	type SomeCompanionConfigField,
 } from '@companion-module/base'
 import { UpdateActions, type ActionsSchema } from './actions.js'
-import { USE_DEFAULT, videoFormatLabel } from './choices.js'
-import { DEFAULT_VIDEO, GetConfigFields, type ModuleConfig } from './config.js'
+import { NEXT_AUTO_ROUTE, USE_DEFAULT, videoFormatLabel } from './choices.js'
+import { AUTO_ROUTE_ORDER, DEFAULT_VIDEO, GetConfigFields, type AutoRouteMode, type ModuleConfig } from './config.js'
 import { SELECTION_FEEDBACKS, UpdateFeedbacks, type FeedbacksSchema } from './feedbacks.js'
 import { UpdatePresets } from './presets.js'
 import {
@@ -82,6 +82,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.#publishDefinitions(true)
 		this.setVariableValues(selectionValues(this.state))
 		this.#publishVideoDefault()
+		this.#publishAutoRouteMode()
 		this.#connect()
 	}
 
@@ -93,8 +94,13 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	async configUpdated(config: ModuleConfig): Promise<void> {
+		const previous = this.config
 		this.config = config
 		this.#publishVideoDefault()
+		this.#publishAutoRouteMode()
+		// the other settings don't touch the connection, so changing them needn't re-read the router
+		if (config.host === previous.host && config.port === previous.port && config.pollInterval === previous.pollInterval)
+			return
 		this.#connect()
 	}
 
@@ -121,10 +127,35 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	#autoRoute(): void {
-		const { autoRoute } = this.config
-		if (autoRoute !== 'cut' && autoRoute !== 'preset') return
+		const mode = this.autoRouteMode
+		if (mode === 'off') return
 		if (this.state.selectedDst === undefined || this.state.selectedSrc === undefined) return
-		this.routeSelection(autoRoute)
+		this.routeSelection(mode)
+	}
+
+	get autoRouteMode(): AutoRouteMode {
+		return this.config.autoRoute ?? 'off'
+	}
+
+	/**
+	 * Change the auto-route mode and save it in the connection settings. It applies from the next
+	 * selection, so a pair already selected is not routed by changing the mode.
+	 */
+	setAutoRouteMode(value: string): void {
+		const current = AUTO_ROUTE_ORDER.indexOf(this.autoRouteMode)
+		const mode =
+			value === NEXT_AUTO_ROUTE
+				? AUTO_ROUTE_ORDER[(current + 1) % AUTO_ROUTE_ORDER.length]
+				: AUTO_ROUTE_ORDER.find((candidate) => candidate === value)
+		if (mode === undefined || mode === this.autoRouteMode) return
+		this.config = { ...this.config, autoRoute: mode }
+		this.saveConfig(this.config)
+		this.#publishAutoRouteMode()
+	}
+
+	#publishAutoRouteMode(): void {
+		this.setVariableValues({ auto_route_mode: this.autoRouteMode.toUpperCase() })
+		this.checkFeedbacks('AutoRouteMode')
 	}
 
 	/** Cut or preset the selected source to the selected destination */

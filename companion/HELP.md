@@ -38,6 +38,7 @@ Add the salvo switch button press before you stop recording if you want the macr
 - `xpt##` hex id of the source routed to each destination
 - `xpt##_name` name of the source routed to each destination
 - `dst##_locked` lock mode of each destination (0 unlocked, 1 locked, 2 locked by others)
+- `auto_route_mode` what happens when a destination and a source are both selected: OFF, PRESET or CUT
 - `selected_dst_id`, `selected_dst_name` the selected destination
 - `selected_dst_src_id`, `selected_dst_src_name` the source routed to the selected destination
 - `selected_src_id`, `selected_src_name` the selected source
@@ -56,6 +57,7 @@ Selection variables are empty when nothing is selected, and are cleared after a 
 - Switch preset crosspoint(s): perform all preset crosspoints together
 - Preset a route / Cut a route: stage or cut one explicit source to destination pair, without using the selection
 - Clear preset crosspoint(s): discard all staged presets
+- Set auto-route mode: off, preset, cut or the next of these. It is saved in the connection settings, and applies from the next selection, so a pair already selected is not routed by changing the mode
 - Preset video format (format, reference and switching point, each of which can be "Use the connection default" set in the connection settings), optionally applied straight away; Apply and Cancel preset video format. These are actions only, with no preset buttons: the router restarts when a new format is accepted and cannot report its current format, so there is no feedback and a stray press is costly.
 - Rename a destination or source. The router may shorten a name or drop characters (an MFR tested kept 16 ASCII characters), so the module shows what it reports back and logs a warning if it differs
 - Lock / unlock a destination, or toggle the lock of the selected destination
@@ -69,10 +71,11 @@ Operator actions are sent ahead of the module's own startup reads, but never int
 - Routed destination: this destination carries the selected source
 - Preset destination / Preset source: a preset is staged for this destination, or this source is staged for the selected destination
 - Locked destination: this destination is locked
+- Auto-route mode: the auto-route mode is the one chosen
 
 ## PRESETS
 
-- Control: a blank button in the module style, cut, preset, salvo switch, clear presets, lock toggle and rename buttons
+- Control: a blank button in the module style, cut, preset, salvo switch, clear presets, lock toggle, auto-route mode and rename buttons. The auto-route mode button steps through off, preset (orange) and cut (red: each selection goes live)
 - Destinations: a button per destination with select, routed, selected, preset and locked feedback
 - Destinations showing their routed source: a button per destination whose text shows the source currently routed to it, updated live, with a staged route shown beneath it
 - Sources: a button per source with select, routed and selected feedback

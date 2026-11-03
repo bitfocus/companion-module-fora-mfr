@@ -5,11 +5,16 @@ export type ModuleConfig = {
 	host: string
 	port: number
 	pollInterval?: number
-	autoRoute?: 'off' | 'cut' | 'preset'
+	autoRoute?: AutoRouteMode
 	videoFormat?: string
 	videoReference?: string
 	videoPoint?: string
 }
+
+export type AutoRouteMode = 'off' | 'cut' | 'preset'
+
+/** The order the mode button steps through: the live mode comes last, after the safer one */
+export const AUTO_ROUTE_ORDER: AutoRouteMode[] = ['off', 'preset', 'cut']
 
 export const DEFAULT_VIDEO = { format: '04', reference: 'RA', point: 'SO' }
 

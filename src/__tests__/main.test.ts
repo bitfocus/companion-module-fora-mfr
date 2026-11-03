@@ -38,6 +38,7 @@ vi.mock('@companion-module/base', async (importOriginal) => {
 		checkFeedbacks = vi.fn()
 		checkAllFeedbacks = vi.fn()
 		recordAction = vi.fn()
+		saveConfig = vi.fn()
 	}
 	return { ...actual, InstanceBase: StubInstanceBase, TCPHelper: FakeSocket }
 })
@@ -341,6 +342,61 @@ describe('ModuleInstance against a simulated router', () => {
 		module.routeExplicit('preset', '02', '06')
 		module.routeExplicit('cut', '01', '03')
 		expect(drainRouting()).toEqual(['@ P:0/02,06', '@ X:0/01,03'])
+	})
+
+	describe('auto-route mode', () => {
+		const lastVariables = (): Record<string, unknown> =>
+			Object.assign({}, ...(module.setVariableValues as unknown as ReturnType<typeof vi.fn>).mock.calls.map(([v]) => v))
+
+		it('steps off, preset, cut, off, saving and showing each mode', () => {
+			startUp()
+			const save = module.saveConfig as unknown as ReturnType<typeof vi.fn>
+			expect(lastVariables().auto_route_mode).toBe('OFF')
+			for (const [mode, text] of [
+				['preset', 'PRESET'],
+				['cut', 'CUT'],
+				['off', 'OFF'],
+			]) {
+				module.setAutoRouteMode('next')
+				expect(module.autoRouteMode).toBe(mode)
+				expect(save.mock.lastCall?.[0]).toMatchObject({ host: '10.0.0.1', port: 23, autoRoute: mode })
+				expect(lastVariables().auto_route_mode).toBe(text)
+				expect(module.checkFeedbacks).toHaveBeenLastCalledWith('AutoRouteMode')
+			}
+		})
+
+		it('sets a named mode, and ignores the current mode or an unknown one', () => {
+			startUp()
+			const save = module.saveConfig as unknown as ReturnType<typeof vi.fn>
+			module.setAutoRouteMode('cut')
+			expect(module.autoRouteMode).toBe('cut')
+			module.setAutoRouteMode('cut')
+			module.setAutoRouteMode('nonsense')
+			expect(module.autoRouteMode).toBe('cut')
+			expect(save).toHaveBeenCalledTimes(1)
+		})
+
+		it('does not route a pair already selected when the mode changes, only the next selection', () => {
+			startUp()
+			module.selectSource('05')
+			module.selectDestination('01')
+			module.setAutoRouteMode('cut')
+			expect(drainRouting()).toEqual([])
+			module.selectDestination('02')
+			expect(drainRouting()).toEqual(['@ X:0/02,05'])
+		})
+
+		it('keeps the connection when a save changes only the mode, and reconnects for a new address', async () => {
+			startUp()
+			module.setAutoRouteMode('cut')
+			await module.configUpdated({ ...module.config })
+			expect(sockets).toHaveLength(1)
+			await module.configUpdated({ ...module.config, autoRoute: 'off' })
+			expect(sockets).toHaveLength(1)
+			expect(lastVariables().auto_route_mode).toBe('OFF')
+			await module.configUpdated({ ...module.config, host: '10.0.0.2' })
+			expect(sockets).toHaveLength(2)
+		})
 	})
 
 	it('records the routes the operator makes while Companion is recording', () => {

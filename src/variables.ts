@@ -20,6 +20,7 @@ export function UpdateVariableDefinitions(
 ): void {
 	const definitions: CompanionVariableDefinitions<VariablesSchema> = {
 		id: { name: 'Router unit ID' },
+		auto_route_mode: { name: 'Auto-route mode (OFF, PRESET or CUT)' },
 		video_format_default: { name: 'Default video format, reference and switching point from the connection settings' },
 		level: { name: 'Crosspoint level' },
 		outputs: { name: 'Number of destinations' },

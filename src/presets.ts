@@ -33,8 +33,8 @@ const STACK = {
 
 /** Text starts large and shrinks to fit its layer */
 const FONT_SIZE = 100
-/** For the longer lock text */
-const LOCK_FONT_SIZE = 32
+/** For text that changes while the button is in use, so its size doesn't jump */
+const CHANGING_TEXT_FONT_SIZE = 32
 
 const textLayer = (
 	id: string,
@@ -266,12 +266,22 @@ export function UpdatePresets(self: ModuleInstance): void {
 	control('preset_xpt', 'Preset routing of selected source to selected destination', stacked('PRESET'), 'presetXpt')
 	control('switch_preset_xpts', 'Salvo switch preset routes', ['CUT\nPRESET\nXPTs'], 'switchPresetXpts')
 	control('clear_preset_xpts', 'Clear the preset routes', ['CLEAR\nPRESET\nXPTs'], 'clearPresetXpts')
+	presets.auto_route = styledButton({
+		name: 'Step the auto-route mode: off, preset, cut',
+		background: CONTROL,
+		lines: [{ text: `AUTO\n${VAR}auto_route_mode)`, fontsize: CHANGING_TEXT_FONT_SIZE }],
+		actions: [{ actionId: 'setAutoRoute', options: { mode: 'next' } }],
+		feedbacks: [
+			{ feedbackId: 'AutoRouteMode', options: { mode: 'preset' }, background: STAGED },
+			{ feedbackId: 'AutoRouteMode', options: { mode: 'cut' }, background: LOCKED },
+		],
+	})
 	control('rename_dst', 'Rename a destination', ['RENAME\nDST'], 'renameDst', { dst: '00', name: 'new name' })
 	control('rename_src', 'Rename a source', ['RENAME\nSRC'], 'renameSrc', { src: '00', name: 'new name' })
 	control(
 		'lock_dst',
 		'Lock / unlock a destination',
-		[{ text: `${VAR}selected_dst_lock_text)`, fontsize: LOCK_FONT_SIZE }],
+		[{ text: `${VAR}selected_dst_lock_text)`, fontsize: CHANGING_TEXT_FONT_SIZE }],
 		'lockDst',
 		{ dst: '00', mode: 'toggle', useSelected: true },
 		'auto',
@@ -330,7 +340,15 @@ export function UpdatePresets(self: ModuleInstance): void {
 					id: 'switching',
 					type: 'simple',
 					name: 'Switching',
-					presets: ['blank', 'cut_xpt', 'preset_xpt', 'switch_preset_xpts', 'clear_preset_xpts', 'lock_dst'],
+					presets: [
+						'blank',
+						'cut_xpt',
+						'preset_xpt',
+						'switch_preset_xpts',
+						'clear_preset_xpts',
+						'lock_dst',
+						'auto_route',
+					],
 				},
 				{ id: 'naming', type: 'simple', name: 'Naming', presets: ['rename_dst', 'rename_src'] },
 			],

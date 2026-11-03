@@ -53,6 +53,14 @@ export function videoFormatLabel(format: string, reference: string, point: strin
 	return `${labelOf(VIDEO_FORMATS, format)} / ${labelOf(REFERENCES, reference)} / ${labelOf(SWITCHING_POINTS, point)}`
 }
 
+export const NEXT_AUTO_ROUTE = 'next'
+
+export const AUTO_ROUTE_MODES: DropdownChoice<string>[] = [
+	{ id: 'off', label: 'Off: wait for the cut or preset button' },
+	{ id: 'preset', label: 'Preset: stage a preset straight away' },
+	{ id: 'cut', label: 'Cut: cut straight away' },
+]
+
 export const LOCK_MODES: DropdownChoice<string>[] = [
 	{ id: '0', label: 'Unlock' },
 	{ id: '1', label: 'Lock' },
