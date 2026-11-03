@@ -14,6 +14,9 @@ import { dstVar, srcVar, xptNameVar, xptPendingVar } from './variables.js'
 // Companion swaps this for the connection's label wherever it appears in preset text
 const VAR = '$(fora-mfr:'
 
+/** Companion's own feedback, lit for as long as the button is held */
+const PUSHED = 'internal:buttonPushed'
+
 const baseStyle = (text: string): CompanionButtonStyleProps => ({
 	text,
 	size: '7',
@@ -103,6 +106,7 @@ function routedDestinationPreset(i: number): CompanionPresetDefinitions<ModuleSc
 				],
 				feedbacks: [
 					{ feedbackId: 'SelectedDestination', options, styleOverrides: colour(0xffff00) },
+					{ feedbackId: PUSHED, options: {}, styleOverrides: colour(0xffff00) },
 					{ feedbackId: 'PresetDestination', options, styleOverrides: [...colour(0xff8000), ...showStaged] },
 					{ feedbackId: 'LockedDestination', options, styleOverrides: colour(0xff0000) },
 				],
@@ -119,6 +123,7 @@ function routedDestinationPreset(i: number): CompanionPresetDefinitions<ModuleSc
 				steps,
 				feedbacks: [
 					{ feedbackId: 'SelectedDestination', options, style: { bgcolor: 0xffff00, color: 0x000000 } },
+					{ feedbackId: PUSHED, options: {}, style: { bgcolor: 0xffff00, color: 0x000000 } },
 					{ feedbackId: 'PresetDestination', options, style: { bgcolor: 0xff8000, color: 0x000000 } },
 					{ feedbackId: 'LockedDestination', options, style: { bgcolor: 0xff0000, color: 0x000000 } },
 				],
@@ -127,7 +132,7 @@ function routedDestinationPreset(i: number): CompanionPresetDefinitions<ModuleSc
 	}
 }
 
-type FeedbackId = keyof FeedbacksSchema
+type FeedbackId = keyof FeedbacksSchema | typeof PUSHED
 
 interface Line {
 	text: string
@@ -307,6 +312,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 			feedbacks: [
 				{ feedbackId: 'RoutedDestination', options, background: SELECTED_DST },
 				{ feedbackId: 'SelectedDestination', options, background: SELECTED_DST },
+				{ feedbackId: PUSHED, options: {}, background: SELECTED_DST },
 				{ feedbackId: 'PresetDestination', options, background: STAGED },
 				{ feedbackId: 'LockedDestination', options, background: LOCKED },
 			],
@@ -333,6 +339,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 			feedbacks: [
 				{ feedbackId: 'RoutedSource', options, background: SELECTED_SRC },
 				{ feedbackId: 'SelectedSource', options, background: SELECTED_SRC },
+				{ feedbackId: PUSHED, options: {}, background: SELECTED_SRC },
 				{ feedbackId: 'PresetSource', options, background: STAGED },
 			],
 		})

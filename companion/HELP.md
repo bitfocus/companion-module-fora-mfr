@@ -77,7 +77,7 @@ Operator actions are sent ahead of the module's own startup reads, but never int
 ## PRESETS
 
 - Control: a blank button in the module style, cut, stage, salvo switch, clear staged, lock toggle, auto-route mode and rename buttons. The auto-route mode button steps through off, stage (orange) and cut (red: each selection goes live)
-- Destinations: a button per destination with select, routed, selected, staged and locked feedback
+- Destinations: a button per destination with select, routed, selected, staged and locked feedback. Destination and source buttons also light up for as long as they are held, which confirms a press in cut straight away mode, where the selection clears at once
 - Destinations showing their routed source: a button per destination whose text shows the source currently routed to it, updated live, with a staged route shown beneath it
 - Sources: a button per source with select, routed and selected feedback
 

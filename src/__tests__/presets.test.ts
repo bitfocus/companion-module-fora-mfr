@@ -56,7 +56,31 @@ describe('presets', () => {
 		expect(take.feedbacks.map((f: any) => f.feedbackId)).toEqual(['StagedRoutes'])
 		expect(take.feedbacks[0].styleOverrides[0].override).toBe(0xff8000)
 		const source = presets.src_0.variants[0]
-		expect(source.feedbacks.map((f: any) => f.feedbackId)).toEqual(['RoutedSource', 'SelectedSource', 'PresetSource'])
+		expect(source.feedbacks.map((f: any) => f.feedbackId)).toEqual([
+			'RoutedSource',
+			'SelectedSource',
+			'internal:buttonPushed',
+			'PresetSource',
+		])
+	})
+
+	it('lights a port button while it is held, below the staged and locked colours', () => {
+		const presets = build(2, 2)
+		const order = (id: string): string[] => presets[id].variants[0].feedbacks.map((f: any) => f.feedbackId)
+		expect(order('dst_0')).toEqual([
+			'RoutedDestination',
+			'SelectedDestination',
+			'internal:buttonPushed',
+			'PresetDestination',
+			'LockedDestination',
+		])
+		expect(order('routed_0')).toEqual([
+			'SelectedDestination',
+			'internal:buttonPushed',
+			'PresetDestination',
+			'LockedDestination',
+		])
+		expect(order('src_0')).toContain('internal:buttonPushed')
 	})
 
 	it('keeps stable preset ids', () => {
