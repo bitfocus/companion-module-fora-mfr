@@ -7,7 +7,14 @@ import {
 } from '@companion-module/base'
 import { UpdateActions, type ActionsSchema } from './actions.js'
 import { NEXT_AUTO_ROUTE, USE_DEFAULT, videoFormatLabel } from './choices.js'
-import { AUTO_ROUTE_ORDER, DEFAULT_VIDEO, GetConfigFields, type AutoRouteMode, type ModuleConfig } from './config.js'
+import {
+	AUTO_ROUTE_LABELS,
+	AUTO_ROUTE_ORDER,
+	DEFAULT_VIDEO,
+	GetConfigFields,
+	type AutoRouteMode,
+	type ModuleConfig,
+} from './config.js'
 import { SELECTION_FEEDBACKS, UpdateFeedbacks, type FeedbacksSchema } from './feedbacks.js'
 import { UpdatePresets } from './presets.js'
 import {
@@ -154,7 +161,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	#publishAutoRouteMode(): void {
-		this.setVariableValues({ auto_route_mode: this.autoRouteMode.toUpperCase() })
+		this.setVariableValues({ auto_route_mode: AUTO_ROUTE_LABELS[this.autoRouteMode] })
 		this.checkFeedbacks('AutoRouteMode')
 	}
 

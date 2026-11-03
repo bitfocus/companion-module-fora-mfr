@@ -20,7 +20,7 @@ export function UpdateVariableDefinitions(
 ): void {
 	const definitions: CompanionVariableDefinitions<VariablesSchema> = {
 		id: { name: 'Router unit ID' },
-		auto_route_mode: { name: 'Auto-route mode (OFF, PRESET or CUT)' },
+		auto_route_mode: { name: 'Auto-route mode (OFF, STAGE or CUT)' },
 		video_format_default: { name: 'Default video format, reference and switching point from the connection settings' },
 		level: { name: 'Crosspoint level' },
 		outputs: { name: 'Number of destinations' },
@@ -31,8 +31,8 @@ export function UpdateVariableDefinitions(
 		selected_dst_src_name: { name: 'Source name routed to the selected destination' },
 		selected_dst_lock_action: { name: 'What the lock button will do to the selected destination (LOCK or UNLOCK)' },
 		selected_dst_lock_text: { name: 'Lock button text for the selected destination, e.g. LOCK + name' },
-		selected_dst_preset_src_id: { name: 'Source id staged by a preset for the selected destination (hex)' },
-		selected_dst_preset_src_name: { name: 'Source name staged by a preset for the selected destination' },
+		selected_dst_preset_src_id: { name: 'Source id staged for the selected destination (hex)' },
+		selected_dst_preset_src_name: { name: 'Source name staged for the selected destination' },
 		selected_dst_label: { name: 'Selected destination name, or DST while none is selected (for button text)' },
 		selected_src_label: { name: 'Selected source name, or SRC while none is selected (for button text)' },
 		selected_src_id: { name: 'Selected source id (hex)' },

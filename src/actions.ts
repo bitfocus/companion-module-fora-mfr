@@ -52,18 +52,18 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: () => self.routeSelection('cut'),
 		},
 		presetXpt: {
-			name: 'Preset selected source to selected destination',
+			name: 'Stage selected source to selected destination',
 			options: [],
 			callback: () => self.routeSelection('preset'),
 		},
 		switchPresetXpts: {
-			name: 'Switch preset crosspoint(s)',
+			name: 'Switch staged crosspoint(s)',
 			options: [],
 			callback: () => self.cutPresets(),
 		},
 		presetRoute: {
-			name: 'Preset a route: stage this source to this destination',
-			description: 'Stage one route without using the selection. Add several, then Switch preset crosspoint(s).',
+			name: 'Stage a route: this source to this destination',
+			description: 'Stage one route without using the selection. Add several, then Switch staged crosspoint(s).',
 			options: [
 				{ type: 'dropdown', id: 'dst', label: 'Destination :', default: '00', choices: dst },
 				{ type: 'dropdown', id: 'src', label: 'Source :', default: '00', choices: src },
@@ -79,7 +79,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: (action) => self.routeExplicit('cut', action.options.dst, action.options.src),
 		},
 		clearPresetXpts: {
-			name: 'Clear preset crosspoint(s)',
+			name: 'Clear staged crosspoint(s)',
 			options: [],
 			callback: () => self.clearPresets(),
 		},
@@ -92,7 +92,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					id: 'mode',
 					label: 'Mode :',
 					default: NEXT_AUTO_ROUTE,
-					choices: [{ id: NEXT_AUTO_ROUTE, label: 'Next mode (off, preset, cut, off)' }, ...AUTO_ROUTE_MODES],
+					choices: [{ id: NEXT_AUTO_ROUTE, label: 'Next mode (off, stage, cut, off)' }, ...AUTO_ROUTE_MODES],
 				},
 			],
 			callback: (action) => self.setAutoRouteMode(action.options.mode),

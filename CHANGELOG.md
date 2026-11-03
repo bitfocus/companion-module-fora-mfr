@@ -20,16 +20,17 @@ buttons already placed, keep working: their ids and option names are unchanged, 
 
 ### Features
 
-- **feat(routing):** staged presets (`P:`) are read back from the router (`V?`). New **Preset destination** and **Preset source** feedbacks, the `selected_dst_preset_src_id` / `_name` variables, and the `xpt##_pending_name` variable show what is staged before it is taken.
-- **feat(routing):** new **Clear preset crosspoint(s)** action (`B:C`) to discard staged routes.
-- **feat(routing):** new **Preset a route** and **Cut a route** actions that take an explicit destination and source instead of using the selection.
-- **feat(routing):** new connection setting "When a destination and a source are both selected": wait for the button (default), cut straight away, or stage a preset straight away. Staging keeps the pair on show, so a salvo is built by picking a source and tapping destinations, then taken with **Switch preset crosspoint(s)**. Cutting a destination removes it from the staged routes, so a later take cannot undo the cut. A cut to a locked destination logs a warning and keeps the selection and staged route.
-- **feat(routing):** new **Set auto-route mode** action, **Auto-route mode** feedback, `auto_route_mode` variable and a preset that steps off, preset, cut. The mode is saved in the connection settings. Changing a setting other than the host, port or refresh interval no longer reconnects.
-- **feat(recording):** supports Companion's action recording. Stage or cut routes while recording and they are captured as **Preset a route** / **Cut a route** actions, ready to replay from one button.
-- **feat(routing):** routes and staged presets are re-read from the router every 5 seconds (connection setting, 0 turns it off) and straight after each routing command, so route changes made from the web UI or a panel appear on buttons. Staged routes are per connection on the router, so only this module's own are shown.
+- **feat(routing):** staged routes (`P:`) are read back from the router (`V?`). New **Staged destination** and **Staged source** feedbacks, the `selected_dst_preset_src_id` / `_name` variables, and the `xpt##_pending_name` variable show what is staged before it is taken.
+- **feat(routing):** routes waiting for a take are called _staged_ throughout, on buttons and in action and feedback names, so they can't be confused with Companion's button presets. The ids of the actions and feedbacks and the names of the variables are unchanged.
+- **feat(routing):** new **Clear staged crosspoint(s)** action (`B:C`) to discard staged routes.
+- **feat(routing):** new **Stage a route** and **Cut a route** actions that take an explicit destination and source instead of using the selection.
+- **feat(routing):** new connection setting "When a destination and a source are both selected": wait for the button (default), cut straight away, or stage straight away. Staging keeps the pair on show, so a salvo is built by picking a source and tapping destinations, then taken with **Switch staged crosspoint(s)**. Cutting a destination removes it from the staged routes, so a later take cannot undo the cut. A cut to a locked destination logs a warning and keeps the selection and staged route.
+- **feat(routing):** new **Set auto-route mode** action, **Auto-route mode** feedback, `auto_route_mode` variable and a preset that steps off, stage, cut. The mode is saved in the connection settings. Changing a setting other than the host, port or refresh interval no longer reconnects.
+- **feat(recording):** supports Companion's action recording. Stage or cut routes while recording and they are captured as **Stage a route** / **Cut a route** actions, ready to replay from one button.
+- **feat(routing):** routes and staged routes are re-read from the router every 5 seconds (connection setting, 0 turns it off) and straight after each routing command, so route changes made from the web UI or a panel appear on buttons. Staged routes are per connection on the router, so only this module's own are shown.
 - **feat(lock):** the lock action can toggle lock / unlock and can act on the selected destination. The lock preset shows `LOCK` or `UNLOCK` with the destination name, driven by the new `selected_dst_lock_action` and `selected_dst_lock_text` variables.
 - **feat(video):** the default video format, reference and switching point are set in the connection settings and shown by the `video_format_default` variable. The **Preset video format** action can use them ("Use the connection default") and can apply straight away. The module never changes the router's format by itself.
-- **feat(presets):** presets use Companion 5 layered buttons with a plain text fallback: a blank button in the module style, destination and source buttons, cut and preset buttons laid out as source / `v` / destination, and a destination button that shows its routed source and, only while a route is staged, the staged source.
+- **feat(presets):** presets use Companion 5 layered buttons with a plain text fallback: a blank button in the module style, destination and source buttons, cut and stage buttons laid out as source / `v` / destination, and a destination button that shows its routed source and, only while a route is staged, the staged source.
 - **feat(variables):** new `xpt##_name` (routed source name per destination), `selected_src_label` and `selected_dst_label` (names, or `SRC` / `DST` while nothing is selected).
 
 ### Bug Fixes
@@ -43,7 +44,7 @@ buttons already placed, keep working: their ids and option names are unchanged, 
 - **fix(select):** the crosspoint lookup used when selecting a destination had an off-by-one.
 - **fix(select):** choosing a port outside the router's size, cutting without both ends selected, or locking before the unit ID is known now logs a warning instead of sending a malformed command or throwing.
 - **fix(actions):** the default text for the rename actions is `New name` (it was an object), and the lock feedback treats any non-zero lock mode as locked.
-- **fix(ui):** the periodic refresh no longer makes buttons flash. Unchanged routes, locks and staged presets are ignored, and the staged list is replaced once, when the reply is complete.
+- **fix(ui):** the periodic refresh no longer makes buttons flash. Unchanged routes, locks and staged routes are ignored, and the staged list is replaced once, when the reply is complete.
 - **fix(lifecycle):** timers are cleared on destroy and on a new connection. v1's blink timer leaked; the blink is gone.
 
 ### Performance Improvements

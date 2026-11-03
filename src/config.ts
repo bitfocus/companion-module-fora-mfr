@@ -16,6 +16,9 @@ export type AutoRouteMode = 'off' | 'cut' | 'preset'
 /** The order the mode button steps through: the live mode comes last, after the safer one */
 export const AUTO_ROUTE_ORDER: AutoRouteMode[] = ['off', 'preset', 'cut']
 
+/** Shown on buttons. The id stays `preset` so saved connections keep working. */
+export const AUTO_ROUTE_LABELS: Record<AutoRouteMode, string> = { off: 'OFF', preset: 'STAGE', cut: 'CUT' }
+
 export const DEFAULT_VIDEO = { format: '04', reference: 'RA', point: 'SO' }
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
@@ -61,9 +64,9 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			width: 12,
 			default: 'off',
 			choices: [
-				{ id: 'off', label: 'Wait for the cut or preset button' },
+				{ id: 'off', label: 'Wait for the cut or stage button' },
 				{ id: 'cut', label: 'Cut straight away' },
-				{ id: 'preset', label: 'Stage a preset straight away (build a salvo, then take it)' },
+				{ id: 'preset', label: 'Stage straight away (build a salvo, then take it)' },
 			],
 		},
 		{

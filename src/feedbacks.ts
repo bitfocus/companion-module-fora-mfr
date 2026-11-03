@@ -72,9 +72,9 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 		},
 		PresetSource: {
-			name: 'Preset source',
+			name: 'Staged source',
 			type: 'boolean',
-			description: 'True if this source is staged by a preset for the selected destination',
+			description: 'True if this source is staged for the selected destination',
 			defaultStyle: { bgcolor: 0xff8000, color: 0x000000 },
 			options: [{ type: 'dropdown', id: 'src', label: 'Source :', default: '00', choices: src }],
 			callback: (feedback) => {
@@ -83,9 +83,9 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			},
 		},
 		PresetDestination: {
-			name: 'Preset destination',
+			name: 'Staged destination',
 			type: 'boolean',
-			description: 'True if a preset is staged for this destination and has not been taken yet',
+			description: 'True if a route is staged for this destination and has not been taken yet',
 			defaultStyle: { bgcolor: 0xff8000, color: 0x000000 },
 			options: [{ type: 'dropdown', id: 'dst', label: 'Destination :', default: '00', choices: dst }],
 			callback: (feedback) => {

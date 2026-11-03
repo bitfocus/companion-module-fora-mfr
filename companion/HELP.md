@@ -10,15 +10,15 @@ The module sends one command at a time and waits for the router's prompt before 
 
 ## HOW IT WORKS
 
-Select a destination and a source, in either order, then press a cut or preset button. The pair stays selected until you cut.
+Select a destination and a source, in either order, then press a cut or stage button. The pair stays selected until you cut.
 
-To build a salvo (a soft macro) of several routes: select a source, then a destination, and press PRESET; the pair stays on show, and each further destination you press and PRESET is added with the same source. Pressing a source starts a new pair. Set "When a destination and a source are both selected" to "Stage a preset straight away" in the connection settings to drop the PRESET press entirely. Destinations showing a staged route show the staged source on their own line and turn orange. Press the salvo switch button to take them all at once, or clear presets to discard them. The module learns the router's size, port names, crosspoints, staged presets and destination locks on connect, and re-reads the crosspoints and presets every few seconds (see the refresh setting) so route changes made elsewhere show up. A cut to a locked destination is refused: the module logs a warning and keeps the selection and any staged route. Staged routes belong to the connection that made them: routes staged from a panel or another client are not visible to this module, and it can only take or clear its own.
+To build a salvo (a soft macro) of several routes: select a source, then a destination, and press STAGE; the pair stays on show, and each further destination you press and STAGE is added with the same source. Pressing a source starts a new pair. Set "When a destination and a source are both selected" to "Stage straight away" in the connection settings to drop the STAGE press entirely. Destinations showing a staged route show the staged source on their own line and turn orange. Press the salvo switch button to take them all at once, or clear staged to discard them. The module learns the router's size, port names, crosspoints, staged routes and destination locks on connect, and re-reads the crosspoints and staged routes every few seconds (see the refresh setting) so route changes made elsewhere show up. A cut to a locked destination is refused: the module logs a warning and keeps the selection and any staged route. Staged routes belong to the connection that made them: routes staged from a panel or another client are not visible to this module, and it can only take or clear its own. The router's manual calls a staged route a "preset crosspoint".
 
 The router's lowest level that responds to a system size request is the one controlled.
 
 ## RECORDING A MACRO
 
-The module supports Companion's action recording. On a button, use the learn (record) option on the action list, then press your source and destination buttons and the salvo switch as you normally would. Each staged or cut route is added as a "Preset a route" or "Cut a route" action, and the salvo switch as "Switch preset crosspoint(s)". Staging the same destination again before a take replaces its earlier action; everything else is kept in the order you did it, including several salvos and clears. Stop recording and the button now repeats that salvo in one press.
+The module supports Companion's action recording. On a button, use the learn (record) option on the action list, then press your source and destination buttons and the salvo switch as you normally would. Each staged or cut route is added as a "Stage a route" or "Cut a route" action, and the salvo switch as "Switch staged crosspoint(s)". Staging the same destination again before a take replaces its earlier action; everything else is kept in the order you did it, including several salvos and clears. Stop recording and the button now repeats that salvo in one press.
 
 Companion's own recording controls are internal actions, which module presets cannot contain, so set up three buttons on a page (the blank module-style preset makes a good macro button):
 
@@ -38,12 +38,12 @@ Add the salvo switch button press before you stop recording if you want the macr
 - `xpt##` hex id of the source routed to each destination
 - `xpt##_name` name of the source routed to each destination
 - `dst##_locked` lock mode of each destination (0 unlocked, 1 locked, 2 locked by others)
-- `auto_route_mode` what happens when a destination and a source are both selected: OFF, PRESET or CUT
+- `auto_route_mode` what happens when a destination and a source are both selected: OFF, STAGE or CUT
 - `selected_dst_id`, `selected_dst_name` the selected destination
 - `selected_dst_src_id`, `selected_dst_src_name` the source routed to the selected destination
 - `selected_src_id`, `selected_src_name` the selected source
-- `selected_dst_label`, `selected_src_label` the selected names, or `DST` / `SRC` while nothing is selected (used by the cut and preset buttons)
-- `selected_dst_preset_src_id`, `selected_dst_preset_src_name` the source staged by a preset for the selected destination
+- `selected_dst_label`, `selected_src_label` the selected names, or `DST` / `SRC` while nothing is selected (used by the cut and stage buttons)
+- `selected_dst_preset_src_id`, `selected_dst_preset_src_name` the source staged for the selected destination
 - `selected_dst_lock_action`, `selected_dst_lock_text` what pressing the lock button will do (LOCK or UNLOCK) and ready made button text
 - `active_selected_id`, `active_selected_name`, `active_selected_type` the most recent selection (`src` or `dst`)
 
@@ -53,11 +53,11 @@ Selection variables are empty when nothing is selected, and are cleared after a 
 
 - Set destination / Set source: make a selection
 - Cut selected source to selected destination
-- Preset selected source to selected destination
-- Switch preset crosspoint(s): perform all preset crosspoints together
-- Preset a route / Cut a route: stage or cut one explicit source to destination pair, without using the selection
-- Clear preset crosspoint(s): discard all staged presets
-- Set auto-route mode: off, preset, cut or the next of these. It is saved in the connection settings, and applies from the next selection, so a pair already selected is not routed by changing the mode
+- Stage selected source to selected destination
+- Switch staged crosspoint(s): perform all staged crosspoints together
+- Stage a route / Cut a route: stage or cut one explicit source to destination pair, without using the selection
+- Clear staged crosspoint(s): discard all staged routes
+- Set auto-route mode: off, stage, cut or the next of these. It is saved in the connection settings, and applies from the next selection, so a pair already selected is not routed by changing the mode
 - Preset video format (format, reference and switching point, each of which can be "Use the connection default" set in the connection settings), optionally applied straight away; Apply and Cancel preset video format. These are actions only, with no preset buttons: the router restarts when a new format is accepted and cannot report its current format, so there is no feedback and a stray press is costly.
 - Rename a destination or source. The router may shorten a name or drop characters (an MFR tested kept 16 ASCII characters), so the module shows what it reports back and logs a warning if it differs
 - Lock / unlock a destination, or toggle the lock of the selected destination
@@ -69,14 +69,14 @@ Operator actions are sent ahead of the module's own startup reads, but never int
 - Selected destination / Selected source: this port is selected
 - Routed source: this source is routed to the selected destination
 - Routed destination: this destination carries the selected source
-- Preset destination / Preset source: a preset is staged for this destination, or this source is staged for the selected destination
+- Staged destination / Staged source: a route is staged for this destination, or this source is staged for the selected destination
 - Locked destination: this destination is locked
 - Auto-route mode: the auto-route mode is the one chosen
 
 ## PRESETS
 
-- Control: a blank button in the module style, cut, preset, salvo switch, clear presets, lock toggle, auto-route mode and rename buttons. The auto-route mode button steps through off, preset (orange) and cut (red: each selection goes live)
-- Destinations: a button per destination with select, routed, selected, preset and locked feedback
+- Control: a blank button in the module style, cut, stage, salvo switch, clear staged, lock toggle, auto-route mode and rename buttons. The auto-route mode button steps through off, stage (orange) and cut (red: each selection goes live)
+- Destinations: a button per destination with select, routed, selected, staged and locked feedback
 - Destinations showing their routed source: a button per destination whose text shows the source currently routed to it, updated live, with a staged route shown beneath it
 - Sources: a button per source with select, routed and selected feedback
 

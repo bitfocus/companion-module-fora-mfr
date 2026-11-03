@@ -263,11 +263,11 @@ export function UpdatePresets(self: ModuleInstance): void {
 		{ text: `${VAR}selected_dst_label)`, bounds: { x: 5, y: 60, width: 90, height: 30 } },
 	]
 	control('cut_xpt', 'Cut selected source to selected destination', stacked('CUT'), 'switchXpt')
-	control('preset_xpt', 'Preset routing of selected source to selected destination', stacked('PRESET'), 'presetXpt')
-	control('switch_preset_xpts', 'Salvo switch preset routes', ['CUT\nPRESET\nXPTs'], 'switchPresetXpts')
-	control('clear_preset_xpts', 'Clear the preset routes', ['CLEAR\nPRESET\nXPTs'], 'clearPresetXpts')
+	control('preset_xpt', 'Stage selected source to selected destination', stacked('STAGE'), 'presetXpt')
+	control('switch_preset_xpts', 'Salvo switch staged routes', ['CUT\nSTAGED\nXPTs'], 'switchPresetXpts')
+	control('clear_preset_xpts', 'Clear the staged routes', ['CLEAR\nSTAGED\nXPTs'], 'clearPresetXpts')
 	presets.auto_route = styledButton({
-		name: 'Step the auto-route mode: off, preset, cut',
+		name: 'Step the auto-route mode: off, stage, cut',
 		background: CONTROL,
 		lines: [{ text: `AUTO\n${VAR}auto_route_mode)`, fontsize: CHANGING_TEXT_FONT_SIZE }],
 		actions: [{ actionId: 'setAutoRoute', options: { mode: 'next' } }],

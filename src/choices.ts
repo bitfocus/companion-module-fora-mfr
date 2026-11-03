@@ -56,8 +56,8 @@ export function videoFormatLabel(format: string, reference: string, point: strin
 export const NEXT_AUTO_ROUTE = 'next'
 
 export const AUTO_ROUTE_MODES: DropdownChoice<string>[] = [
-	{ id: 'off', label: 'Off: wait for the cut or preset button' },
-	{ id: 'preset', label: 'Preset: stage a preset straight away' },
+	{ id: 'off', label: 'Off: wait for the cut or stage button' },
+	{ id: 'preset', label: 'Stage: stage straight away' },
 	{ id: 'cut', label: 'Cut: cut straight away' },
 ]
 

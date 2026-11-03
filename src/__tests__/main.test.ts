@@ -353,7 +353,7 @@ describe('ModuleInstance against a simulated router', () => {
 			const save = module.saveConfig as unknown as ReturnType<typeof vi.fn>
 			expect(lastVariables().auto_route_mode).toBe('OFF')
 			for (const [mode, text] of [
-				['preset', 'PRESET'],
+				['preset', 'STAGE'],
 				['cut', 'CUT'],
 				['off', 'OFF'],
 			]) {
