@@ -145,3 +145,43 @@ describe('FakeMfr matches the bytes measured on a real router', () => {
 		expect(await third.request('@ F?1')).toBe('@ F?1\r\r\n>')
 	})
 })
+
+describe('FakeMfr holds', () => {
+	it('pauses a reply and lets the rest through on release', async () => {
+		const router = new FakeMfr()
+		await router.start()
+		try {
+			const client = await router.connectClient()
+			const hold = router.hold('@ A?', 3)
+			await until(() => client.connection !== undefined, 'the router to accept the client')
+			client.send('@ A?')
+			await until(() => hold.reached, 'the hold')
+			await until(() => client.output === '@ A', 'the first part')
+			hold.release()
+			await until(() => client.settled, 'the rest of the reply')
+			expect(client.output).toBe('@ A?\r\r\nA:15\r\n\r\n>')
+			// a hold is used once
+			expect(await client.request('@ A?')).toBe('@ A?\r\r\nA:15\r\n\r\n>')
+		} finally {
+			await router.stop()
+		}
+	})
+
+	it('releases a paused reply on stop, so a failing test cannot leave it stuck', async () => {
+		const router = new FakeMfr()
+		await router.start()
+		const client = await router.connectClient()
+		const unused = router.hold('@ F?0', 1)
+		const hold = router.hold('@ A?', 3)
+		await until(() => client.connection !== undefined, 'the router to accept the client')
+		const connection = client.connection!
+		client.send('@ A?')
+		await until(() => hold.reached, 'the hold')
+		expect(connection.busy).toBe(true)
+
+		await router.stop()
+		expect(hold.released).toBe(true)
+		expect(unused.released).toBe(true)
+		await until(() => !connection.busy, 'the paused reply to finish')
+	})
+})

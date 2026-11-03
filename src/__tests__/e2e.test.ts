@@ -66,6 +66,10 @@ const mock = (fn: unknown): Mock => fn as Mock
 const LEVEL = '0'
 const DST = 40
 const SRC = 36
+/** For the tests that run a reply split at every byte, or the whole startup one byte per packet */
+const HEAVY = { timeout: 30_000 }
+/** How long the startup may take when the router drips one byte per packet */
+const DRIP_STARTUP_MS = 15_000
 
 describe('ModuleInstance against the fake router over TCP', () => {
 	let router: FakeMfr
@@ -97,11 +101,15 @@ describe('ModuleInstance against the fake router over TCP', () => {
 	}
 
 	/** Start the module and wait until it has read everything from the router */
-	async function startModule(): Promise<Module> {
+	async function startModule(startupMs?: number): Promise<Module> {
 		module = new ModuleInstance({})
 		await module.init({ host: '127.0.0.1', port: router.port, pollInterval: 5 })
 		await until(() => socket()?.isConnected && connection() !== undefined, 'the module to connect')
-		await until(() => sent().at(-1) === `@ W?${LEVEL},${(DST - 1).toString(16).toUpperCase()}`, 'the startup reads')
+		await until(
+			() => sent().at(-1) === `@ W?${LEVEL},${(DST - 1).toString(16).toUpperCase()}`,
+			'the startup reads',
+			startupMs,
+		)
 		await settle()
 		return module
 	}
@@ -133,11 +141,11 @@ describe('ModuleInstance against the fake router over TCP', () => {
 	describe('startup', () => {
 		beforeEach(async () => startRouter())
 
-		it('reads the CPU, size, routes, staged routes, names and locks, one command per prompt', async () => {
+		it('reads the CPU, size, routes, staged routes, names and locks, one command per prompt', HEAVY, async () => {
 			router.drip = true
 			router.locks.set(3, { id: '15', mode: 1 })
 			router.setName('src', 33, 'CAM 34')
-			const m = await startModule()
+			const m = await startModule(DRIP_STARTUP_MS)
 
 			expect(router.violations).toEqual([])
 			expect(sent()).toEqual([
@@ -168,9 +176,9 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			expect(m.updateStatus).toHaveBeenLastCalledWith(InstanceStatus.Ok, undefined)
 		})
 
-		it('never sends a command before the previous prompt, even with every byte in its own packet', async () => {
+		it('never sends a command before the previous prompt, even with every byte in its own packet', HEAVY, async () => {
 			router.drip = true
-			const m = await startModule()
+			const m = await startModule(DRIP_STARTUP_MS)
 			m.routeExplicit('preset', '01', '05')
 			m.routeExplicit('preset', '02', '06')
 			m.routeExplicit('cut', '01', '03')
@@ -230,7 +238,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			await settle()
 		}
 
-		it('handles the S? reply split at every byte, including right before the prompt', async () => {
+		it('handles the S? reply split at every byte, including right before the prompt', HEAVY, async () => {
 			const m = await start20()
 			const replyLength = (): number =>
 				`@ S?0\r\r\n${router.routes
@@ -251,7 +259,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			expect(router.violations).toEqual([])
 		})
 
-		it('handles the V? reply split at every byte, replacing the staged list only at the prompt', async () => {
+		it('handles the V? reply split at every byte, replacing the staged list only at the prompt', HEAVY, async () => {
 			const m = await start20()
 			const sets = [
 				new Map([
@@ -382,16 +390,38 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			vi.advanceTimersByTime(1)
 			expect(sent().at(-1)).toBe('@ V?0')
 
-			// the router comes back: everything after that is read normally
+			// V? is ignored too: the router comes back only once it has V?, so V? is never answered.
+			// Answering it late would land its prompt on the next command and put the rest of the
+			// startup one prompt out of step.
+			await until(() => router.received.at(-1)?.command === '@ V?0', 'the router to get V?')
+			await settle()
 			router.ignore = () => false
-			vi.advanceTimersByTime(5000)
+			expect(router.commandsFrom(connection())).toEqual(['@ A?', '@ F?0', '@ S?0', '@ V?0'])
+
+			// V? has a long reply, so the module waits 5 s before the next command
+			vi.advanceTimersByTime(4999)
+			expect(sent().at(-1)).toBe('@ V?0')
+			vi.advanceTimersByTime(1)
+			expect(sent().at(-1)).toBe('@ K?SA,000')
+
+			// everything after that is read normally, one command per prompt
 			await until(() => sent().at(-1) === '@ W?0,27', 'the rest of the startup reads')
 			await settle()
+			expect(router.commandsFrom(connection())).toEqual(sent())
+			// The commands the module moved on from were never answered, so nothing was waiting for a
+			// prompt when the next one went out: none of the timeouts counts as sending early.
+			expect(router.violations).toEqual([])
+			expect(module.state.srcNames.size).toBe(SRC)
 			expect(module.state.dstNames.size).toBe(DST)
+			expect(module.state.locks.size).toBe(DST)
 			expect(module.state.routerId).toBeUndefined()
 			expect(module.state.routes.size).toBe(0)
+			expect(module.state.presets.size).toBe(0)
+
+			// the next refresh reads the routes it missed
 			await refresh()
 			expect(routes(module)).toEqual(routerRoutes())
+			expect(router.violations).toEqual([])
 		})
 	})
 

@@ -63,6 +63,10 @@ buttons already placed, keep working: their ids and option names are unchanged, 
 
 - **docs:** `HELP.md` rewritten: setup, how selection and salvos work, recording a macro, variables, actions, feedbacks and presets. `README.md` describes development and the source layout.
 
+### Continuous Integration
+
+- **ci:** GitHub Actions run `yarn typecheck`, `yarn lint`, `yarn test` and `yarn package` on each pull request and each push to `main`, and check that each commit in a pull request follows Conventional Commits (Dependabot's `Bump …` commits and git's `Revert` / `Reapply` commits are exempt). The commit message check has its own tests, run in CI.
+
 ### Removed
 
 - **Video format presets** (preset, apply and cancel). The router restarts when a new format is accepted and cannot report its current format, so a button could not show or confirm anything and a stray press is costly. The Preset, Apply and Cancel video format **actions** remain.
