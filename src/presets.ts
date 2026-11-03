@@ -31,7 +31,19 @@ const STACK = {
 	pending: { x: 5, y: 65, width: 90, height: 30 },
 }
 
-const textLayer = (id: string, name: string, text: string, bounds: (typeof STACK)['dst'], enabled = true) =>
+/** Text starts large and shrinks to fit its layer */
+const FONT_SIZE = 100
+/** For the longer lock text */
+const LOCK_FONT_SIZE = 32
+
+const textLayer = (
+	id: string,
+	name: string,
+	text: string,
+	bounds: (typeof STACK)['dst'],
+	enabled = true,
+	fontsize = FONT_SIZE,
+) =>
 	({
 		type: 'text',
 		id,
@@ -42,7 +54,7 @@ const textLayer = (id: string, name: string, text: string, bounds: (typeof STACK
 		color: 0x000000,
 		halign: 'center',
 		valign: 'center',
-		fontsize: 32,
+		fontsize,
 		fontsizeAllowShrink: true,
 		font: 'companion-mono',
 		outlineColor: 0xff000000,
@@ -125,6 +137,8 @@ interface Line {
 	weight?: number
 	/** Exact position and size in percent, instead of sharing the height */
 	bounds?: { x: number; y: number; width: number; height: number }
+	/** Starting text size, default `FONT_SIZE` */
+	fontsize?: number
 }
 
 interface ButtonSpec {
@@ -152,7 +166,14 @@ function styledButton(spec: ButtonSpec): CompanionPresetDefinitions<ModuleSchema
 		if (line.bounds) return textLayer(`line${index}`, `line ${index + 1}`, line.text, line.bounds)
 		const height = line.symbol ? 15 : (room * (line.weight ?? 2)) / totalWeight
 		const bounds = line.symbol ? { x: 40, width: 20 } : { x: 5, width: 90 }
-		const layer = textLayer(`line${index}`, `line ${index + 1}`, line.text, { ...bounds, y, height })
+		const layer = textLayer(
+			`line${index}`,
+			`line ${index + 1}`,
+			line.text,
+			{ ...bounds, y, height },
+			true,
+			line.fontsize,
+		)
 		y += height
 		return layer
 	})
@@ -238,7 +259,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 	const stacked = (label: string): Line[] => [
 		{ text: label, bounds: { x: 5, y: 5, width: 90, height: 25 } },
 		{ text: `${VAR}selected_src_label)`, bounds: { x: 5, y: 30, width: 90, height: 30 } },
-		{ text: 'v', symbol: true, bounds: { x: 40, y: 50, width: 20, height: 15 } },
+		{ text: 'v', symbol: true, bounds: { x: 40, y: 52, width: 20, height: 15 } },
 		{ text: `${VAR}selected_dst_label)`, bounds: { x: 5, y: 60, width: 90, height: 30 } },
 	]
 	control('cut_xpt', 'Cut selected source to selected destination', stacked('CUT'), 'switchXpt')
@@ -250,7 +271,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 	control(
 		'lock_dst',
 		'Lock / unlock a destination',
-		[`${VAR}selected_dst_lock_text)`],
+		[{ text: `${VAR}selected_dst_lock_text)`, fontsize: LOCK_FONT_SIZE }],
 		'lockDst',
 		{ dst: '00', mode: 'toggle', useSelected: true },
 		'auto',
