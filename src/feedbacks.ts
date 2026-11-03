@@ -8,6 +8,7 @@ export const SELECTION_FEEDBACKS = [
 	'RoutedSource',
 	'RoutedDestination',
 	'PresetSource',
+	'StagedRoutes',
 ] as const
 
 export type FeedbacksSchema = {
@@ -19,6 +20,7 @@ export type FeedbacksSchema = {
 	PresetDestination: { type: 'boolean'; options: { dst: string } }
 	LockedDestination: { type: 'boolean'; options: { dst: string } }
 	AutoRouteMode: { type: 'boolean'; options: { mode: string } }
+	StagedRoutes: { type: 'boolean'; options: Record<string, never> }
 }
 
 export function UpdateFeedbacks(self: ModuleInstance): void {
@@ -30,12 +32,14 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		SelectedSource: {
 			name: 'Show selected source',
 			type: 'boolean',
-			description: 'If this source is selected the button will be highlighted irrespective of routing',
+			description:
+				'If this source is selected the button will be highlighted irrespective of routing. It flashes while it is the next source for the selected destination.',
 			defaultStyle: { bgcolor: 0x00ff00, color: 0x000000 },
 			options: [{ type: 'dropdown', id: 'src', label: 'Source :', default: '00', choices: src }],
 			callback: (feedback) => {
 				const port = parseHex(feedback.options.src)
-				return port !== undefined && state.isSrcSelected(port)
+				if (port === undefined || !state.isSrcSelected(port)) return false
+				return port !== state.nextSrc || state.flashOn
 			},
 		},
 		SelectedDestination: {
@@ -103,6 +107,14 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				const port = parseHex(feedback.options.dst)
 				return port !== undefined && state.isLocked(port)
 			},
+		},
+		StagedRoutes: {
+			name: 'Staged routes waiting',
+			type: 'boolean',
+			description: 'Flashes while routes are staged and have not been taken',
+			defaultStyle: { bgcolor: 0xff8000, color: 0x000000 },
+			options: [],
+			callback: () => state.hasStagedRoutes && state.flashOn,
 		},
 		AutoRouteMode: {
 			name: 'Auto-route mode',

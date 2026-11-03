@@ -59,6 +59,7 @@ export { UpgradeScripts }
 /** The router has at most 8 levels; each is probed to find the one in use */
 const MAX_LEVELS = 8
 const DEFINITIONS_DEBOUNCE_MS = 100
+const FLASH_MS = 500
 
 export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	config!: ModuleConfig // Setup in init()
@@ -76,6 +77,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	/** Staged routes collected from the reply to the V? in progress */
 	#presetSweep: Map<number, number> | undefined
 	#pollTimer: ReturnType<typeof setInterval> | undefined
+	#flashTimer: ReturnType<typeof setInterval> | undefined
 	#definitionsTimer: ReturnType<typeof setTimeout> | undefined
 	#choicesDirty = false
 	#portsDirty = false
@@ -95,6 +97,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	async destroy(): Promise<void> {
 		this.#disconnect()
+		this.#stopFlash()
 		if (this.#definitionsTimer) clearTimeout(this.#definitionsTimer)
 		this.#definitionsTimer = undefined
 		this.log('debug', 'destroy')
@@ -488,13 +491,21 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				if (message.level !== state.level || message.dst >= state.dstCount) break
 				if (state.routes.get(message.dst) === message.src) break
 				state.routes.set(message.dst, message.src)
+				this.#syncFlash()
 				this.setVariableValues({
 					[xptVar(message.dst)]: toHex(message.src),
 					[xptNameVar(message.dst)]: state.routedSrcName(message.dst),
 					[xptPendingVar(message.dst)]: pendingText(state, message.dst),
 				})
 				if (message.dst === state.selectedDst) this.setVariableValues(selectionValues(state))
-				this.checkFeedbacks('RoutedSource', 'RoutedDestination', 'PresetSource', 'PresetDestination')
+				this.checkFeedbacks(
+					'SelectedSource',
+					'RoutedSource',
+					'RoutedDestination',
+					'PresetSource',
+					'PresetDestination',
+					'StagedRoutes',
+				)
 				break
 			}
 
@@ -547,7 +558,31 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	#selectionChanged(): void {
 		this.setVariableValues(selectionValues(this.state))
+		// start from the bright half, so a press shows straight away
+		this.#stopFlash()
+		this.#syncFlash()
 		this.checkFeedbacks(...SELECTION_FEEDBACKS)
+	}
+
+	/** The flash only runs while a source is about to change a route or routes are staged */
+	#syncFlash(): void {
+		const { state } = this
+		if (state.nextSrc === undefined && !state.hasStagedRoutes) {
+			if (!this.#flashTimer) return
+			this.#stopFlash()
+			this.checkFeedbacks('SelectedSource', 'StagedRoutes')
+			return
+		}
+		this.#flashTimer ??= setInterval(() => {
+			state.flashOn = !state.flashOn
+			this.checkFeedbacks('SelectedSource', 'StagedRoutes')
+		}, FLASH_MS)
+	}
+
+	#stopFlash(): void {
+		if (this.#flashTimer) clearInterval(this.#flashTimer)
+		this.#flashTimer = undefined
+		this.state.flashOn = true
 	}
 
 	/** While Companion is recording, what the operator does becomes actions they can put on a button */
@@ -572,7 +607,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		// a V? already in flight can't include this change; the refresh that follows every change will
 		this.#presetSweep = undefined
 		this.setVariableValues({ ...selectionValues(this.state), ...routedNameValues(this.state) })
-		this.checkFeedbacks('PresetSource', 'PresetDestination')
+		this.#syncFlash()
+		this.checkFeedbacks('SelectedSource', 'PresetSource', 'PresetDestination', 'StagedRoutes')
 	}
 
 	#nameChanged(kind: NameKind, index: number): void {

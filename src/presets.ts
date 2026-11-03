@@ -264,7 +264,14 @@ export function UpdatePresets(self: ModuleInstance): void {
 	]
 	control('cut_xpt', 'Cut selected source to selected destination', stacked('CUT'), 'switchXpt')
 	control('preset_xpt', 'Stage selected source to selected destination', stacked('STAGE'), 'presetXpt')
-	control('switch_preset_xpts', 'Salvo switch staged routes', ['CUT\nSTAGED\nXPTs'], 'switchPresetXpts')
+	presets.switch_preset_xpts = styledButton({
+		name: 'Salvo switch staged routes',
+		background: CONTROL,
+		lines: ['CUT\nSTAGED\nXPTs'],
+		size: '7',
+		actions: [{ actionId: 'switchPresetXpts', options: {} }],
+		feedbacks: [{ feedbackId: 'StagedRoutes', options: {}, background: STAGED }],
+	})
 	control('clear_preset_xpts', 'Clear the staged routes', ['CLEAR\nSTAGED\nXPTs'], 'clearPresetXpts')
 	presets.auto_route = styledButton({
 		name: 'Step the auto-route mode: off, stage, cut',
@@ -325,8 +332,8 @@ export function UpdatePresets(self: ModuleInstance): void {
 			actions: [{ actionId: 'setSrc', options }],
 			feedbacks: [
 				{ feedbackId: 'RoutedSource', options, background: SELECTED_SRC },
-				{ feedbackId: 'PresetSource', options, background: STAGED },
 				{ feedbackId: 'SelectedSource', options, background: SELECTED_SRC },
+				{ feedbackId: 'PresetSource', options, background: STAGED },
 			],
 		})
 	}

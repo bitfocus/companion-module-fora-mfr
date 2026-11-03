@@ -570,10 +570,12 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			await until(() => m.state.routes.get(3) === 6, 'the route')
 			expect(m.setVariableValues).toHaveBeenCalledWith(expect.objectContaining({ xpt04: '06', xpt04_name: 'SRC 7' }))
 			expect(m.checkFeedbacks).toHaveBeenCalledWith(
+				'SelectedSource',
 				'RoutedSource',
 				'RoutedDestination',
 				'PresetSource',
 				'PresetDestination',
+				'StagedRoutes',
 			)
 
 			await panel.request('@ B:E')
@@ -636,7 +638,10 @@ describe('ModuleInstance against the fake router over TCP', () => {
 
 			await refresh()
 			await refresh()
-			for (const spy of spies) expect(spy).not.toHaveBeenCalled()
+			// the staged route keeps the flash running, which is all that may touch the feedbacks
+			const check = mock(m.checkFeedbacks)
+			expect(check.mock.calls.filter((call) => call.join() !== 'SelectedSource,StagedRoutes')).toEqual([])
+			for (const spy of spies) if (spy !== check) expect(spy).not.toHaveBeenCalled()
 
 			// and a change is picked up, alone
 			router.routes.get('0')![6] = 20

@@ -2,6 +2,32 @@ import { describe, expect, it } from 'vitest'
 import { RouterState } from '../state.js'
 import { selectionValues } from '../variables.js'
 
+describe('what flashes', () => {
+	it('flashes the selected source only while it would change the selected destination', () => {
+		const state = routerWith()
+		state.selectSrc(5)
+		expect(state.nextSrc).toBeUndefined() // no destination to compare with
+		state.selectDst(1)
+		expect(state.nextSrc).toBe(5)
+		state.selectSrc(3) // already routed
+		expect(state.nextSrc).toBeUndefined()
+		state.selectSrc(5)
+		state.staged = true
+		expect(state.nextSrc).toBeUndefined()
+		state.selectDst(2) // the next destination reuses the source
+		expect(state.nextSrc).toBe(5)
+	})
+
+	it('counts only staged routes that a take would change', () => {
+		const state = routerWith()
+		expect(state.hasStagedRoutes).toBe(false)
+		state.presets.set(1, 3) // already routed
+		expect(state.hasStagedRoutes).toBe(false)
+		state.presets.set(2, 5)
+		expect(state.hasStagedRoutes).toBe(true)
+	})
+})
+
 function routerWith(): RouterState {
 	const state = new RouterState()
 	state.setSize(4, 8)

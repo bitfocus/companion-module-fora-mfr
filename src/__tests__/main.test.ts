@@ -344,6 +344,79 @@ describe('ModuleInstance against a simulated router', () => {
 		expect(drainRouting()).toEqual(['@ P:0/02,06', '@ X:0/01,03'])
 	})
 
+	describe('flashing', () => {
+		const defined = (): any => (module.setFeedbackDefinitions as unknown as ReturnType<typeof vi.fn>).mock.lastCall?.[0]
+		const selected = (src: string): boolean => defined().SelectedSource.callback({ options: { src } })
+		const takeLit = (): boolean => defined().StagedRoutes.callback({ options: {} })
+		const started = (): void => {
+			startUp()
+			vi.advanceTimersByTime(100) // the definitions go out after a short wait
+		}
+		/** The selected source's state over one whole flash, and then whether it is back where it began */
+		const halves = (src: string): boolean[] => {
+			const seen = [selected(src)]
+			vi.advanceTimersByTime(500)
+			seen.push(selected(src))
+			vi.advanceTimersByTime(500)
+			seen.push(selected(src))
+			return seen
+		}
+
+		it('flashes the next source, starting bright', () => {
+			started()
+			module.selectDestination('01')
+			module.selectSource('05')
+			expect(halves('05')).toEqual([true, false, true])
+		})
+
+		it('holds steady with no destination selected', () => {
+			started()
+			module.selectSource('05')
+			expect(halves('05')).toEqual([true, true, true])
+		})
+
+		it('holds steady for the source already routed, whichever way it became routed', () => {
+			started()
+			reply(socket, '@ S?0', 'S:01,5')
+			module.selectDestination('01')
+			module.selectSource('05')
+			expect(halves('05')).toEqual([true, true, true])
+
+			// the router reports a new route for the destination: 06 was next, and is now current
+			module.selectSource('06')
+			expect(halves('06')).toEqual([true, false, true])
+			socket.receive('S:01,6\r\n\r\n')
+			expect(halves('06')).toEqual([true, true, true])
+		})
+
+		it('stops the source flash once staged, and flashes the take button until the take', () => {
+			started()
+			module.selectDestination('01')
+			module.selectSource('05')
+			module.routeSelection('preset')
+			expect(halves('05')).toEqual([true, true, true])
+			expect(takeLit()).toBe(true)
+			vi.advanceTimersByTime(500)
+			expect(takeLit()).toBe(false)
+			module.cutPresets()
+			expect(takeLit()).toBe(false)
+			vi.advanceTimersByTime(1000)
+			expect(takeLit()).toBe(false)
+		})
+
+		it('runs no timer once nothing is flashing', () => {
+			started()
+			module.selectDestination('01')
+			module.selectSource('05')
+			module.routeSelection('cut')
+			const check = module.checkFeedbacks as unknown as ReturnType<typeof vi.fn>
+			check.mockClear()
+			vi.advanceTimersByTime(4000)
+			const flashes = check.mock.calls.filter((call) => call.includes('StagedRoutes') && call.length === 2)
+			expect(flashes).toEqual([])
+		})
+	})
+
 	describe('auto-route mode', () => {
 		const lastVariables = (): Record<string, unknown> =>
 			Object.assign({}, ...(module.setVariableValues as unknown as ReturnType<typeof vi.fn>).mock.calls.map(([v]) => v))
@@ -460,7 +533,7 @@ describe('ModuleInstance against a simulated router', () => {
 		check.mockClear()
 		module.cutPresets()
 		expect(setVars).toHaveBeenCalledWith(expect.objectContaining({ xpt02_pending_name: '' }))
-		expect(check).toHaveBeenCalledWith('PresetSource', 'PresetDestination')
+		expect(check).toHaveBeenCalledWith('SelectedSource', 'PresetSource', 'PresetDestination', 'StagedRoutes')
 	})
 
 	it('does not poll or log while the connection is down', () => {

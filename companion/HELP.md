@@ -10,9 +10,9 @@ The module sends one command at a time and waits for the router's prompt before 
 
 ## HOW IT WORKS
 
-Select a destination and a source, in either order, then press a cut or stage button. The pair stays selected until you cut.
+Select a destination and a source, in either order, then press a cut or stage button. The pair stays selected until you cut. A steady green source is the one routed to the selected destination now; a flashing one is the next source, which a cut or stage would route.
 
-To build a salvo (a soft macro) of several routes: select a source, then a destination, and press STAGE; the pair stays on show, and each further destination you press and STAGE is added with the same source. Pressing a source starts a new pair. Set "When a destination and a source are both selected" to "Stage straight away" in the connection settings to drop the STAGE press entirely. Destinations showing a staged route show the staged source on their own line and turn orange. Press the salvo switch button to take them all at once, or clear staged to discard them. The module learns the router's size, port names, crosspoints, staged routes and destination locks on connect, and re-reads the crosspoints and staged routes every few seconds (see the refresh setting) so route changes made elsewhere show up. A cut to a locked destination is refused: the module logs a warning and keeps the selection and any staged route. Staged routes belong to the connection that made them: routes staged from a panel or another client are not visible to this module, and it can only take or clear its own. The router's manual calls a staged route a "preset crosspoint".
+To build a salvo (a soft macro) of several routes: select a source, then a destination, and press STAGE; the pair stays on show, and each further destination you press and STAGE is added with the same source. Pressing a source starts a new pair. Set "When a destination and a source are both selected" to "Stage straight away" in the connection settings to drop the STAGE press entirely. Destinations showing a staged route show the staged source on their own line and turn orange. The salvo switch button flashes while routes are staged: press it to take them all at once, or clear staged to discard them. The module learns the router's size, port names, crosspoints, staged routes and destination locks on connect, and re-reads the crosspoints and staged routes every few seconds (see the refresh setting) so route changes made elsewhere show up. A cut to a locked destination is refused: the module logs a warning and keeps the selection and any staged route. Staged routes belong to the connection that made them: routes staged from a panel or another client are not visible to this module, and it can only take or clear its own. The router's manual calls a staged route a "preset crosspoint".
 
 The router's lowest level that responds to a system size request is the one controlled.
 
@@ -66,12 +66,13 @@ Operator actions are sent ahead of the module's own startup reads, but never int
 
 ## FEEDBACKS
 
-- Selected destination / Selected source: this port is selected
+- Selected destination / Selected source: this port is selected. A selected source flashes while it is the next source for the selected destination
 - Routed source: this source is routed to the selected destination
 - Routed destination: this destination carries the selected source
 - Staged destination / Staged source: a route is staged for this destination, or this source is staged for the selected destination
 - Locked destination: this destination is locked
 - Auto-route mode: the auto-route mode is the one chosen
+- Staged routes waiting: flashes while routes are staged and have not been taken
 
 ## PRESETS
 

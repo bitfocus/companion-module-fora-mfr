@@ -25,6 +25,8 @@ export class RouterState {
 	/** The pair on show has been staged; the next source starts a new pair, the next destination reuses the source */
 	staged = false
 	active: ActiveSelection | undefined
+	/** Which half of the flash is showing; stays true while nothing is flashing */
+	flashOn = true
 
 	setSize(outputs: number, inputs: number): boolean {
 		const changed = outputs !== this.dstCount || inputs !== this.srcCount
@@ -76,6 +78,18 @@ export class RouterState {
 
 	isSrcSelected(src: number): boolean {
 		return this.selectedSrc === src
+	}
+
+	/** The selected source, while it is chosen for the selected destination but not routed or staged yet */
+	get nextSrc(): number | undefined {
+		const { selectedDst, selectedSrc } = this
+		if (selectedDst === undefined || selectedSrc === undefined || this.staged) return undefined
+		return this.routes.get(selectedDst) === selectedSrc ? undefined : selectedSrc
+	}
+
+	/** Routes are staged that a take would change */
+	get hasStagedRoutes(): boolean {
+		return [...this.presets.keys()].some((dst) => this.pendingSrc(dst) !== undefined)
 	}
 
 	isDstSelected(dst: number): boolean {

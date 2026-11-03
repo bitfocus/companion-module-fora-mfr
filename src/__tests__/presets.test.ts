@@ -50,6 +50,15 @@ describe('presets', () => {
 		expect(simple.feedbacks).toHaveLength(2)
 	})
 
+	it('flashes the salvo button while routes are staged, and lets a staged source show orange', () => {
+		const presets = build(2, 2)
+		const take = presets.switch_preset_xpts.variants[0]
+		expect(take.feedbacks.map((f: any) => f.feedbackId)).toEqual(['StagedRoutes'])
+		expect(take.feedbacks[0].styleOverrides[0].override).toBe(0xff8000)
+		const source = presets.src_0.variants[0]
+		expect(source.feedbacks.map((f: any) => f.feedbackId)).toEqual(['RoutedSource', 'SelectedSource', 'PresetSource'])
+	})
+
 	it('keeps stable preset ids', () => {
 		const presets = build(2, 3)
 		expect(Object.keys(presets).sort()).toEqual(
