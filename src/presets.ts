@@ -1,10 +1,10 @@
 import type {
+	CompanionButtonStepActions,
 	CompanionButtonStyleProps,
 	CompanionPresetDefinitions,
 	CompanionPresetSection,
 } from '@companion-module/base'
 import { BUTTON_PNG_BASE64 } from './button-image.js'
-import type { ActionsSchema } from './actions.js'
 import type { FeedbacksSchema } from './feedbacks.js'
 import type ModuleInstance from './main.js'
 import type { ModuleSchema } from './main.js'
@@ -13,18 +13,32 @@ import { dstVar, srcVar, xptNameVar, xptPendingVar } from './variables.js'
 
 // Companion swaps this for the connection's label wherever it appears in preset text
 const VAR = '$(fora-mfr:'
-
 /** Companion's own feedback, lit for as long as the button is held */
 const PUSHED = 'internal:buttonPushed'
 
-const baseStyle = (text: string): CompanionButtonStyleProps => ({
-	text,
-	size: '7',
-	color: 0x000000,
-	bgcolor: 0xdadada,
-	png64: BUTTON_PNG_BASE64,
-})
+const CONTROL = 0xdadada
+const CONTROL_PUSHED = 0xffffff
+const DESTINATION = 0x808000
+const SOURCE = 0x008000
+const SELECTED_DST = 0xffff00
+const SELECTED_SRC = 0x00ff00
+const STAGED = 0xff8000
+const LOCKED = 0xff0000
 
+/** Text starts large and shrinks to fit its layer */
+const FONT_SIZE = 100
+/** For text that changes while the button is in use, so its size doesn't jump */
+const CHANGING_TEXT_FONT_SIZE = 32
+
+interface Bounds {
+	x: number
+	y: number
+	width: number
+	height: number
+}
+
+/** The whole button, inside its margin */
+const FULL: Bounds = { x: 5, y: 5, width: 90, height: 90 }
 /** Layout, in percent of the button, of the stacked destination button */
 const STACK = {
 	dst: { x: 5, y: 5, width: 90, height: 30 },
@@ -34,19 +48,7 @@ const STACK = {
 	pending: { x: 5, y: 65, width: 90, height: 30 },
 }
 
-/** Text starts large and shrinks to fit its layer */
-const FONT_SIZE = 100
-/** For text that changes while the button is in use, so its size doesn't jump */
-const CHANGING_TEXT_FONT_SIZE = 32
-
-const textLayer = (
-	id: string,
-	name: string,
-	text: string,
-	bounds: (typeof STACK)['dst'],
-	enabled = true,
-	fontsize = FONT_SIZE,
-) =>
+const textLayer = (id: string, name: string, text: string, bounds: Bounds, enabled = true, fontsize = FONT_SIZE) =>
 	({
 		type: 'text',
 		id,
@@ -63,128 +65,35 @@ const textLayer = (
 		outlineColor: 0xff000000,
 	}) as const
 
-/**
- * A destination button, stacked: destination, `x`, the source routed now, and, only while a route is
- * staged for it, `v` and the staged source in brackets. A plain text version follows for hosts without
- * layered buttons.
- */
-function routedDestinationPreset(i: number): CompanionPresetDefinitions<ModuleSchema>[string] {
-	const port = toHex(i)
-	const options = { dst: port }
-	const showStaged = [
-		{ elementId: 'arrow', elementProperty: 'enabled', override: true },
-		{ elementId: 'pending', elementProperty: 'enabled', override: true },
-	]
-	const colour = (bgcolor: number) => [{ elementId: 'box0', elementProperty: 'color', override: bgcolor }]
-	const steps = [{ down: [{ actionId: 'setDst' as const, options }], up: [] }]
-	const name = `Dest ${i + 1} with its routed source`
+type PresetActions = CompanionButtonStepActions<ModuleSchema>['down']
 
-	return {
-		type: 'alternatives',
-		variants: [
-			{
-				type: 'layered',
-				name,
-				elements: [
-					{ type: 'box', id: 'box0', name: 'Background', x: 0, y: 0, width: 100, height: 100, color: 0x808000 },
-					{
-						type: 'image',
-						id: 'image0',
-						name: 'Image',
-						x: 0,
-						y: 0,
-						width: 100,
-						height: 100,
-						base64Image: `data:image/png;base64,${BUTTON_PNG_BASE64}`,
-						fillMode: 'fill',
-					},
-					textLayer('dst', 'this dst', `${VAR}${dstVar(i)})`, STACK.dst),
-					textLayer('cross', 'xpt', 'x', STACK.cross),
-					textLayer('current', 'current src', `${VAR}${xptNameVar(i)})`, STACK.current),
-					textLayer('arrow', 'next xpt', 'v', STACK.arrow, false),
-					textLayer('pending', 'pending src', `[${VAR}${xptPendingVar(i)})]`, STACK.pending, false),
-				],
-				feedbacks: [
-					{ feedbackId: 'SelectedDestination', options, styleOverrides: colour(0xffff00) },
-					{ feedbackId: PUSHED, options: {}, styleOverrides: colour(0xffff00) },
-					{ feedbackId: 'PresetDestination', options, styleOverrides: [...colour(0xff8000), ...showStaged] },
-					{ feedbackId: 'LockedDestination', options, styleOverrides: colour(0xff0000) },
-				],
-				steps,
-			},
-			{
-				type: 'simple',
-				name,
-				style: {
-					...baseStyle(`${VAR}${dstVar(i)})\n${VAR}${xptNameVar(i)})\n[${VAR}${xptPendingVar(i)})]`),
-					size: 'auto',
-					bgcolor: 0x808000,
-				},
-				steps,
-				feedbacks: [
-					{ feedbackId: 'SelectedDestination', options, style: { bgcolor: 0xffff00, color: 0x000000 } },
-					{ feedbackId: PUSHED, options: {}, style: { bgcolor: 0xffff00, color: 0x000000 } },
-					{ feedbackId: 'PresetDestination', options, style: { bgcolor: 0xff8000, color: 0x000000 } },
-					{ feedbackId: 'LockedDestination', options, style: { bgcolor: 0xff0000, color: 0x000000 } },
-				],
-			},
-		],
-	}
-}
-
-type FeedbackId = keyof FeedbacksSchema | typeof PUSHED
-
-interface Line {
-	text: string
-	/** Small centred separator such as `v`, instead of a full width line of text */
-	symbol?: boolean
-	/** Share of the height among the text lines, default 2 */
-	weight?: number
-	/** Exact position and size in percent, instead of sharing the height */
-	bounds?: { x: number; y: number; width: number; height: number }
-	/** Starting text size, default `FONT_SIZE` */
-	fontsize?: number
+type PresetFeedback = (
+	| { [K in keyof FeedbacksSchema]: { feedbackId: K; options: FeedbacksSchema[K]['options'] } }[keyof FeedbacksSchema]
+	| { feedbackId: typeof PUSHED; options: Record<string, never> }
+) & {
+	background: number
+	/** Layers hidden until this feedback is true */
+	shows?: string[]
 }
 
 interface ButtonSpec {
 	name: string
 	background: number
-	/** Text lines, top to bottom; a plain string is one line that may contain line breaks */
-	lines: (Line | string)[]
 	/** Text size of the plain fallback button */
 	size?: CompanionButtonStyleProps['size']
-	actions: { actionId: keyof ActionsSchema; options: Record<string, string | boolean> }[]
-	feedbacks?: { feedbackId: FeedbackId; options: Record<string, string>; background: number }[]
+	actions: PresetActions
+	feedbacks?: PresetFeedback[]
 }
 
 /**
- * A button in the module style: the MFR image on a coloured background with black mono text that
- * shrinks to fit, one layer per line, plus a plain text version for hosts without layered buttons.
+ * A button in the module style: the MFR image on a coloured background with the given layers, plus a
+ * plain text version for hosts without layered buttons.
  */
-function styledButton(spec: ButtonSpec): CompanionPresetDefinitions<ModuleSchema>[string] {
-	const lines = spec.lines.map((line): Line => (typeof line === 'string' ? { text: line } : line))
-	const symbols = lines.filter((line) => line.symbol).length
-	const totalWeight = lines.reduce((sum, line) => sum + (line.symbol ? 0 : (line.weight ?? 2)), 0)
-	const room = 90 - 15 * symbols
-	let y = 5
-	const layers = lines.map((line, index) => {
-		if (line.bounds) return textLayer(`line${index}`, `line ${index + 1}`, line.text, line.bounds)
-		const height = line.symbol ? 15 : (room * (line.weight ?? 2)) / totalWeight
-		const bounds = line.symbol ? { x: 40, width: 20 } : { x: 5, width: 90 }
-		const layer = textLayer(
-			`line${index}`,
-			`line ${index + 1}`,
-			line.text,
-			{ ...bounds, y, height },
-			true,
-			line.fontsize,
-		)
-		y += height
-		return layer
-	})
-
-	const steps = [{ down: spec.actions, up: [] }] as never
-	const overrides = (background: number) => [{ elementId: 'box0', elementProperty: 'color', override: background }]
+function moduleButton(
+	spec: ButtonSpec & { layers: ReturnType<typeof textLayer>[]; fallbackText: string },
+): CompanionPresetDefinitions<ModuleSchema>[string] {
+	const steps = [{ down: spec.actions, up: [] }]
+	const feedbacks = spec.feedbacks ?? []
 	return {
 		type: 'alternatives',
 		variants: [
@@ -204,45 +113,91 @@ function styledButton(spec: ButtonSpec): CompanionPresetDefinitions<ModuleSchema
 						base64Image: `data:image/png;base64,${BUTTON_PNG_BASE64}`,
 						fillMode: 'fill',
 					},
-					...layers,
+					...spec.layers,
 				],
-				feedbacks: (spec.feedbacks ?? []).map((f) => ({
-					feedbackId: f.feedbackId,
-					options: f.options,
-					styleOverrides: overrides(f.background),
-				})) as never,
+				feedbacks: feedbacks.map(({ background, shows, ...feedback }) => ({
+					...feedback,
+					styleOverrides: [
+						{ elementId: 'box0', elementProperty: 'color', override: background },
+						...(shows ?? []).map((elementId) => ({ elementId, elementProperty: 'enabled', override: true })),
+					],
+				})),
 				steps,
 			},
 			{
 				type: 'simple',
 				name: spec.name,
 				style: {
-					...baseStyle(lines.map((line) => line.text).join('\n')),
+					text: spec.fallbackText,
 					size: spec.size ?? 'auto',
+					color: 0x000000,
 					bgcolor: spec.background,
+					png64: BUTTON_PNG_BASE64,
 				},
 				steps,
-				feedbacks: (spec.feedbacks ?? []).map((f) => ({
-					feedbackId: f.feedbackId,
-					options: f.options,
-					style: { bgcolor: f.background, color: 0x000000 },
-				})) as never,
+				feedbacks: feedbacks.map(({ background, shows: _shows, ...feedback }) => ({
+					...feedback,
+					style: { bgcolor: background, color: 0x000000 },
+				})),
 			},
 		],
 	}
 }
 
-const CONTROL = 0xdadada
-const CONTROL_PUSHED = 0xffffff
-const DESTINATION = 0x808000
-const SOURCE = 0x008000
-const SELECTED_DST = 0xffff00
-const SELECTED_SRC = 0x00ff00
-const STAGED = 0xff8000
-const LOCKED = 0xff0000
+interface Line {
+	text: string
+	/** Exact position and size in percent, default the whole button */
+	bounds?: Bounds
+	/** Starting text size, default `FONT_SIZE` */
+	fontsize?: number
+}
+
+/** A module style button whose text is one layer per line */
+function styledButton(
+	spec: ButtonSpec & { lines: (Line | string)[] },
+): CompanionPresetDefinitions<ModuleSchema>[string] {
+	const lines = spec.lines.map((line): Line => (typeof line === 'string' ? { text: line } : line))
+	return moduleButton({
+		...spec,
+		layers: lines.map((line, index) =>
+			textLayer(`line${index}`, `line ${index + 1}`, line.text, line.bounds ?? FULL, true, line.fontsize),
+		),
+		fallbackText: lines.map((line) => line.text).join('\n'),
+	})
+}
+
+/**
+ * A destination button, stacked: destination, `x`, the source routed now, and, only while a route is
+ * staged for it, `v` and the staged source in brackets.
+ */
+function routedDestinationPreset(i: number): CompanionPresetDefinitions<ModuleSchema>[string] {
+	const options = { dst: toHex(i) }
+	const dst = `${VAR}${dstVar(i)})`
+	const current = `${VAR}${xptNameVar(i)})`
+	const pending = `[${VAR}${xptPendingVar(i)})]`
+	return moduleButton({
+		name: `Dest ${i + 1} with its routed source`,
+		background: DESTINATION,
+		layers: [
+			textLayer('dst', 'this dst', dst, STACK.dst),
+			textLayer('cross', 'xpt', 'x', STACK.cross),
+			textLayer('current', 'current src', current, STACK.current),
+			textLayer('arrow', 'next xpt', 'v', STACK.arrow, false),
+			textLayer('pending', 'pending src', pending, STACK.pending, false),
+		],
+		fallbackText: `${dst}\n${current}\n${pending}`,
+		actions: [{ actionId: 'setDst', options }],
+		feedbacks: [
+			{ feedbackId: 'SelectedDestination', options, background: SELECTED_DST },
+			{ feedbackId: PUSHED, options: {}, background: SELECTED_DST },
+			{ feedbackId: 'PresetDestination', options, background: STAGED, shows: ['arrow', 'pending'] },
+			{ feedbackId: 'LockedDestination', options, background: LOCKED },
+		],
+	})
+}
 
 /** Always last on a control button, so a press shows whatever colour the button has */
-const controlPushed = { feedbackId: PUSHED, options: {}, background: CONTROL_PUSHED } as const
+const controlPushed: PresetFeedback = { feedbackId: PUSHED, options: {}, background: CONTROL_PUSHED }
 
 export function UpdatePresets(self: ModuleInstance): void {
 	const { state } = self
@@ -250,19 +205,11 @@ export function UpdatePresets(self: ModuleInstance): void {
 	const control = (
 		id: string,
 		name: string,
-		lines: ButtonSpec['lines'],
-		actionId: ButtonSpec['actions'][number]['actionId'],
-		options: ButtonSpec['actions'][number]['options'] = {},
+		lines: (Line | string)[],
+		actions: PresetActions,
 		size: ButtonSpec['size'] = '7',
 	): void => {
-		presets[id] = styledButton({
-			name,
-			background: CONTROL,
-			lines,
-			size,
-			actions: [{ actionId, options }],
-			feedbacks: [controlPushed],
-		})
+		presets[id] = styledButton({ name, background: CONTROL, lines, size, actions, feedbacks: [controlPushed] })
 	}
 
 	presets.blank = styledButton({
@@ -276,11 +223,15 @@ export function UpdatePresets(self: ModuleInstance): void {
 	const stacked = (label: string): Line[] => [
 		{ text: label, bounds: { x: 5, y: 5, width: 90, height: 25 } },
 		{ text: `${VAR}selected_src_label)`, bounds: { x: 5, y: 30, width: 90, height: 30 } },
-		{ text: 'v', symbol: true, bounds: { x: 40, y: 52, width: 20, height: 15 } },
+		{ text: 'v', bounds: { x: 40, y: 52, width: 20, height: 15 } },
 		{ text: `${VAR}selected_dst_label)`, bounds: { x: 5, y: 60, width: 90, height: 30 } },
 	]
-	control('cut_xpt', 'Cut selected source to selected destination', stacked('CUT'), 'switchXpt')
-	control('preset_xpt', 'Stage selected source to selected destination', stacked('STAGE'), 'presetXpt')
+	control('cut_xpt', 'Cut selected source to selected destination', stacked('CUT'), [
+		{ actionId: 'switchXpt', options: {} },
+	])
+	control('preset_xpt', 'Stage selected source to selected destination', stacked('STAGE'), [
+		{ actionId: 'presetXpt', options: {} },
+	])
 	presets.switch_preset_xpts = styledButton({
 		name: 'Salvo switch staged routes',
 		background: CONTROL,
@@ -289,7 +240,12 @@ export function UpdatePresets(self: ModuleInstance): void {
 		actions: [{ actionId: 'switchPresetXpts', options: {} }],
 		feedbacks: [{ feedbackId: 'StagedRoutes', options: {}, background: STAGED }, controlPushed],
 	})
-	control('clear_preset_xpts', 'Clear the staged routes', ['CLEAR\nSTAGED\nXPTs'], 'clearPresetXpts')
+	control(
+		'clear_preset_xpts',
+		'Clear the staged routes',
+		['CLEAR\nSTAGED\nXPTs'],
+		[{ actionId: 'clearPresetXpts', options: {} }],
+	)
 	presets.auto_route = styledButton({
 		name: 'Step the auto-route mode: off, stage, cut',
 		background: CONTROL,
@@ -305,8 +261,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		'lock_dst',
 		'Lock / unlock a destination',
 		[{ text: `${VAR}selected_dst_lock_text)`, fontsize: CHANGING_TEXT_FONT_SIZE }],
-		'lockDst',
-		{ dst: '00', mode: 'toggle', useSelected: true },
+		[{ actionId: 'lockDst', options: { dst: '00', mode: 'toggle', useSelected: true } }],
 		'auto',
 	)
 
