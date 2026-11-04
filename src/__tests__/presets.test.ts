@@ -92,7 +92,7 @@ describe('presets', () => {
 		for (const id of ['blank', 'cut_xpt', 'switch_preset_xpts', 'auto_route', 'lock_dst']) {
 			const feedbacks = presets[id].variants[0].feedbacks
 			expect(feedbacks.at(-1).feedbackId, id).toBe('internal:buttonPushed')
-			expect(feedbacks.at(-1).styleOverrides[0].override, id).toBe(0xffff00)
+			expect(feedbacks.at(-1).styleOverrides[0].override, id).toBe(0xffffff)
 		}
 	})
 
@@ -107,8 +107,6 @@ describe('presets', () => {
 				'clear_preset_xpts',
 				'lock_dst',
 				'auto_route',
-				'rename_dst',
-				'rename_src',
 				'dst_0',
 				'dst_1',
 				'routed_0',

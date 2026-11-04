@@ -233,7 +233,7 @@ function styledButton(spec: ButtonSpec): CompanionPresetDefinitions<ModuleSchema
 }
 
 const CONTROL = 0xdadada
-const CONTROL_PUSHED = 0xffff00
+const CONTROL_PUSHED = 0xffffff
 const DESTINATION = 0x808000
 const SOURCE = 0x008000
 const SELECTED_DST = 0xffff00
@@ -266,7 +266,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 	}
 
 	presets.blank = styledButton({
-		name: 'Blank button in the module style, for your own actions',
+		name: 'Blank button in the module style: place it, use Convert to Normal Button, then add your own actions',
 		background: CONTROL,
 		lines: [''],
 		actions: [],
@@ -301,8 +301,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 			controlPushed,
 		],
 	})
-	control('rename_dst', 'Rename a destination', ['RENAME\nDST'], 'renameDst', { dst: '00', name: 'new name' })
-	control('rename_src', 'Rename a source', ['RENAME\nSRC'], 'renameSrc', { src: '00', name: 'new name' })
 	control(
 		'lock_dst',
 		'Lock / unlock a destination',
@@ -377,7 +375,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 						'auto_route',
 					],
 				},
-				{ id: 'naming', type: 'simple', name: 'Naming', presets: ['rename_dst', 'rename_src'] },
 			],
 		},
 		{
