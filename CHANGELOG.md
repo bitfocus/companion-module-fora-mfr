@@ -7,7 +7,8 @@ All notable changes to this module are documented here. The format follows
 
 ## [2.0.0] - Unreleased
 
-A rewrite in TypeScript for Companion 5. The ids of v1's actions, feedbacks and connection settings are unchanged
+A rewrite in TypeScript for Companion 5, built against and tested on Companion 5.1.1. Earlier versions of Companion have
+not been tested, and the only router it has been tested with is an MFR-3000. The ids of v1's actions, feedbacks and connection settings are unchanged
 and there is no upgrade script, but upgrading a v1 configuration has not been tested. Check your buttons after upgrading.
 
 ### ⚠ BREAKING CHANGES

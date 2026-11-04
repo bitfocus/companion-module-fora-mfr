@@ -1,3 +1,5 @@
+Version 2.0.0 is built against and tested on Companion 5.1.1. Earlier versions of Companion have not been tested. It has only been tested with an MFR-3000 router.
+
 ## SETUP
 
 In the router's web interface (System Settings > Router System Settings > Port Settings):
