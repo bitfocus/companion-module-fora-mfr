@@ -107,6 +107,17 @@ td.status { width: 30%; }
 input { font: inherit; width: 100%; padding: 2px 6px; }
 tr.changed { background: var(--changed); }
 .saved { color: var(--good); }
+@media (max-width: 600px) {
+	h1 { width: 100%; }
+	thead { display: none; }
+	table, tbody { display: block; }
+	tr { display: grid; grid-template-columns: 5em 1fr; gap: 2px 8px; align-items: baseline; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+	th, td { padding: 0; border: 0; }
+	th.port, td.current, td.status { width: auto; }
+	td.edit, td.status { grid-column: 1 / -1; }
+	td.status:empty { display: none; }
+	input { font-size: 16px; padding: 6px; }
+}
 </style>
 </head>
 <body>
@@ -197,6 +208,7 @@ function addRow(kind, port) {
 	const current = document.createElement('td')
 	current.className = 'current'
 	const edit = document.createElement('td')
+	edit.className = 'edit'
 	const input = document.createElement('input')
 	input.setAttribute('aria-label', 'New name for ' + label(kind, port))
 	edit.append(input)
