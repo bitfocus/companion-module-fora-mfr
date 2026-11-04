@@ -46,6 +46,7 @@ buttons already placed, keep working: their ids and option names are unchanged, 
 - **fix(select):** the crosspoint lookup used when selecting a destination had an off-by-one.
 - **fix(select):** choosing a port outside the router's size, cutting without both ends selected, or locking before the unit ID is known now logs a warning instead of sending a malformed command or throwing.
 - **fix(actions):** the default text for the rename actions is `New name` (it was an object), and the lock feedback treats any non-zero lock mode as locked.
+- **fix(connection):** a lost network is noticed within about 11 seconds, by treating 6 seconds without a reply to a command as a lost connection, instead of waiting for TCP to give up. The return of the network is noticed within about 5 seconds, by starting a fresh attempt every 5 seconds. The link is still tested every 5 seconds when the refresh is off or slower.
 - **fix(ui):** the periodic refresh no longer makes buttons flash. Unchanged routes, locks and staged routes are ignored, and the staged list is replaced once, when the reply is complete.
 - **fix(lifecycle):** timers are cleared on destroy and on a new connection. v1's blink timer leaked; the blink is gone.
 

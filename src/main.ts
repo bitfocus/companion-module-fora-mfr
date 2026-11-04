@@ -60,6 +60,12 @@ export { UpgradeScripts }
 const MAX_LEVELS = 8
 const DEFINITIONS_DEBOUNCE_MS = 100
 const FLASH_MS = 500
+/** Longer than the manual's slowest command (5 s). TCP alone can take minutes to report a lost network. */
+const LINK_TIMEOUT_MS = 6000
+/** A fresh attempt gets through as soon as the network returns; one left running backs off for over a minute */
+const CONNECT_TIMEOUT_MS = 5000
+/** How often the link is tested when the refresh is off or slower than this */
+const HEARTBEAT_MS = 5000
 
 export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	config!: ModuleConfig // Setup in init()
@@ -78,6 +84,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	#presetSweep: Map<number, number> | undefined
 	#pollTimer: ReturnType<typeof setInterval> | undefined
 	#flashTimer: ReturnType<typeof setInterval> | undefined
+	#linkTimer: ReturnType<typeof setTimeout> | undefined
+	#connectTimer: ReturnType<typeof setTimeout> | undefined
 	#definitionsTimer: ReturnType<typeof setTimeout> | undefined
 	#choicesDirty = false
 	#portsDirty = false
@@ -321,7 +329,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	// ---- connection -------------------------------------------------------------------------
 
-	#connect(): void {
+	#connect(retrying = false): void {
 		this.#disconnect()
 
 		const { host, port } = this.config
@@ -330,16 +338,22 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			return
 		}
 
-		this.updateStatus(InstanceStatus.Connecting)
+		if (!retrying) this.updateStatus(InstanceStatus.Connecting)
 		const socket = new TCPHelper(host, port)
 		this.#socket = socket
+		this.#armConnectTimer()
 
 		socket.on('status_change', (status, message) => {
 			this.updateStatus(status, message)
-			if (status !== InstanceStatus.Ok) this.#queue.clear()
+			if (status !== InstanceStatus.Ok) {
+				this.#queue.clear()
+				this.#stopLinkTimer()
+				this.#armConnectTimer()
+			}
 		})
 		socket.on('error', (err) => this.log('error', `Network error: ${err.message}`))
 		socket.on('connect', () => {
+			this.#stopConnectTimer()
 			this.#lines.reset()
 			this.#queue.clear()
 			this.#awaitingSize = true
@@ -350,11 +364,43 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				const message = parseLine(line, this.#queue.pending)
 				if (message) this.#handleMessage(message)
 			}
+			// the router is there: wait afresh for whatever is still unanswered
+			this.#stopLinkTimer()
+			if (this.#queue.pending !== undefined) this.#armLinkTimer()
 		})
+	}
+
+	#armLinkTimer(): void {
+		this.#linkTimer ??= setTimeout(() => {
+			this.#linkTimer = undefined
+			this.log('warn', 'No reply from the router, reconnecting')
+			this.updateStatus(InstanceStatus.ConnectionFailure, 'No reply from the router')
+			this.#connect(true)
+		}, LINK_TIMEOUT_MS)
+	}
+
+	#stopLinkTimer(): void {
+		if (this.#linkTimer) clearTimeout(this.#linkTimer)
+		this.#linkTimer = undefined
+	}
+
+	#armConnectTimer(): void {
+		this.#connectTimer ??= setTimeout(() => {
+			this.#connectTimer = undefined
+			this.updateStatus(InstanceStatus.ConnectionFailure, 'Cannot reach the router, retrying')
+			this.#connect(true)
+		}, CONNECT_TIMEOUT_MS)
+	}
+
+	#stopConnectTimer(): void {
+		if (this.#connectTimer) clearTimeout(this.#connectTimer)
+		this.#connectTimer = undefined
 	}
 
 	#disconnect(): void {
 		this.#stopPolling()
+		this.#stopLinkTimer()
+		this.#stopConnectTimer()
 		this.#presetSweep = undefined
 		this.#queue.clear()
 		this.#lines.reset()
@@ -368,6 +414,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		// Any other command means a V? that never got its prompt, so its partial list is dropped.
 		this.#presetSweep = this.#isPresetRead(command) ? new Map() : undefined
 		this.#socket.send(`${command}\r`)
+		this.#armLinkTimer()
 		return true
 	}
 
@@ -427,11 +474,19 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	#startPolling(): void {
 		this.#stopPolling()
-		const seconds = Number(this.config.pollInterval ?? 5)
-		if (!(seconds > 0)) return
+		const refreshMs = Number(this.config.pollInterval ?? 5) * 1000
+		const tickMs = refreshMs > 0 ? Math.min(refreshMs, HEARTBEAT_MS) : HEARTBEAT_MS
+		let sinceRefreshMs = 0
 		this.#pollTimer = setInterval(() => {
-			if (this.#queue.idle && this.#socket?.isConnected) this.#refreshRoutes()
-		}, seconds * 1000)
+			sinceRefreshMs += tickMs
+			if (!this.#queue.idle || !this.#socket?.isConnected) return
+			if (refreshMs > 0 && sinceRefreshMs >= refreshMs) {
+				sinceRefreshMs = 0
+				this.#refreshRoutes()
+			} else {
+				this.#send(Cmd.cpuStatus(), false)
+			}
+		}, tickMs)
 	}
 
 	#stopPolling(): void {

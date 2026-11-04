@@ -369,6 +369,25 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			expect(routes(module)).toEqual(routerRoutes())
 		})
 
+		it('reconnects and reads everything again when the router stays silent', async () => {
+			const m = await startModule()
+			const first = socket()
+			router.ignore = () => true
+			m.routeExplicit('preset', '01', '05')
+			await until(() => router.received.at(-1)?.command === '@ P:0/01,05', 'the router to get the command')
+
+			vi.advanceTimersByTime(6000)
+			router.ignore = () => false
+			expect(socket()).not.toBe(first)
+			expect(m.updateStatus).toHaveBeenCalledWith(InstanceStatus.ConnectionFailure, 'No reply from the router')
+
+			await until(() => sent().at(-1) === `@ W?${LEVEL},27`, 'the startup reads again')
+			await settle()
+			expect(m.updateStatus).toHaveBeenLastCalledWith(InstanceStatus.Ok, undefined)
+			// staged routes belong to the connection, so the new one has none
+			expect(m.state.presets.size).toBe(0)
+		})
+
 		it('moves on after 1 s, or 5 s for a long reply, when the router stops answering', async () => {
 			router.ignore = () => true
 			module = new ModuleInstance({})
@@ -396,6 +415,9 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			await until(() => router.received.at(-1)?.command === '@ V?0', 'the router to get V?')
 			await settle()
 			router.ignore = () => false
+			// a byte from the router shows it is still there, so this waits for the prompt, not a reconnect
+			connection()!.write('\r\n')
+			await settle()
 			expect(router.commandsFrom(connection())).toEqual(['@ A?', '@ F?0', '@ S?0', '@ V?0'])
 
 			// V? has a long reply, so the module waits 5 s before the next command

@@ -344,6 +344,81 @@ describe('ModuleInstance against a simulated router', () => {
 		expect(drainRouting()).toEqual(['@ P:0/02,06', '@ X:0/01,03'])
 	})
 
+	describe('a lost connection', () => {
+		const status = (): unknown => (module.updateStatus as unknown as ReturnType<typeof vi.fn>).mock.lastCall?.[0]
+		/** Connect and answer the startup, leaving the module with nothing outstanding */
+		const idle = (): void => {
+			startUp()
+			for (let i = 0; i < 200 && !module.state.locks.size; i++) reply(socket, socket.sent.at(-1)!.trim())
+			for (let i = 0; i < 200; i++) {
+				const before = socket.sent.length
+				reply(socket, socket.sent.at(-1)!.trim())
+				if (socket.sent.length === before) break
+			}
+		}
+
+		it('reconnects after 6 s without a byte while a command is unanswered', () => {
+			startUp()
+			vi.advanceTimersByTime(5999)
+			expect(sockets).toHaveLength(1)
+			vi.advanceTimersByTime(1)
+			expect(socket.destroyed).toBe(true)
+			expect(sockets).toHaveLength(2)
+			expect(status()).toBe('connection_failure')
+		})
+
+		it('notices within one refresh and 6 s when the router goes quiet while idle', () => {
+			idle()
+			vi.advanceTimersByTime(4999)
+			expect(sockets).toHaveLength(1)
+			vi.advanceTimersByTime(1 + 6000)
+			expect(sockets).toHaveLength(2)
+		})
+
+		it('keeps the connection while bytes keep arriving, even if the prompt is slow', () => {
+			startUp()
+			vi.advanceTimersByTime(4000)
+			socket.receive('@ S?0\r\r\nS:00,1\r\n')
+			vi.advanceTimersByTime(4000)
+			expect(sockets).toHaveLength(1)
+		})
+
+		it('stays connected while the router answers', () => {
+			idle()
+			for (let i = 0; i < 12; i++) {
+				vi.advanceTimersByTime(5000)
+				for (let j = 0; j < 4; j++) reply(socket, socket.sent.at(-1)!.trim())
+			}
+			expect(sockets).toHaveLength(1)
+		})
+
+		it('starts a fresh attempt every 5 s until one connects, and then reads the router again', () => {
+			startUp()
+			vi.advanceTimersByTime(6000)
+			const retry = sockets[1]
+			vi.advanceTimersByTime(4999)
+			expect(sockets).toHaveLength(2)
+			vi.advanceTimersByTime(1)
+			expect(retry.destroyed).toBe(true)
+			expect(sockets).toHaveLength(3)
+			sockets[2].emit('connect')
+			expect(sockets[2].sent).toEqual(['@ A?\r'])
+			reply(sockets[2], '@ A?', 'A:01')
+			vi.advanceTimersByTime(5000)
+			expect(sockets).toHaveLength(3)
+		})
+
+		it('tests the link when the refresh is off, without refreshing', async () => {
+			await module.configUpdated({ ...module.config, pollInterval: 0 })
+			socket = sockets[1]
+			socket.emit('connect')
+			idle()
+			const before = socket.sent.length
+			vi.advanceTimersByTime(5000)
+			expect(socket.sent.slice(before)).toEqual(['@ A?\r'])
+		})
+	})
+
 	describe('flashing', () => {
 		const defined = (): any => (module.setFeedbackDefinitions as unknown as ReturnType<typeof vi.fn>).mock.lastCall?.[0]
 		const selected = (src: string): boolean => defined().SelectedSource.callback({ options: { src } })
