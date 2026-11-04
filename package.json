@@ -36,7 +36,7 @@
 		"typescript": "~6.0.3",
 		"typescript-eslint": "^8.71.0",
 		"vite-node": "3.2.4",
-		"vitest": "^3.2.4"
+		"vitest": "^4.1.11"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json",
 	"packageManager": "yarn@4.18.1"
