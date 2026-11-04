@@ -640,6 +640,23 @@ describe('ModuleInstance against a simulated router', () => {
 		expect(module.log).toHaveBeenCalledWith('warn', expect.stringContaining('stored'))
 	})
 
+	it('does not warn when a read already under way returns the old name during a rename', () => {
+		startUp()
+		reply(socket, '@ S?0')
+		reply(socket, '@ V?0')
+		const log = module.log as unknown as ReturnType<typeof vi.fn>
+		// the startup read of the destination names is in flight when the rename is asked for
+		while (socket.sent.at(-1) !== '@ K?DA,000\r') reply(socket, socket.sent.at(-1)!.trim())
+		module.rename('dst', '01', 'NEW')
+		reply(socket, '@ K?DA,000', `K:DA001,${hex('OLD')}`)
+		expect(log).not.toHaveBeenCalledWith('warn', expect.stringContaining('stored'))
+		expect(socket.sent.at(-1)).toBe(`@ K:DA001,${hex('NEW')}\r`)
+		reply(socket, socket.sent.at(-1)!.trim())
+		reply(socket, '@ K?DA,001', `K:DA001,${hex('NEW')}`)
+		expect(module.state.dstName(1)).toBe('NEW')
+		expect(log).not.toHaveBeenCalledWith('warn', expect.stringContaining('stored'))
+	})
+
 	it('does not warn when the router keeps the name as sent', () => {
 		startUp()
 		module.rename('src', '02', 'CAM2')

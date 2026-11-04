@@ -51,7 +51,7 @@ export function GetConfigFields(label: string): SomeCompanionConfigField[] {
 		{
 			type: 'number',
 			id: 'pollInterval',
-			label: 'Refresh routes from the router every (seconds, 0 = never)',
+			label: 'Refresh router data every (seconds, 0 = never)',
 			width: 6,
 			min: 0,
 			max: 3600,

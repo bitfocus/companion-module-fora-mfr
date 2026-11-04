@@ -80,6 +80,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	#awaitingSize = true
 	/** Names just sent to the router, to compare with what it reports back */
 	readonly #renames = new Map<string, string>()
+	/** Renames still queued, by command. A read already under way can't include them, so they aren't compared yet. */
+	readonly #queuedRenames = new Map<string, { port: string; name: string }>()
 	#recording = false
 	/** Counts what has been recorded, so only a repeat within one salvo replaces an earlier action */
 	#recordStep = 0
@@ -320,8 +322,9 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		}
 		// the router may shorten a name or drop characters, so show what it reports back
 		const fitted = fitName(trimmed).trim()
-		this.#renames.set(`${kind}${index}`, fitted)
-		this.#send(Cmd.rename(kind, index, fitted))
+		const command = Cmd.rename(kind, index, fitted)
+		this.#queuedRenames.set(command, { port: `${kind}${index}`, name: fitted })
+		this.#send(command)
 		this.#send(Cmd.names(kind, index))
 	}
 
@@ -412,6 +415,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	#disconnect(): void {
+		this.#queuedRenames.clear()
 		this.#stopPolling()
 		this.#stopLinkTimer()
 		this.#stopConnectTimer()
@@ -427,6 +431,11 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		// the reply to V? lists only what is staged now; collect it and compare at the prompt.
 		// Any other command means a V? that never got its prompt, so its partial list is dropped.
 		this.#presetSweep = this.#isPresetRead(command) ? new Map() : undefined
+		const rename = this.#queuedRenames.get(command)
+		if (rename) {
+			this.#queuedRenames.delete(command)
+			this.#renames.set(rename.port, rename.name)
+		}
 		this.#socket.send(`${command}\r`)
 		this.#armLinkTimer()
 		return true
@@ -450,13 +459,18 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	#requestRouterContents(level: string): void {
 		this.#send(Cmd.crosspoints(level), false)
 		this.#send(Cmd.presetStatus(level), false)
+		this.#readNames()
+		for (let dst = 0; dst < this.state.dstCount; dst++) this.#send(Cmd.lockStatus(level, dst), false)
+	}
+
+	/** The router doesn't announce a name changed on its own panel or web interface, so names are read too */
+	#readNames(): void {
 		for (const kind of ['src', 'dst'] as const) {
 			const count = kind === 'src' ? this.state.srcCount : this.state.dstCount
 			for (let block = 0; block < Math.ceil(count / NAMES_PER_BLOCK); block++) {
 				this.#send(Cmd.names(kind, block * NAMES_PER_BLOCK), false)
 			}
 		}
-		for (let dst = 0; dst < this.state.dstCount; dst++) this.#send(Cmd.lockStatus(level, dst), false)
 	}
 
 	/**
@@ -497,6 +511,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			if (refreshMs > 0 && sinceRefreshMs >= refreshMs) {
 				sinceRefreshMs = 0
 				this.#refreshRoutes()
+				this.#readNames()
 			} else {
 				this.#send(Cmd.cpuStatus(), false)
 			}

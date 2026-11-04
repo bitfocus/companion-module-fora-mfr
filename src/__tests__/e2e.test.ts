@@ -119,7 +119,8 @@ describe('ModuleInstance against the fake router over TCP', () => {
 		const before = socket().sent.length
 		vi.advanceTimersByTime(5000)
 		expect(socket().sent.length).toBeGreaterThan(before)
-		await until(() => sent().at(-1) === `@ V?${LEVEL}`, 'the refresh')
+		// the names follow V?, so it may not stay the last command for long
+		await until(() => sent().slice(before).includes(`@ V?${LEVEL}`), 'the refresh')
 		await settle()
 	}
 
@@ -234,7 +235,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 				.map((c) => c.trim())
 			expect(sentWhileHeld.at(-1), `split at ${at}`).toBe(command)
 			hold.release()
-			await until(() => sent().at(-1) === '@ V?0', 'the refresh')
+			await until(() => sent().slice(before).includes('@ V?0'), 'the refresh')
 			await settle()
 		}
 
@@ -367,6 +368,32 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			await settle()
 			expect(module.state.level).toBe('0')
 			expect(routes(module)).toEqual(routerRoutes())
+		})
+
+		it('does not warn when renaming neighbouring ports together', async () => {
+			// each read back returns a whole block, including neighbours whose rename hasn't been sent yet
+			const m = await startModule()
+			for (const port of ['01', '02', '03']) m.rename('dst', port, `NEW ${port}`)
+			await until(() => m.state.dstName(3) === 'NEW 03', 'the names to be read back')
+			await settle()
+			expect(m.state.dstName(1)).toBe('NEW 01')
+			expect(m.log).not.toHaveBeenCalledWith('warn', expect.stringContaining('stored'))
+		})
+
+		it('picks up a name changed on the router at the next refresh, and leaves unchanged names alone', async () => {
+			const m = await startModule()
+			await refresh()
+			mock(m.setVariableValues).mockClear()
+			await refresh()
+			expect(m.setVariableValues).not.toHaveBeenCalled()
+
+			router.setName('dst', 7, 'FROM PANEL')
+			router.setName('src', 33, 'CAM 34')
+			await refresh()
+			expect(m.state.dstName(7)).toBe('FROM PANEL')
+			expect(m.state.srcName(33)).toBe('CAM 34')
+			expect(m.setVariableValues).toHaveBeenCalledWith(expect.objectContaining({ dst08: 'FROM PANEL' }))
+			expect(router.violations).toEqual([])
 		})
 
 		it('reconnects and reads everything again when the router stays silent', async () => {
