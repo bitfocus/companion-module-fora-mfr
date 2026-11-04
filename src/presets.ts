@@ -233,12 +233,16 @@ function styledButton(spec: ButtonSpec): CompanionPresetDefinitions<ModuleSchema
 }
 
 const CONTROL = 0xdadada
+const CONTROL_PUSHED = 0xffff00
 const DESTINATION = 0x808000
 const SOURCE = 0x008000
 const SELECTED_DST = 0xffff00
 const SELECTED_SRC = 0x00ff00
 const STAGED = 0xff8000
 const LOCKED = 0xff0000
+
+/** Always last on a control button, so a press shows whatever colour the button has */
+const controlPushed = { feedbackId: PUSHED, options: {}, background: CONTROL_PUSHED } as const
 
 export function UpdatePresets(self: ModuleInstance): void {
 	const { state } = self
@@ -251,7 +255,14 @@ export function UpdatePresets(self: ModuleInstance): void {
 		options: ButtonSpec['actions'][number]['options'] = {},
 		size: ButtonSpec['size'] = '7',
 	): void => {
-		presets[id] = styledButton({ name, background: CONTROL, lines, size, actions: [{ actionId, options }] })
+		presets[id] = styledButton({
+			name,
+			background: CONTROL,
+			lines,
+			size,
+			actions: [{ actionId, options }],
+			feedbacks: [controlPushed],
+		})
 	}
 
 	presets.blank = styledButton({
@@ -259,6 +270,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		background: CONTROL,
 		lines: [''],
 		actions: [],
+		feedbacks: [controlPushed],
 	})
 	// source above destination, laid out as restyled in Companion; the `v` overlaps the two names slightly
 	const stacked = (label: string): Line[] => [
@@ -275,7 +287,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		lines: ['CUT\nSTAGED\nXPTs'],
 		size: '7',
 		actions: [{ actionId: 'switchPresetXpts', options: {} }],
-		feedbacks: [{ feedbackId: 'StagedRoutes', options: {}, background: STAGED }],
+		feedbacks: [{ feedbackId: 'StagedRoutes', options: {}, background: STAGED }, controlPushed],
 	})
 	control('clear_preset_xpts', 'Clear the staged routes', ['CLEAR\nSTAGED\nXPTs'], 'clearPresetXpts')
 	presets.auto_route = styledButton({
@@ -286,6 +298,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 		feedbacks: [
 			{ feedbackId: 'AutoRouteMode', options: { mode: 'preset' }, background: STAGED },
 			{ feedbackId: 'AutoRouteMode', options: { mode: 'cut' }, background: LOCKED },
+			controlPushed,
 		],
 	})
 	control('rename_dst', 'Rename a destination', ['RENAME\nDST'], 'renameDst', { dst: '00', name: 'new name' })

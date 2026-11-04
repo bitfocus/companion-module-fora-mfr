@@ -43,17 +43,17 @@ describe('presets', () => {
 		expect(layered.steps).toEqual([{ down: [{ actionId: 'setAutoRoute', options: { mode: 'next' } }], up: [] }])
 		expect(layered.elements.at(-1).text).toBe('AUTO\n$(fora-mfr:auto_route_mode)')
 		expect(layered.elements.at(-1).fontsize).toBe(32)
-		expect(layered.feedbacks.map((f: any) => [f.options.mode, f.styleOverrides[0].override])).toEqual([
+		expect(layered.feedbacks.slice(0, 2).map((f: any) => [f.options.mode, f.styleOverrides[0].override])).toEqual([
 			['preset', 0xff8000],
 			['cut', 0xff0000],
 		])
-		expect(simple.feedbacks).toHaveLength(2)
+		expect(simple.feedbacks).toHaveLength(3)
 	})
 
 	it('flashes the salvo button while routes are staged, and lets a staged source show orange', () => {
 		const presets = build(2, 2)
 		const take = presets.switch_preset_xpts.variants[0]
-		expect(take.feedbacks.map((f: any) => f.feedbackId)).toEqual(['StagedRoutes'])
+		expect(take.feedbacks.map((f: any) => f.feedbackId)).toEqual(['StagedRoutes', 'internal:buttonPushed'])
 		expect(take.feedbacks[0].styleOverrides[0].override).toBe(0xff8000)
 		const source = presets.src_0.variants[0]
 		expect(source.feedbacks.map((f: any) => f.feedbackId)).toEqual([
@@ -81,6 +81,19 @@ describe('presets', () => {
 			'LockedDestination',
 		])
 		expect(order('src_0')).toContain('internal:buttonPushed')
+	})
+
+	it('lights every button while it is held', () => {
+		const presets = build(2, 2)
+		for (const [id, preset] of Object.entries(presets)) {
+			const ids = preset.variants[0].feedbacks.map((f: any) => f.feedbackId)
+			expect(ids, id).toContain('internal:buttonPushed')
+		}
+		for (const id of ['blank', 'cut_xpt', 'switch_preset_xpts', 'auto_route', 'lock_dst']) {
+			const feedbacks = presets[id].variants[0].feedbacks
+			expect(feedbacks.at(-1).feedbackId, id).toBe('internal:buttonPushed')
+			expect(feedbacks.at(-1).styleOverrides[0].override, id).toBe(0xffff00)
+		}
 	})
 
 	it('keeps stable preset ids', () => {
