@@ -344,6 +344,82 @@ describe('ModuleInstance against a simulated router', () => {
 		expect(drainRouting()).toEqual(['@ P:0/02,06', '@ X:0/01,03'])
 	})
 
+	describe('logging', () => {
+		const log = (level: string): string[] =>
+			(module.log as unknown as ReturnType<typeof vi.fn>).mock.calls
+				.filter(([l]) => l === level)
+				.map(([, text]) => text as string)
+		/** Answer until nothing is left to send, so the first read has finished */
+		const finishRead = (): void => {
+			for (let i = 0; i < 400; i++) {
+				const before = socket.sent.length
+				reply(socket, socket.sent.at(-1)!.trim())
+				if (socket.sent.length === before) break
+			}
+		}
+
+		it('logs routes changed elsewhere, but not its own or those from the first read', () => {
+			startUp()
+			socket.receive('S:00,1\r\n')
+			finishRead()
+			expect(log('info').filter((text) => text.includes(' now on '))).toEqual([])
+
+			socket.receive('S:01,5\r\n')
+			expect(log('info')).toContain('DST 2 now on SRC 6')
+
+			module.routeExplicit('cut', '02', '03')
+			socket.receive('S:02,3\r\n')
+			expect(log('info')).not.toContain('DST 3 now on SRC 4')
+			// the same route later, from elsewhere, is logged once this module has seen its own
+			socket.receive('S:02,4\r\n')
+			socket.receive('S:02,3\r\n')
+			expect(log('info')).toContain('DST 3 now on SRC 4')
+		})
+
+		it('does not log the routes of its own salvo', () => {
+			startUp()
+			finishRead()
+			module.routeExplicit('preset', '01', '05')
+			module.cutPresets()
+			socket.receive('S:01,5\r\n')
+			expect(log('info')).not.toContain('DST 2 now on SRC 6')
+		})
+
+		it('logs the auto-route mode, using the word on the button', () => {
+			module.setAutoRouteMode('preset')
+			expect(log('info')).toContain('Auto-route mode: STAGE')
+		})
+
+		it('logs how long a lost connection took to come back', () => {
+			startUp()
+			vi.advanceTimersByTime(6000)
+			vi.advanceTimersByTime(8000)
+			sockets.at(-1)!.emit('connect')
+			expect(log('info')).toContain('Reconnected after 8 s')
+		})
+
+		it('logs operator commands and timeouts at debug, but not routine reads', () => {
+			startUp()
+			finishRead()
+			const before = log('debug').length
+			vi.advanceTimersByTime(5000) // a refresh
+			expect(log('debug').slice(before)).toEqual([])
+			finishRead()
+			module.routeExplicit('cut', '01', '02')
+			expect(log('debug')).toContain('Sending @ X:0/01,02')
+			vi.advanceTimersByTime(5000)
+			expect(log('debug').some((text) => /^No prompt for @ .* moving on$/.test(text))).toBe(true)
+		})
+
+		it('logs a line it did not recognise at debug, but not echoes or C: lines', () => {
+			startUp()
+			socket.receive('C:00102,15\r\n@ S?0\r\n')
+			expect(log('debug').filter((text) => text.startsWith('Ignored'))).toEqual([])
+			socket.receive('Q:NEW THING\r\n')
+			expect(log('debug')).toContain('Ignored from router: Q:NEW THING')
+		})
+	})
+
 	describe('a lost connection', () => {
 		const status = (): unknown => (module.updateStatus as unknown as ReturnType<typeof vi.fn>).mock.lastCall?.[0]
 		/** Connect and answer the startup, leaving the module with nothing outstanding */

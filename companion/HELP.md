@@ -18,6 +18,10 @@ To build a salvo (a soft macro) of several routes: select a source, then a desti
 
 The router's lowest level that responds to a system size request is the one controlled.
 
+## LOG
+
+The connection's log shows what the module found on connecting, reconnects, the auto-route mode, and routes and names changed from elsewhere. At debug level it also shows each operator command, any command that got no prompt, and any line from the router it didn't recognise, which is useful on a model other than the MFR-3000. Routine refreshes are not logged.
+
 ## RECORDING A MACRO
 
 The module supports Companion's action recording. On a button, use the learn (record) option on the action list, then press your source and destination buttons and the salvo switch as you normally would. Each staged or cut route is added as a "Stage a route" or "Cut a route" action, and the salvo switch as "Switch staged crosspoint(s)". Staging the same destination again before a take replaces its earlier action; everything else is kept in the order you did it, including several salvos and clears. Stop recording and the button now repeats that salvo in one press.

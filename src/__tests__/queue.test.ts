@@ -134,3 +134,22 @@ describe('CommandQueue urgent lane', () => {
 		vi.useRealTimers()
 	})
 })
+
+describe('CommandQueue timeouts', () => {
+	it('reports a command that got no prompt, but not one that did', () => {
+		vi.useFakeTimers()
+		const onTimeout = vi.fn()
+		const queue = new CommandQueue(
+			() => true,
+			() => 500,
+			undefined,
+			onTimeout,
+		)
+		queue.enqueue('a')
+		queue.acknowledge()
+		queue.enqueue('b')
+		vi.advanceTimersByTime(500)
+		expect(onTimeout.mock.calls).toEqual([['b', 500]])
+		vi.useRealTimers()
+	})
+})

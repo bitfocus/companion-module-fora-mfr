@@ -7,16 +7,23 @@ export class CommandQueue {
 	readonly #send: (command: string) => boolean
 	readonly #timeoutFor: (command: string) => number
 	readonly #maxLength: number
+	readonly #onTimeout: (command: string, timeoutMs: number) => void
 	/** Operator commands, always sent ahead of the bulk reads in `#queue` */
 	#urgent: string[] = []
 	#queue: string[] = []
 	#inFlight: string | undefined
 	#timer: ReturnType<typeof setTimeout> | undefined
 
-	constructor(send: (command: string) => boolean, timeoutFor: (command: string) => number, maxLength = 1024) {
+	constructor(
+		send: (command: string) => boolean,
+		timeoutFor: (command: string) => number,
+		maxLength = 1024,
+		onTimeout: (command: string, timeoutMs: number) => void = () => undefined,
+	) {
 		this.#send = send
 		this.#timeoutFor = timeoutFor
 		this.#maxLength = maxLength
+		this.#onTimeout = onTimeout
 	}
 
 	/** The command currently waiting for its prompt */
@@ -65,7 +72,11 @@ export class CommandQueue {
 		const command = this.#urgent.shift() ?? this.#queue.shift()
 		if (command === undefined) return
 		this.#inFlight = command
-		this.#timer = setTimeout(() => this.acknowledge(), this.#timeoutFor(command))
+		const timeoutMs = this.#timeoutFor(command)
+		this.#timer = setTimeout(() => {
+			this.#onTimeout(command, timeoutMs)
+			this.acknowledge()
+		}, timeoutMs)
 		if (!this.#send(command)) {
 			// not connected: no prompt will ever arrive
 			this.clear()

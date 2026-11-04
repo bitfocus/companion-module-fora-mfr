@@ -6,6 +6,7 @@ export interface NamesHost {
 	readonly state: RouterState
 	readonly connected: boolean
 	rename(kind: NameKind, value: string, name: string): void
+	log(message: string): void
 }
 
 const json = (status: number, body: unknown): CompanionHTTPResponse => ({
@@ -63,6 +64,7 @@ function applyNames(host: NamesHost, request: CompanionHTTPRequest): CompanionHT
 		if (typeof name !== 'string' || !name.trim()) return json(400, { error: `Empty name for ${label}` })
 		valid.push({ kind, index: port - 1, name })
 	}
+	if (valid.length) host.log(`Names page: sending ${valid.length} name${valid.length === 1 ? '' : 's'}`)
 	for (const { kind, index, name } of valid) host.rename(kind, toHex(index), name)
 	return json(200, { sent: valid.length })
 }

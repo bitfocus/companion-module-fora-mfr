@@ -25,6 +25,7 @@ import {
 	LineBuffer,
 	commandTimeoutMs,
 	fitName,
+	isUnrecognised,
 	NAMES_PER_BLOCK,
 	parseHex,
 	parseLine,
@@ -76,7 +77,18 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	#socket: TCPHelper | undefined
 	readonly #lines = new LineBuffer()
-	readonly #queue = new CommandQueue((command) => this.#write(command), commandTimeoutMs)
+	readonly #queue = new CommandQueue(
+		(command) => this.#write(command),
+		commandTimeoutMs,
+		undefined,
+		(command, timeoutMs) => this.log('debug', `No prompt for ${command} after ${timeoutMs / 1000} s, moving on`),
+	)
+	/** Still on the first read after connecting, when every name and route is new and not worth logging */
+	#reading = false
+	/** When the connection was lost, to report how long it took to come back */
+	#lostAt: number | undefined
+	/** Routes this module asked for, so that only changes from elsewhere are logged */
+	readonly #ownRoutes = new Map<number, number>()
 	#awaitingSize = true
 	/** Names just sent to the router, to compare with what it reports back */
 	readonly #renames = new Map<string, string>()
@@ -137,6 +149,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				state: this.state,
 				connected: !!this.#socket?.isConnected,
 				rename: (kind, value, name) => this.rename(kind, value, name),
+				log: (message) => this.log('info', message),
 			},
 			request,
 		)
@@ -184,6 +197,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		if (mode === undefined || mode === this.autoRouteMode) return
 		this.config = { ...this.config, autoRoute: mode }
 		this.saveConfig(this.config)
+		this.log('info', `Auto-route mode: ${AUTO_ROUTE_LABELS[mode]}`)
 		this.#publishAutoRouteMode()
 	}
 
@@ -236,6 +250,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		const level = this.state.level
 		if (level === undefined) return
 		if (mode === 'cut') {
+			this.#ownRoutes.set(dst, src)
 			this.#send(Cmd.cut(level, dst, src))
 			this.#unstage(level, dst)
 		} else {
@@ -260,6 +275,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	cutPresets(): void {
+		for (const [dst, src] of this.state.presets) this.#ownRoutes.set(dst, src)
 		this.#send(Cmd.cutPresets())
 		this.#record('switchPresetXpts')
 		this.state.presets.clear()
@@ -348,6 +364,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	#connect(retrying = false): void {
 		this.#disconnect()
+		if (!retrying) this.#lostAt = undefined
 
 		const { host, port } = this.config
 		if (!host) {
@@ -363,6 +380,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		socket.on('status_change', (status, message) => {
 			this.updateStatus(status, message)
 			if (status !== InstanceStatus.Ok) {
+				this.#lostAt ??= Date.now()
 				this.#queue.clear()
 				this.#stopLinkTimer()
 				this.#armConnectTimer()
@@ -371,6 +389,11 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		socket.on('error', (err) => this.log('error', `Network error: ${err.message}`))
 		socket.on('connect', () => {
 			this.#stopConnectTimer()
+			if (this.#lostAt !== undefined) {
+				this.log('info', `Reconnected after ${Math.round((Date.now() - this.#lostAt) / 1000)} s`)
+				this.#lostAt = undefined
+			}
+			this.#reading = true
 			this.#lines.reset()
 			this.#queue.clear()
 			this.#awaitingSize = true
@@ -380,6 +403,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			for (const line of this.#lines.push(data)) {
 				const message = parseLine(line, this.#queue.pending)
 				if (message) this.#handleMessage(message)
+				else if (isUnrecognised(line, this.#queue.pending)) this.log('debug', `Ignored from router: ${line.trim()}`)
 			}
 			// the router is there: wait afresh for whatever is still unanswered
 			this.#stopLinkTimer()
@@ -390,6 +414,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	#armLinkTimer(): void {
 		this.#linkTimer ??= setTimeout(() => {
 			this.#linkTimer = undefined
+			this.#lostAt ??= Date.now()
 			this.log('warn', 'No reply from the router, reconnecting')
 			this.updateStatus(InstanceStatus.ConnectionFailure, 'No reply from the router')
 			this.#connect(true)
@@ -416,6 +441,9 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	#disconnect(): void {
 		this.#queuedRenames.clear()
+		this.#renames.clear()
+		this.#ownRoutes.clear()
+		this.#reading = false
 		this.#stopPolling()
 		this.#stopLinkTimer()
 		this.#stopConnectTimer()
@@ -447,7 +475,11 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			this.log('warn', `Not connected, dropped command: ${command}`)
 			return
 		}
-		if (!this.#queue.enqueue(command, urgent)) this.log('warn', `Command queue full, dropped command: ${command}`)
+		if (!this.#queue.enqueue(command, urgent)) {
+			this.log('warn', `Command queue full, dropped command: ${command}`)
+		} else if (urgent) {
+			this.log('debug', `Sending ${command}`)
+		}
 	}
 
 	/** Ask which CPU is active and how big each level is; the rest is requested once the size is known */
@@ -508,6 +540,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.#pollTimer = setInterval(() => {
 			sinceRefreshMs += tickMs
 			if (!this.#queue.idle || !this.#socket?.isConnected) return
+			this.#finishFirstRead()
 			if (refreshMs > 0 && sinceRefreshMs >= refreshMs) {
 				sinceRefreshMs = 0
 				this.#refreshRoutes()
@@ -523,6 +556,16 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.#pollTimer = undefined
 	}
 
+	#finishFirstRead(): void {
+		if (!this.#reading || !this.#queue.idle || this.state.level === undefined) return
+		this.#reading = false
+		const { dstCount, srcCount, level, routerId } = this.state
+		this.log(
+			'info',
+			`Router found: ${dstCount} destinations, ${srcCount} sources, level ${level}, unit ${routerId ?? 'unknown'}`,
+		)
+	}
+
 	// ---- incoming messages ------------------------------------------------------------------
 
 	#handleMessage(message: Message): void {
@@ -531,6 +574,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			case 'prompt':
 				if (this.#isPresetRead(this.#queue.pending)) this.#finishPresetSweep()
 				this.#queue.acknowledge()
+				this.#finishFirstRead()
 				break
 
 			case 'videoFormat':
@@ -575,6 +619,11 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				if (message.level !== state.level || message.dst >= state.dstCount) break
 				if (state.routes.get(message.dst) === message.src) break
 				state.routes.set(message.dst, message.src)
+				if (this.#ownRoutes.get(message.dst) === message.src) {
+					this.#ownRoutes.delete(message.dst)
+				} else if (!this.#reading) {
+					this.log('info', `DST ${message.dst + 1} now on SRC ${message.src + 1}`)
+				}
 				this.#syncFlash()
 				this.setVariableValues({
 					[xptVar(message.dst)]: toHex(message.src),
@@ -608,7 +657,14 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 					this.#renames.delete(renamed)
 					if (sent !== message.name) this.log('warn', `The router stored "${sent}" as "${message.name}"`)
 				}
-				if (state.setName(message.kind, message.index, message.name)) this.#nameChanged(message.kind, message.index)
+				const previous = message.kind === 'dst' ? state.dstName(message.index) : state.srcName(message.index)
+				if (state.setName(message.kind, message.index, message.name)) {
+					if (sent === undefined && !this.#reading) {
+						const port = `${message.kind.toUpperCase()} ${message.index + 1}`
+						this.log('info', `${port} renamed on the router: "${previous}" to "${message.name}"`)
+					}
+					this.#nameChanged(message.kind, message.index)
+				}
 				break
 			}
 

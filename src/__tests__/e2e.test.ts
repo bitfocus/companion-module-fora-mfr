@@ -370,6 +370,33 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			expect(routes(module)).toEqual(routerRoutes())
 		})
 
+		const logged = (m: Module, level: string): string[] =>
+			mock(m.log)
+				.mock.calls.filter(([l]) => l === level)
+				.map(([, text]) => text as string)
+
+		it('logs what it found once, and no names or routes from the first read', async () => {
+			const m = await startModule()
+			await until(() => logged(m, 'info').length > 0, 'the first read to finish')
+			expect(logged(m, 'info')).toEqual(['Router found: 40 destinations, 36 sources, level 0, unit 15'])
+			await refresh()
+			expect(logged(m, 'info')).toHaveLength(1)
+		})
+
+		it('logs a name changed on the router, but not one changed from here', async () => {
+			const m = await startModule()
+			await refresh()
+			mock(m.log).mockClear()
+			router.setName('dst', 7, 'FROM PANEL')
+			await refresh()
+			expect(logged(m, 'info')).toEqual(['DST 8 renamed on the router: "DST 8" to "FROM PANEL"'])
+			mock(m.log).mockClear()
+			m.rename('dst', '08', 'MINE')
+			await until(() => m.state.dstName(8) === 'MINE', 'the rename to be read back')
+			await settle()
+			expect(logged(m, 'info')).toEqual([])
+		})
+
 		it('does not warn when renaming neighbouring ports together', async () => {
 			// each read back returns a whole block, including neighbours whose rename hasn't been sent yet
 			const m = await startModule()

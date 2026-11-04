@@ -3,12 +3,12 @@ import type { CompanionHTTPRequest } from '@companion-module/base'
 import { handleNamesRequest, type NamesHost } from '../names-page.js'
 import { RouterState } from '../state.js'
 
-function setup(connected = true): NamesHost & { rename: ReturnType<typeof vi.fn> } {
+function setup(connected = true): NamesHost & { rename: ReturnType<typeof vi.fn>; log: ReturnType<typeof vi.fn> } {
 	const state = new RouterState()
 	state.setSize(2, 3)
 	state.setName('dst', 0, 'MON 1')
 	state.setName('src', 2, 'CAM <3>')
-	return { state, connected, rename: vi.fn() }
+	return { state, connected, rename: vi.fn(), log: vi.fn() }
 }
 
 function request(method: string, path: string, body?: unknown, headers = {}): CompanionHTTPRequest {
@@ -74,6 +74,19 @@ describe('the port names page', () => {
 		expect(host.rename).toHaveBeenCalledWith('dst', '00', 'MON')
 		const empty = { ...request('POST', '/names'), body: undefined }
 		expect(handleNamesRequest(host, empty).status).toBe(400)
+	})
+
+	it('logs how many names it is sending, and nothing when there are none', () => {
+		const host = setup()
+		post(host, [])
+		expect(host.log).not.toHaveBeenCalled()
+		post(host, [{ kind: 'dst', port: 1, name: 'A' }])
+		expect(host.log).toHaveBeenLastCalledWith('Names page: sending 1 name')
+		post(host, [
+			{ kind: 'dst', port: 1, name: 'A' },
+			{ kind: 'src', port: 1, name: 'B' },
+		])
+		expect(host.log).toHaveBeenLastCalledWith('Names page: sending 2 names')
 	})
 
 	it.each([

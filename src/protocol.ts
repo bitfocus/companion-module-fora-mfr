@@ -102,6 +102,15 @@ export function parseLine(line: string, pendingCommand?: string): Message | unde
 	return parseResponse(body)
 }
 
+/** A line `parseLine` made nothing of that isn't an echo, or a response this module knowingly ignores */
+export function isUnrecognised(line: string, pendingCommand?: string): boolean {
+	const body = line.trim()
+	if (!body || body === PROMPT || body.startsWith('@')) return false
+	const pending = pendingCommand?.trim()
+	if (pending && body.includes(pending)) return false
+	return !/^C:/i.test(body)
+}
+
 function parseResponse(text: string): Message | undefined {
 	const start = text.search(TOKEN)
 	if (start < 0) return undefined

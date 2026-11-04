@@ -11,6 +11,7 @@ import {
 	parseHex,
 	parseLine,
 	toHex,
+	isUnrecognised,
 } from '../protocol.js'
 
 describe('hex helpers', () => {
@@ -207,5 +208,21 @@ describe('command builders', () => {
 		expect(Cmd.cancelVideoFormat()).toBe('@ UE:C')
 		expect(Cmd.rename('dst', 5, 'CAM1')).toBe('@ K:DA005,43414D31')
 		expect(Cmd.lock('0', 5, '01', '1')).toBe('@ W:0/05,01,1')
+	})
+})
+
+describe('isUnrecognised', () => {
+	it.each([
+		['', undefined],
+		['>', undefined],
+		['@ S?0', '@ S?0'],
+		['@ X:0/01,02', undefined],
+		['C:00102,15', undefined],
+	])('passes over %j', (line, pending) => {
+		expect(isUnrecognised(line, pending)).toBe(false)
+	})
+
+	it('flags anything else', () => {
+		expect(isUnrecognised('Q:SOMETHING NEW', '@ S?0')).toBe(true)
 	})
 })
