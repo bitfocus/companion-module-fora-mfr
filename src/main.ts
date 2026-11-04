@@ -2,6 +2,8 @@ import {
 	InstanceBase,
 	InstanceStatus,
 	TCPHelper,
+	type CompanionHTTPRequest,
+	type CompanionHTTPResponse,
 	type CompanionVariableValues,
 	type SomeCompanionConfigField,
 } from '@companion-module/base'
@@ -16,6 +18,7 @@ import {
 	type ModuleConfig,
 } from './config.js'
 import { SELECTION_FEEDBACKS, UpdateFeedbacks, type FeedbacksSchema } from './feedbacks.js'
+import { handleNamesRequest } from './names-page.js'
 import { UpdatePresets } from './presets.js'
 import {
 	Cmd,
@@ -123,7 +126,18 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	getConfigFields(): SomeCompanionConfigField[] {
-		return GetConfigFields()
+		return GetConfigFields(this.label)
+	}
+
+	handleHttpRequest(request: CompanionHTTPRequest): CompanionHTTPResponse {
+		return handleNamesRequest(
+			{
+				state: this.state,
+				connected: !!this.#socket?.isConnected,
+				rename: (kind, value, name) => this.rename(kind, value, name),
+			},
+			request,
+		)
 	}
 
 	// ---- actions ----------------------------------------------------------------------------

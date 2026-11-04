@@ -49,6 +49,15 @@ Add the salvo switch button press before you stop recording if you want the macr
 
 Selection variables are empty when nothing is selected, and are cleared after a cut.
 
+## PORT NAMES
+
+To edit many names at once, open `/instance/<connection label>/` at Companion's web address, for example `http://127.0.0.1:8000/instance/fora-mfr/`. The table shows each port's name on the router, updated every 2 seconds. Destinations and sources fold away separately, and a folded section still shows how many changes it has waiting. Type in the New name column or paste into it, then press Apply. Nothing reaches the router until you do, and one bad row sends nothing.
+
+- Paste a column of names to fill downward from the cell you paste into, stopping at the end of that section, or lines such as `DST 1 = Main Mon` or two spreadsheet columns (`DST 1`, then the name) to go to their own ports.
+- After Apply each row shows Saved, what the router kept if it changed the name (an MFR tested kept 16 ASCII characters), or No reply.
+- Revert last Apply fills the old names back in, for you to Apply. Copy all copies every port and name, to paste into a spreadsheet.
+- Anyone who can open Companion's web address can open this page.
+
 ## ACTIONS
 
 - Set destination / Set source: make a selection
@@ -76,7 +85,7 @@ Operator actions are sent ahead of the module's own startup reads, but never int
 
 ## PRESETS
 
-- Control: a blank button in the module style, cut, stage, salvo switch, clear staged, lock toggle, auto-route mode and rename buttons. The auto-route mode button steps through off, stage (orange) and cut (red: each selection goes live)
+- Control: a blank button in the module style, cut, stage, salvo switch, clear staged, lock toggle and auto-route mode buttons. Convert the blank button to a normal button after placing it, so you can add your own actions. The auto-route mode button steps through off, stage (orange) and cut (red: each selection goes live)
 - Destinations: a button per destination with select, routed, selected, staged and locked feedback. Destination and source buttons also light up for as long as they are held, which confirms a press in cut straight away mode, where the selection clears at once
 - Destinations showing their routed source: a button per destination whose text shows the source currently routed to it, updated live, with a staged route shown beneath it
 - Sources: a button per source with select, routed and selected feedback

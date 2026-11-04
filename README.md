@@ -31,3 +31,4 @@ Source layout:
 - `src/state.ts` router names, crosspoints, locks and the operator's selection
 - `src/main.ts` connects the above to Companion
 - `src/actions.ts`, `feedbacks.ts`, `variables.ts`, `presets.ts` Companion definitions
+- `src/names-page.ts` the table of port names served through Companion

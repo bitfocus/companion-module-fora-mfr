@@ -21,7 +21,7 @@ export const AUTO_ROUTE_LABELS: Record<AutoRouteMode, string> = { off: 'OFF', pr
 
 export const DEFAULT_VIDEO = { format: '04', reference: 'RA', point: 'SO' }
 
-export function GetConfigFields(): SomeCompanionConfigField[] {
+export function GetConfigFields(label: string): SomeCompanionConfigField[] {
 	return [
 		{
 			type: 'static-text',
@@ -68,6 +68,13 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 				{ id: 'cut', label: 'Cut straight away' },
 				{ id: 'preset', label: 'Stage straight away (build a salvo, then take it)' },
 			],
+		},
+		{
+			type: 'static-text',
+			id: 'namesInfo',
+			width: 12,
+			label: 'Port names',
+			value: `To edit many port names at once, open /instance/${label}/ at this Companion's web address, for example http://127.0.0.1:8000/instance/${label}/`,
 		},
 		{
 			type: 'static-text',

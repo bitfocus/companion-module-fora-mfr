@@ -676,6 +676,43 @@ describe('ModuleInstance against the fake router over TCP', () => {
 	describe('names', () => {
 		beforeEach(async () => startRouter())
 
+		it('renames ports from the names page, and shows what the router kept', async () => {
+			const m = await startModule()
+			const response = m.handleHttpRequest({
+				method: 'POST',
+				path: '/names',
+				baseUrl: '',
+				originalUrl: '',
+				hostname: '',
+				ip: '',
+				query: {},
+				headers: {},
+				body: JSON.stringify({
+					changes: [
+						{ kind: 'dst', port: 3, name: 'A very long studio name' },
+						{ kind: 'src', port: 4, name: 'CAM 4' },
+					],
+				}),
+			})
+			expect(response.status).toBe(200)
+			await until(() => m.state.srcName(3) === 'CAM 4', 'the names to be read back')
+			await settle()
+			const list = m.handleHttpRequest({
+				method: 'GET',
+				path: '/names',
+				baseUrl: '',
+				originalUrl: '',
+				hostname: '',
+				ip: '',
+				query: {},
+				headers: {},
+			})
+			const names = JSON.parse(list.body!) as { dst: string[]; src: string[] }
+			expect(names.dst[2]).toBe('A very long stud')
+			expect(names.src[3]).toBe('CAM 4')
+			expect(router.violations).toEqual([])
+		})
+
 		it('reads a renamed source back from the router after reconnecting', async () => {
 			const m = await startModule()
 			m.rename('src', '03', 'CAM 4')
