@@ -54,6 +54,7 @@ and there is no upgrade script, but upgrading a v1 configuration has not been te
 
 ### Performance Improvements
 
+- **perf(presets):** the button image no longer carries its leftover camera and editor metadata, more than halving the size of the presets and of buttons exported from them. The picture is unchanged.
 - **perf(definitions):** port names and sizes now rebuild dropdowns, variables and presets once per batch (debounced) instead of on every received line, and presets are no longer rebuilt from a file read each time. Duplicate variable definitions are gone.
 - **perf(ui):** dropdowns list every port as soon as the router's size is known, labelled `n: name`.
 
