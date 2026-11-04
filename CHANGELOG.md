@@ -7,8 +7,8 @@ All notable changes to this module are documented here. The format follows
 
 ## [2.0.0] - Unreleased
 
-A rewrite in TypeScript for Companion 5. Existing connections, and the actions, feedbacks and variables on
-buttons already placed, keep working: their ids and option names are unchanged, so no upgrade script is needed.
+A rewrite in TypeScript for Companion 5. The ids of v1's actions, feedbacks and connection settings are unchanged
+and there is no upgrade script, but upgrading a v1 configuration has not been tested. Check your buttons after upgrading.
 
 ### ⚠ BREAKING CHANGES
 
