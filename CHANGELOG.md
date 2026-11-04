@@ -66,6 +66,7 @@ and there is no upgrade script, but upgrading a v1 configuration has not been te
 
 ### Tests
 
+- **test:** `yarn fake-router` runs the tests' fake router on its own, so the module can be tried in Companion without hardware.
 - **test:** unit tests for the protocol parser, the command queue, the router state, the presets, and the module against a simulated router using the framing captured from a real MFR (no router needed).
 
 ### Documentation

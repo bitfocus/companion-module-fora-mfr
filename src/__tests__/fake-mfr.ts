@@ -1,5 +1,5 @@
 /**
- * A fake For.A MFR router for tests: a real TCP server on an ephemeral port that answers the
+ * A fake For.A MFR router for tests and `yarn fake-router`: a real TCP server that answers the
  * "Crosspoint remote control 2" protocol byte for byte the way a real router was measured to.
  *
  * Test fixture only. It lives in `src/__tests__/`, which the build excludes, so it never ships.
@@ -255,10 +255,11 @@ export class FakeMfr {
 		this.#server = net.createServer((socket) => this.#accept(socket))
 	}
 
-	async start(): Promise<number> {
+	/** Listens on `port`, or on any free port */
+	async start(port = 0): Promise<number> {
 		await new Promise<void>((resolve, reject) => {
 			this.#server.once('error', reject)
-			this.#server.listen(0, '127.0.0.1', () => resolve())
+			this.#server.listen(port, '127.0.0.1', () => resolve())
 		})
 		return this.port
 	}

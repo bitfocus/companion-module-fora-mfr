@@ -18,6 +18,15 @@ yarn lint
 yarn package     # builds fora-mfr-<version>.tgz for loading into Companion
 ```
 
+To try the module without a router, run a fake one and add a connection in Companion with host `127.0.0.1` and port `2323`:
+
+```bash
+yarn fake-router                       # 64 x 64 on port 2323
+yarn fake-router --port 3000 --size 40x36
+```
+
+It only listens on this machine, forgets everything when stopped (Ctrl+C), and copes with two connections at once, like the router it was measured from. It can't replace a final check on real hardware.
+
 ## Contributing
 
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `feat(scope): …`, `fix(scope): …`, `refactor`, `perf`, `test`, `docs`, `chore`, with `!` or a `BREAKING CHANGE:` footer for breaking changes.
