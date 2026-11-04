@@ -75,8 +75,8 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			width: 12,
 			label: 'Video format',
 			value:
-				'The video format, reference and switching point used by the "Set router video format" action and button when ' +
-				'they are set to "Use the connection default". The module never changes the router\'s format by itself.',
+				'The video format, reference and switching point used by the "Preset video format" action when ' +
+				'it is set to "Use the connection default". The module never changes the router\'s format by itself.',
 		},
 		{
 			type: 'dropdown',
