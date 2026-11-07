@@ -5,9 +5,14 @@ import type { RouterState } from './state.js'
 export interface NamesHost {
 	readonly state: RouterState
 	readonly connected: boolean
+	/** How many more commands the module can queue */
+	readonly queueSpace: number
 	rename(kind: NameKind, value: string, name: string): void
 	log(message: string): void
 }
+
+/** The commands queued by one rename: the rename and the read-back */
+const RENAME_COMMANDS = 2
 
 const json = (status: number, body: unknown): CompanionHTTPResponse => ({
 	status,
@@ -63,6 +68,10 @@ function applyNames(host: NamesHost, request: CompanionHTTPRequest): CompanionHT
 		if (port < 1 || port > portCount(host.state, kind)) return json(400, { error: `No such port: ${label}` })
 		if (typeof name !== 'string' || !name.trim()) return json(400, { error: `Empty name for ${label}` })
 		valid.push({ kind, index: port - 1, name })
+	}
+	// each rename is sent with a read-back; refuse the lot rather than send only some
+	if (valid.length * RENAME_COMMANDS > host.queueSpace) {
+		return json(503, { error: 'Too many names at once, apply them in smaller batches' })
 	}
 	if (valid.length) host.log(`Names page: sending ${valid.length} name${valid.length === 1 ? '' : 's'}`)
 	for (const { kind, index, name } of valid) host.rename(kind, toHex(index), name)

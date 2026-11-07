@@ -36,6 +36,16 @@ export class CommandQueue {
 		return this.#inFlight === undefined && this.#urgent.length === 0 && this.#queue.length === 0
 	}
 
+	/** How many more commands can be queued before `enqueue` starts dropping them */
+	get space(): number {
+		return Math.max(0, this.#maxLength - this.#urgent.length - this.#queue.length)
+	}
+
+	/** A bulk command identical to this one is queued and not sent yet */
+	has(command: string): boolean {
+		return this.#queue.includes(command)
+	}
+
 	/**
 	 * Returns false if the queue is full and the command was dropped.
 	 * `urgent` commands go ahead of everything not urgent, keeping their order among themselves.

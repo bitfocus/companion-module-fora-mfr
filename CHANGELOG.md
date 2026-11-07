@@ -5,6 +5,29 @@ All notable changes to this module are documented here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and entries are grouped by the
 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) type of the change.
 
+## [Unreleased]
+
+### ⚠ BREAKING CHANGES
+
+- Runs on Companion's Node 26 runtime (`node26` in the manifest), like other modules built on the API 2.1 template. Development needs Node 26.
+
+### Bug Fixes
+
+- **fix(config):** an empty, fractional or out-of-range MFR Port now shows "Bad configuration" instead of crashing the module on every restart. The field only accepts whole numbers.
+- **fix(names):** the port names page refuses an Apply that the module cannot queue in full, asking for smaller batches, instead of reporting every name as sent and leaving the router half renamed.
+- **fix(polling):** the refresh runs at the interval set. A value that is not a multiple of 5 seconds no longer runs at the next multiple of 5.
+- **fix(actions):** a destination or source option in expression mode explains that it takes the zero-based hex port id, and accepts lower-case ids such as `0a`. HELP.md says the same.
+- **fix(actions):** **Lock/Unlock a destination** hides its Destination option while "Use the selected destination" is ticked. That checkbox, and "Apply straight away" of **Preset video format**, can no longer be switched to an expression.
+
+### Performance
+
+- **perf(routing):** a burst of route actions queues one re-read of the routes, not one per action.
+- **perf(names):** a source rename updates the routed-name variables of only the destinations using that source.
+
+### Build System
+
+- **build:** follow the API 2.1 template: `.gitattributes` keeps LF line endings, husky and lint-staged format and lint staged files before each commit, Prettier no longer skips two GitHub files, and the template's Node CI and release workflows are added. Publishing a GitHub release attaches the module package.
+
 ## [2.0.0] - 2026-11-04
 
 A rewrite in TypeScript for Companion 5, built against and tested on Companion 5.1.1. Earlier versions of Companion have

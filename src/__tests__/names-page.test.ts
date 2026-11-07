@@ -3,12 +3,15 @@ import type { CompanionHTTPRequest } from '@companion-module/base'
 import { handleNamesRequest, type NamesHost } from '../names-page.js'
 import { RouterState } from '../state.js'
 
-function setup(connected = true): NamesHost & { rename: Mock<NamesHost['rename']>; log: Mock<NamesHost['log']> } {
+function setup(
+	connected = true,
+	queueSpace = 1024,
+): NamesHost & { rename: Mock<NamesHost['rename']>; log: Mock<NamesHost['log']> } {
 	const state = new RouterState()
 	state.setSize(2, 3)
 	state.setName('dst', 0, 'MON 1')
 	state.setName('src', 2, 'CAM <3>')
-	return { state, connected, rename: vi.fn<NamesHost['rename']>(), log: vi.fn<NamesHost['log']>() }
+	return { state, connected, queueSpace, rename: vi.fn<NamesHost['rename']>(), log: vi.fn<NamesHost['log']>() }
 }
 
 function request(method: string, path: string, body?: unknown, headers = {}): CompanionHTTPRequest {
@@ -110,6 +113,22 @@ describe('the port names page', () => {
 		expect(handleNamesRequest(host, request('POST', '/names', 'not json')).status).toBe(400)
 		expect(handleNamesRequest(host, request('POST', '/names', { changes: 'x' })).status).toBe(400)
 		expect(host.rename).not.toHaveBeenCalled()
+	})
+
+	it('sends nothing when the module cannot queue every rename and its read-back', () => {
+		const host = setup(true, 3)
+		const res = post(host, [
+			{ kind: 'dst', port: 1, name: 'A' },
+			{ kind: 'src', port: 1, name: 'B' },
+		])
+		expect(res.status).toBe(503)
+		expect(host.rename).not.toHaveBeenCalled()
+		expect(
+			post(setup(true, 4), [
+				{ kind: 'dst', port: 1, name: 'A' },
+				{ kind: 'src', port: 1, name: 'B' },
+			]).status,
+		).toBe(200)
 	})
 
 	it('sends nothing while disconnected', () => {

@@ -47,6 +47,7 @@ import {
 	xptPendingVar,
 	xptVar,
 	routedNameValues,
+	routedNameValuesForSource,
 	type VariablesSchema,
 } from './variables.js'
 
@@ -99,7 +100,9 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	#recordStep = 0
 	/** Staged routes collected from the reply to the V? in progress */
 	#presetSweep: Map<number, number> | undefined
+	/** The heartbeat, which tests the link when the refresh is off or slower than it */
 	#pollTimer: ReturnType<typeof setInterval> | undefined
+	#refreshTimer: ReturnType<typeof setInterval> | undefined
 	#flashTimer: ReturnType<typeof setInterval> | undefined
 	#linkTimer: ReturnType<typeof setTimeout> | undefined
 	#connectTimer: ReturnType<typeof setTimeout> | undefined
@@ -144,10 +147,14 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	handleHttpRequest(request: CompanionHTTPRequest): CompanionHTTPResponse {
+		const queue = this.#queue
 		return handleNamesRequest(
 			{
 				state: this.state,
 				connected: !!this.#socket?.isConnected,
+				get queueSpace() {
+					return queue.space
+				},
 				rename: (kind, value, name) => this.rename(kind, value, name),
 				log: (message) => this.log('info', message),
 			},
@@ -366,9 +373,15 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.#disconnect()
 		if (!retrying) this.#lostAt = undefined
 
-		const { host, port } = this.config
+		const { host } = this.config
 		if (!host) {
 			this.updateStatus(InstanceStatus.BadConfig, 'No host configured')
+			return
+		}
+		// an empty or fractional port would make the socket throw where nothing can catch it
+		const port = Number(this.config.port)
+		if (!Number.isInteger(port) || port < 1 || port > 65535) {
+			this.updateStatus(InstanceStatus.BadConfig, 'Set the MFR Port to a whole number from 1 to 65535')
 			return
 		}
 
@@ -512,8 +525,10 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	#refreshRoutes(): void {
 		const { level } = this.state
 		if (level === undefined) return
-		this.#send(Cmd.crosspoints(level), false)
-		this.#send(Cmd.presetStatus(level), false)
+		// one read that hasn't been sent yet already covers every change before it
+		for (const command of [Cmd.crosspoints(level), Cmd.presetStatus(level)]) {
+			if (!this.#queue.has(command)) this.#send(command, false)
+		}
 	}
 
 	#isPresetRead(command: string | undefined): boolean {
@@ -535,25 +550,30 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	#startPolling(): void {
 		this.#stopPolling()
 		const refreshMs = Number(this.config.pollInterval ?? 5) * 1000
-		const tickMs = refreshMs > 0 ? Math.min(refreshMs, HEARTBEAT_MS) : HEARTBEAT_MS
-		let sinceRefreshMs = 0
-		this.#pollTimer = setInterval(() => {
-			sinceRefreshMs += tickMs
-			if (!this.#queue.idle || !this.#socket?.isConnected) return
+		const ready = (): boolean => {
+			if (!this.#queue.idle || !this.#socket?.isConnected) return false
 			this.#finishFirstRead()
-			if (refreshMs > 0 && sinceRefreshMs >= refreshMs) {
-				sinceRefreshMs = 0
+			return true
+		}
+		if (refreshMs > 0) {
+			this.#refreshTimer = setInterval(() => {
+				if (!ready()) return
 				this.#refreshRoutes()
 				this.#readNames()
-			} else {
-				this.#send(Cmd.cpuStatus(), false)
-			}
-		}, tickMs)
+			}, refreshMs)
+		}
+		// a refresh at least as often as the heartbeat already tests the link
+		if (refreshMs > 0 && refreshMs <= HEARTBEAT_MS) return
+		this.#pollTimer = setInterval(() => {
+			if (ready()) this.#send(Cmd.cpuStatus(), false)
+		}, HEARTBEAT_MS)
 	}
 
 	#stopPolling(): void {
 		if (this.#pollTimer) clearInterval(this.#pollTimer)
+		if (this.#refreshTimer) clearInterval(this.#refreshTimer)
 		this.#pollTimer = undefined
+		this.#refreshTimer = undefined
 	}
 
 	#finishFirstRead(): void {
@@ -757,7 +777,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.setVariableValues({
 			...values,
 			...selectionValues(this.state),
-			...(kind === 'src' ? routedNameValues(this.state) : {}),
+			...(kind === 'src' ? routedNameValuesForSource(this.state, index) : {}),
 		})
 		this.#choicesDirty = true
 		this.#scheduleDefinitions()

@@ -493,6 +493,54 @@ describe('ModuleInstance against a simulated router', () => {
 			vi.advanceTimersByTime(5000)
 			expect(socket.sent.slice(before)).toEqual(['@ A?\r'])
 		})
+
+		it('refreshes at the interval set, even one that is not a multiple of the heartbeat', async () => {
+			await module.configUpdated({ ...module.config, pollInterval: 7 })
+			socket = sockets[1]
+			socket.emit('connect')
+			idle()
+			const before = socket.sent.length
+			vi.advanceTimersByTime(5000)
+			expect(socket.sent.slice(before)).toEqual(['@ A?\r'])
+			reply(socket, '@ A?')
+			vi.advanceTimersByTime(2000)
+			expect(socket.sent.at(-1)).toBe('@ S?0\r')
+		})
+
+		it.each([undefined, '', 23.5, 0, 70000])(
+			'reports a bad configuration for the port %s instead of connecting',
+			async (port) => {
+				const count = sockets.length
+				await module.configUpdated({ ...module.config, port: port as number })
+				expect(sockets).toHaveLength(count)
+				expect(module.updateStatus).toHaveBeenLastCalledWith('bad_config', expect.stringContaining('MFR Port'))
+			},
+		)
+
+		it('queues one re-read of the routes for a burst of route actions', () => {
+			idle()
+			const before = socket.sent.length
+			for (const src of ['01', '02', '03']) module.routeExplicit('cut', '00', src)
+			for (let i = 0; i < 20; i++) {
+				const count = socket.sent.length
+				reply(socket, socket.sent.at(-1)!.trim())
+				if (socket.sent.length === count) break
+			}
+			const sent = socket.sent.slice(before).map((command) => command.trim())
+			expect(sent.filter((command) => command === '@ S?0')).toHaveLength(1)
+			expect(sent.filter((command) => command === '@ V?0')).toHaveLength(1)
+		})
+
+		it('updates the routed name variables of only the destinations on a renamed source', () => {
+			idle()
+			socket.receive('S:000,02\r\nS:001,03\r\n')
+			const setVars = module.setVariableValues as unknown as ReturnType<typeof vi.fn>
+			setVars.mockClear()
+			socket.receive(`K:SA002,${hex('NEW CAM')}\r\n`)
+			const values = Object.assign({}, ...setVars.mock.calls.map(([v]) => v as object))
+			expect(values).toMatchObject({ src03: 'NEW CAM', xpt01_name: 'NEW CAM' })
+			expect(Object.keys(values).filter((key) => key.startsWith('xpt'))).toEqual(['xpt01_name'])
+		})
 	})
 
 	describe('flashing', () => {

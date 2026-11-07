@@ -7,6 +7,7 @@ import {
 	USE_DEFAULT,
 	VIDEO_FORMAT_CHOICES,
 	destinationChoices,
+	portDropdown,
 	sourceChoices,
 } from './choices.js'
 import type ModuleInstance from './main.js'
@@ -38,12 +39,12 @@ export function UpdateActions(self: ModuleInstance): void {
 	self.setActionDefinitions({
 		setDst: {
 			name: 'Set destination',
-			options: [{ type: 'dropdown', id: 'dst', label: 'Select destination :', default: '00', choices: dst }],
+			options: [portDropdown('dst', 'Select destination :', dst)],
 			callback: (action) => self.selectDestination(action.options.dst),
 		},
 		setSrc: {
 			name: 'Set source',
-			options: [{ type: 'dropdown', id: 'src', label: 'Select source :', default: '00', choices: src }],
+			options: [portDropdown('src', 'Select source :', src)],
 			callback: (action) => self.selectSource(action.options.src),
 		},
 		switchXpt: {
@@ -64,18 +65,12 @@ export function UpdateActions(self: ModuleInstance): void {
 		presetRoute: {
 			name: 'Stage a route: this source to this destination',
 			description: 'Stage one route without using the selection. Add several, then Switch staged crosspoint(s).',
-			options: [
-				{ type: 'dropdown', id: 'dst', label: 'Destination :', default: '00', choices: dst },
-				{ type: 'dropdown', id: 'src', label: 'Source :', default: '00', choices: src },
-			],
+			options: [portDropdown('dst', 'Destination :', dst), portDropdown('src', 'Source :', src)],
 			callback: (action) => self.routeExplicit('preset', action.options.dst, action.options.src),
 		},
 		cutRoute: {
 			name: 'Cut a route: switch this source to this destination now',
-			options: [
-				{ type: 'dropdown', id: 'dst', label: 'Destination :', default: '00', choices: dst },
-				{ type: 'dropdown', id: 'src', label: 'Source :', default: '00', choices: src },
-			],
+			options: [portDropdown('dst', 'Destination :', dst), portDropdown('src', 'Source :', src)],
 			callback: (action) => self.routeExplicit('cut', action.options.dst, action.options.src),
 		},
 		clearPresetXpts: {
@@ -126,6 +121,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					id: 'apply',
 					label: 'Apply straight away (otherwise press Apply preset video format)',
 					default: false,
+					disableAutoExpression: true,
 				},
 			],
 			callback: (action) =>
@@ -149,7 +145,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		renameDst: {
 			name: 'Rename a destination',
 			options: [
-				{ type: 'dropdown', id: 'dst', label: 'Select destination :', default: '00', choices: dst },
+				portDropdown('dst', 'Select destination :', dst),
 				{ type: 'textinput', id: 'name', label: 'New name', default: 'New name' },
 			],
 			callback: (action) => self.rename('dst', action.options.dst, action.options.name),
@@ -157,7 +153,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		renameSrc: {
 			name: 'Rename a source',
 			options: [
-				{ type: 'dropdown', id: 'src', label: 'Select source :', default: '00', choices: src },
+				portDropdown('src', 'Select source :', src),
 				{ type: 'textinput', id: 'name', label: 'New name', default: 'New name' },
 			],
 			callback: (action) => self.rename('src', action.options.src, action.options.name),
@@ -165,13 +161,14 @@ export function UpdateActions(self: ModuleInstance): void {
 		lockDst: {
 			name: 'Lock/Unlock a destination',
 			options: [
-				{ type: 'dropdown', id: 'dst', label: 'Destination :', default: '00', choices: dst },
 				{
 					type: 'checkbox',
 					id: 'useSelected',
-					label: 'Use the selected destination (ignores the destination above)',
+					label: 'Use the selected destination',
 					default: false,
+					disableAutoExpression: true,
 				},
+				{ ...portDropdown('dst', 'Destination :', dst), isVisibleExpression: '!$(options:useSelected)' },
 				{ type: 'dropdown', id: 'mode', label: 'Lock mode :', default: '0', choices: LOCK_MODES },
 			],
 			callback: (action) =>

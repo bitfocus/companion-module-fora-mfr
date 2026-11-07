@@ -82,3 +82,36 @@ function portChoices(count: number, name: (index: number) => string): DropdownCh
 	const length = Math.max(count, 1)
 	return Array.from({ length }, (_, i) => ({ id: toHex(i), label: `${i + 1}: ${name(i)}` }))
 }
+
+/** Shown in place of the description when a port option is switched to an expression */
+export const PORT_EXPRESSION_DESCRIPTION =
+	'A zero-based hex port id, not the number in the list: 00 = port 1, 0A = port 11, 3F = port 64. ' +
+	'The selected_dst_id, selected_src_id and xpt## variables already use this format.'
+
+/**
+ * A destination or source dropdown. The ids stay zero-based hex, which saved buttons depend on.
+ * In expression mode any value is passed through, as the module checks the port itself and logs a bad one.
+ */
+export function portDropdown<Id extends string>(
+	id: Id,
+	label: string,
+	choices: DropdownChoice<string>[],
+): {
+	type: 'dropdown'
+	id: Id
+	label: string
+	default: string
+	choices: DropdownChoice<string>[]
+	expressionDescription: string
+	allowInvalidValues: true
+} {
+	return {
+		type: 'dropdown',
+		id,
+		label,
+		default: '00',
+		choices,
+		expressionDescription: PORT_EXPRESSION_DESCRIPTION,
+		allowInvalidValues: true,
+	}
+}

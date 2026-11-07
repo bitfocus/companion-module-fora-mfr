@@ -71,6 +71,16 @@ export function routedNameValues(state: RouterState): VariablesSchema {
 	return values
 }
 
+/** The routed and staged source names of only the destinations that use source `src`, after it is renamed */
+export function routedNameValuesForSource(state: RouterState, src: number): VariablesSchema {
+	const values: VariablesSchema = {}
+	for (let dst = 0; dst < state.dstCount; dst++) {
+		if (state.routes.get(dst) === src) values[xptNameVar(dst)] = state.routedSrcName(dst)
+		if (state.pendingSrc(dst) === src) values[xptPendingVar(dst)] = pendingText(state, dst)
+	}
+	return values
+}
+
 /** The selection related variables, derived from state */
 export function selectionValues(state: RouterState): VariablesSchema {
 	const { selectedDst, selectedSrc, selectedDstSrc, active } = state

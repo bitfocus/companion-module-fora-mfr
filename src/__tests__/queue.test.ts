@@ -152,4 +152,19 @@ describe('CommandQueue timeouts', () => {
 		expect(onTimeout.mock.calls).toEqual([['b', 500]])
 		vi.useRealTimers()
 	})
+
+	it('reports the space left and whether an unsent bulk command is already queued', () => {
+		const queue = new CommandQueue(() => true, after500, 3)
+		queue.enqueue('a')
+		queue.enqueue('b')
+		queue.enqueue('c', true)
+		expect(queue.space).toBe(1)
+		// 'a' is in flight, not waiting, so a fresh read of it would still be needed
+		expect(queue.has('a')).toBe(false)
+		expect(queue.has('b')).toBe(true)
+		expect(queue.has('c')).toBe(false)
+		queue.enqueue('d')
+		expect(queue.space).toBe(0)
+		expect(queue.enqueue('e')).toBe(false)
+	})
 })

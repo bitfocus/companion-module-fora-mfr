@@ -46,7 +46,9 @@ export function GetConfigFields(label: string): SomeCompanionConfigField[] {
 			width: 4,
 			min: 1,
 			max: 65535,
+			step: 1,
 			default: 23,
+			asInteger: true,
 		},
 		{
 			type: 'number',

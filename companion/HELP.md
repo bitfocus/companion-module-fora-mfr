@@ -77,6 +77,8 @@ To edit many names at once, open `/instance/<connection label>/` at Companion's 
 - Rename a destination or source. The router may shorten a name or drop characters (an MFR tested kept 16 ASCII characters), so the module shows what it reports back and logs a warning if it differs
 - Lock / unlock a destination, or toggle the lock of the selected destination
 
+A destination or source option switched to an expression takes the zero-based hex port id, not the number shown in the list: `00` is port 1, `0A` port 11 and `3F` port 64. The `selected_dst_id`, `selected_src_id` and `xpt##` variables already use this format, so they can be used there as they are.
+
 Operator actions are sent ahead of the module's own startup reads, but never interrupt a command already waiting for its prompt.
 
 ## FEEDBACKS
