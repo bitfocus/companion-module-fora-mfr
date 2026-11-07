@@ -134,7 +134,8 @@ export class FakeMfrConnection {
 		this.remotePort = socket.remotePort ?? 0
 		this.#router = router
 		socket.setNoDelay(true)
-		socket.on('data', (data) => this.#receive(data))
+		// no encoding is set on the socket, so data is always a Buffer
+		socket.on('data', (data) => this.#receive(Buffer.from(data)))
 		// a client going away mid-write is normal here
 		socket.on('error', () => undefined)
 	}

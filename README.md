@@ -8,7 +8,7 @@ See [companion/HELP.md](./companion/HELP.md) for setup and usage, and [LICENSE](
 
 ## Development
 
-Requires Node 22 and Yarn 4 (`corepack enable`).
+Requires Node 26 and Yarn 4 (`corepack enable`).
 
 ```bash
 yarn install
