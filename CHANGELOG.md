@@ -5,7 +5,7 @@ All notable changes to this module are documented here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and entries are grouped by the
 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) type of the change.
 
-## [Unreleased]
+## [3.0.0] - 2026-11-09
 
 ### ⚠ BREAKING CHANGES
 
@@ -127,5 +127,6 @@ and there is no upgrade script, but upgrading a v1 configuration has not been te
 - Moved the button image to an `images/` directory.
 - Upgraded module-base and module-tools.
 
+[3.0.0]: https://github.com/bitfocus/companion-module-fora-mfr/compare/v2.0.0...v3.0.0
 [2.0.0]: https://github.com/bitfocus/companion-module-fora-mfr/compare/v1.0.2...v2.0.0
 [1.0.2]: https://github.com/bitfocus/companion-module-fora-mfr/releases/tag/v1.0.2
