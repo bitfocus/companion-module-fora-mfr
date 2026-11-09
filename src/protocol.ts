@@ -30,10 +30,17 @@ export function toHex(value: number, width = 2): string {
 	return value.toString(16).toUpperCase().padStart(width, '0')
 }
 
-/** Parse a hex option value such as '0A'. Returns undefined for anything that is not a hex number. */
-export function parseHex(value: unknown): number | undefined {
-	if (typeof value !== 'string' || !/^[0-9a-f]{1,3}$/i.test(value.trim())) return undefined
-	return parseInt(value, 16)
+/** The port number an operator sees, counting from 1, as used in option values and variables */
+export function portNumber(index: number): string {
+	return String(index + 1)
+}
+
+/** Parse a port number such as '11' into a zero based index. Returns undefined for anything that is not a port number. */
+export function parsePort(value: unknown): number | undefined {
+	const text = typeof value === 'number' ? String(value) : value
+	if (typeof text !== 'string' || !/^[0-9]{1,4}$/.test(text.trim())) return undefined
+	const port = parseInt(text, 10)
+	return port >= 1 ? port - 1 : undefined
 }
 
 export function decodeName(hex: string): string {

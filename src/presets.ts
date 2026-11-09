@@ -8,7 +8,7 @@ import { BUTTON_PNG_BASE64 } from './button-image.js'
 import type { FeedbacksSchema } from './feedbacks.js'
 import type ModuleInstance from './main.js'
 import type { ModuleSchema } from './main.js'
-import { toHex } from './protocol.js'
+import { portNumber } from './protocol.js'
 import { dstVar, srcVar, xptNameVar, xptPendingVar } from './variables.js'
 
 // Companion swaps this for the connection's label wherever it appears in preset text
@@ -171,7 +171,7 @@ function styledButton(
  * staged for it, `v` and the staged source in brackets.
  */
 function routedDestinationPreset(i: number): CompanionPresetDefinitions<ModuleSchema>[string] {
-	const options = { dst: toHex(i) }
+	const options = { dst: portNumber(i) }
 	const dst = `${VAR}${dstVar(i)})`
 	const current = `${VAR}${xptNameVar(i)})`
 	const pending = `[${VAR}${xptPendingVar(i)})]`
@@ -261,14 +261,14 @@ export function UpdatePresets(self: ModuleInstance): void {
 		'lock_dst',
 		'Lock / unlock a destination',
 		[{ text: `${VAR}selected_dst_lock_text)`, fontsize: CHANGING_TEXT_FONT_SIZE }],
-		[{ actionId: 'lockDst', options: { dst: '00', mode: 'toggle', useSelected: true } }],
+		[{ actionId: 'lockDst', options: { dst: '1', mode: 'toggle', useSelected: true } }],
 		'auto',
 	)
 
 	const dstIds: string[] = []
 	for (let i = 0; i < state.dstCount; i++) {
 		const id = `dst_${i}`
-		const options = { dst: toHex(i) }
+		const options = { dst: portNumber(i) }
 		dstIds.push(id)
 		presets[id] = styledButton({
 			name: `Dest ${i + 1}`,
@@ -295,7 +295,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 	const srcIds: string[] = []
 	for (let i = 0; i < state.srcCount; i++) {
 		const id = `src_${i}`
-		const options = { src: toHex(i) }
+		const options = { src: portNumber(i) }
 		srcIds.push(id)
 		presets[id] = styledButton({
 			name: `Src ${i + 1}`,

@@ -1,5 +1,5 @@
 import type { CompanionVariableDefinitions, CompanionVariableValues } from '@companion-module/base'
-import { toHex } from './protocol.js'
+import { portNumber } from './protocol.js'
 import type { RouterState } from './state.js'
 
 /** Variable ids are dynamic (dst01, src01, xpt01, ...) so values are an open record */
@@ -25,26 +25,26 @@ export function UpdateVariableDefinitions(
 		level: { name: 'Crosspoint level' },
 		outputs: { name: 'Number of destinations' },
 		inputs: { name: 'Number of sources' },
-		selected_dst_id: { name: 'Selected destination id (hex)' },
+		selected_dst_id: { name: 'Selected destination port number' },
 		selected_dst_name: { name: 'Selected destination name' },
-		selected_dst_src_id: { name: 'Source id routed to the selected destination (hex)' },
+		selected_dst_src_id: { name: 'Source port number routed to the selected destination' },
 		selected_dst_src_name: { name: 'Source name routed to the selected destination' },
 		selected_dst_lock_action: { name: 'What the lock button will do to the selected destination (LOCK or UNLOCK)' },
 		selected_dst_lock_text: { name: 'Lock button text for the selected destination, e.g. LOCK + name' },
-		selected_dst_preset_src_id: { name: 'Source id staged for the selected destination (hex)' },
+		selected_dst_preset_src_id: { name: 'Source port number staged for the selected destination' },
 		selected_dst_preset_src_name: { name: 'Source name staged for the selected destination' },
 		selected_dst_label: { name: 'Selected destination name, or DST while none is selected (for button text)' },
 		selected_src_label: { name: 'Selected source name, or SRC while none is selected (for button text)' },
-		selected_src_id: { name: 'Selected source id (hex)' },
+		selected_src_id: { name: 'Selected source port number' },
 		selected_src_name: { name: 'Selected source name' },
-		active_selected_id: { name: 'Most recently selected port id (hex)' },
+		active_selected_id: { name: 'Most recently selected port number' },
 		active_selected_name: { name: 'Most recently selected port name' },
 		active_selected_type: { name: 'Most recently selected port type (src or dst)' },
 	}
 	for (let i = 0; i < state.dstCount; i++) {
 		const n = pad(i)
 		definitions[dstVar(i)] = { name: `DST-${n} name` }
-		definitions[xptVar(i)] = { name: `XPT-${n} routed source id (hex)` }
+		definitions[xptVar(i)] = { name: `XPT-${n} routed source port number` }
 		definitions[xptNameVar(i)] = { name: `XPT-${n} routed source name` }
 		definitions[xptPendingVar(i)] = { name: `XPT-${n} staged source name (empty when none)` }
 		definitions[lockVar(i)] = { name: `DST-${n} lock mode` }
@@ -87,22 +87,22 @@ export function selectionValues(state: RouterState): VariablesSchema {
 	const staged = selectedDst === undefined ? undefined : state.pendingSrc(selectedDst)
 	const activeIndex = active === 'dst' ? selectedDst : active === 'src' ? selectedSrc : undefined
 	return {
-		selected_dst_id: selectedDst === undefined ? null : toHex(selectedDst),
+		selected_dst_id: selectedDst === undefined ? null : portNumber(selectedDst),
 		selected_dst_name: selectedDst === undefined ? null : state.dstName(selectedDst),
-		selected_dst_src_id: selectedDstSrc === undefined ? null : toHex(selectedDstSrc),
+		selected_dst_src_id: selectedDstSrc === undefined ? null : portNumber(selectedDstSrc),
 		selected_dst_src_name: selectedDstSrc === undefined ? null : state.srcName(selectedDstSrc),
 		selected_dst_lock_action: selectedDst === undefined ? null : state.isLocked(selectedDst) ? 'UNLOCK' : 'LOCK',
 		selected_dst_lock_text:
 			selectedDst === undefined
 				? '[UN]LOCK\nDST'
 				: `${state.isLocked(selectedDst) ? 'UNLOCK' : 'LOCK'}\n${state.dstName(selectedDst)}`,
-		selected_dst_preset_src_id: staged === undefined ? null : toHex(staged),
+		selected_dst_preset_src_id: staged === undefined ? null : portNumber(staged),
 		selected_dst_preset_src_name: staged === undefined ? null : state.srcName(staged),
 		selected_dst_label: selectedDst === undefined ? 'DST' : state.dstName(selectedDst),
 		selected_src_label: selectedSrc === undefined ? 'SRC' : state.srcName(selectedSrc),
-		selected_src_id: selectedSrc === undefined ? null : toHex(selectedSrc),
+		selected_src_id: selectedSrc === undefined ? null : portNumber(selectedSrc),
 		selected_src_name: selectedSrc === undefined ? null : state.srcName(selectedSrc),
-		active_selected_id: activeIndex === undefined ? null : toHex(activeIndex),
+		active_selected_id: activeIndex === undefined ? null : portNumber(activeIndex),
 		active_selected_name:
 			activeIndex === undefined ? null : active === 'dst' ? state.dstName(activeIndex) : state.srcName(activeIndex),
 		active_selected_type: active ?? null,

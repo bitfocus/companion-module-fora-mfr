@@ -161,7 +161,7 @@ describe('selectionValues', () => {
 		const state = routerWith()
 		state.selectDst(1)
 		expect(selectionValues(state)).toEqual({
-			selected_dst_id: '01',
+			selected_dst_id: '2',
 			selected_dst_lock_action: 'LOCK',
 			selected_dst_preset_src_id: null,
 			selected_dst_preset_src_name: null,
@@ -169,19 +169,19 @@ describe('selectionValues', () => {
 			selected_dst_label: 'MON1',
 			selected_src_label: 'SRC',
 			selected_dst_name: 'MON1',
-			selected_dst_src_id: '03',
+			selected_dst_src_id: '4',
 			selected_dst_src_name: 'CAM3',
 			selected_src_id: null,
 			selected_src_name: null,
-			active_selected_id: '01',
+			active_selected_id: '2',
 			active_selected_name: 'MON1',
 			active_selected_type: 'dst',
 		})
 		state.selectSrc(3)
 		expect(selectionValues(state)).toMatchObject({
-			selected_src_id: '03',
+			selected_src_id: '4',
 			selected_src_name: 'CAM3',
-			active_selected_id: '03',
+			active_selected_id: '4',
 			active_selected_name: 'CAM3',
 			active_selected_type: 'src',
 		})

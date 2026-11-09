@@ -10,13 +10,14 @@ All notable changes to this module are documented here. The format follows
 ### ⚠ BREAKING CHANGES
 
 - Runs on Companion's Node 26 runtime (`node26` in the manifest), like other modules built on the API 2.1 template. Development needs Node 26.
+- Port options and the `xpt##`, `selected_dst_id`, `selected_dst_src_id`, `selected_dst_preset_src_id`, `selected_src_id` and `active_selected_id` variables use the port number shown in the list (`11`), not a zero-based hex id (`0A`). Saved dropdown choices are converted automatically. An expression or button text that relies on the old hex values must be changed by hand.
 
 ### Bug Fixes
 
 - **fix(config):** an empty, fractional or out-of-range MFR Port now shows "Bad configuration" instead of crashing the module on every restart. The field only accepts whole numbers.
 - **fix(names):** the port names page refuses an Apply that the module cannot queue in full, asking for smaller batches, instead of reporting every name as sent and leaving the router half renamed.
 - **fix(polling):** the refresh runs at the interval set. A value that is not a multiple of 5 seconds no longer runs at the next multiple of 5.
-- **fix(actions):** a destination or source option in expression mode explains that it takes the zero-based hex port id, and accepts lower-case ids such as `0a`. HELP.md says the same.
+- **fix(actions):** a destination or source option in expression mode takes the port number shown in the list. `11` used to be read as a zero-based hex id, which sent it to port 18.
 - **fix(actions):** **Lock/Unlock a destination** hides its Destination option while "Use the selected destination" is ticked. That checkbox, and "Apply straight away" of **Preset video format**, can no longer be switched to an expression.
 
 ### Performance

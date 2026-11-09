@@ -27,9 +27,9 @@ import {
 	fitName,
 	isUnrecognised,
 	NAMES_PER_BLOCK,
-	parseHex,
+	parsePort,
 	parseLine,
-	toHex,
+	portNumber,
 	type Message,
 	type NameKind,
 } from './protocol.js'
@@ -555,17 +555,25 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			this.#finishFirstRead()
 			return true
 		}
+		/** A refresh that came due while the module was busy, run at the next heartbeat instead of a whole interval later */
+		let refreshMissed = false
+		const refresh = (): void => {
+			refreshMissed = false
+			this.#refreshRoutes()
+			this.#readNames()
+		}
 		if (refreshMs > 0) {
 			this.#refreshTimer = setInterval(() => {
-				if (!ready()) return
-				this.#refreshRoutes()
-				this.#readNames()
+				if (ready()) refresh()
+				else refreshMissed = true
 			}, refreshMs)
 		}
 		// a refresh at least as often as the heartbeat already tests the link
 		if (refreshMs > 0 && refreshMs <= HEARTBEAT_MS) return
 		this.#pollTimer = setInterval(() => {
-			if (ready()) this.#send(Cmd.cpuStatus(), false)
+			if (!ready()) return
+			if (refreshMissed) refresh()
+			else this.#send(Cmd.cpuStatus(), false)
 		}, HEARTBEAT_MS)
 	}
 
@@ -646,7 +654,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 				}
 				this.#syncFlash()
 				this.setVariableValues({
-					[xptVar(message.dst)]: toHex(message.src),
+					[xptVar(message.dst)]: portNumber(message.src),
 					[xptNameVar(message.dst)]: state.routedSrcName(message.dst),
 					[xptPendingVar(message.dst)]: pendingText(state, message.dst),
 				})
@@ -704,7 +712,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	// ---- derived updates --------------------------------------------------------------------
 
 	#port(value: string, count: number): number | undefined {
-		const port = parseHex(value)
+		const port = parsePort(value)
 		if (port === undefined) {
 			this.log('warn', `Invalid port: ${String(value)}`)
 			return undefined
@@ -748,7 +756,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	/** While Companion is recording, what the operator does becomes actions they can put on a button */
 	#record(actionId: string, dst?: number, src?: number): void {
 		if (!this.#recording) return
-		const options = dst === undefined || src === undefined ? {} : { dst: toHex(dst), src: toHex(src) }
+		const options = dst === undefined || src === undefined ? {} : { dst: portNumber(dst), src: portNumber(src) }
 		// Companion replaces a recorded action with the same id in place, which only suits staging a
 		// destination again before the salvo is taken. Anything else is a new step, kept in order.
 		if (actionId === 'presetRoute') {

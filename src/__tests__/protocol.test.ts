@@ -8,8 +8,9 @@ import {
 	decodeName,
 	encodeName,
 	fitName,
-	parseHex,
 	parseLine,
+	parsePort,
+	portNumber,
 	toHex,
 	isUnrecognised,
 } from '../protocol.js'
@@ -21,13 +22,19 @@ describe('hex helpers', () => {
 		expect(toHex(5, 3)).toBe('005')
 	})
 
-	it('parses hex option values and rejects junk', () => {
-		expect(parseHex('0a')).toBe(10)
-		expect(parseHex('FF')).toBe(255)
-		expect(parseHex('')).toBeUndefined()
-		expect(parseHex('zz')).toBeUndefined()
-		expect(parseHex(5)).toBeUndefined()
-		expect(parseHex(undefined)).toBeUndefined()
+	it('converts between the port number shown and the zero based index', () => {
+		expect(portNumber(0)).toBe('1')
+		expect(portNumber(10)).toBe('11')
+		expect(parsePort('11')).toBe(10)
+		expect(parsePort(' 11 ')).toBe(10)
+		expect(parsePort('01')).toBe(0)
+		expect(parsePort(11)).toBe(10)
+	})
+
+	it('rejects anything that is not a port number', () => {
+		for (const junk of ['', '0', 0, '0A', 'zz', '-1', -1, 1.5, '12345', null, undefined]) {
+			expect(parsePort(junk)).toBeUndefined()
+		}
 	})
 
 	it('round trips names, trimming padding', () => {

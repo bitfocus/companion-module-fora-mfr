@@ -215,7 +215,7 @@ describe('ModuleInstance against a simulated router', () => {
 		expect(module.state.routes.get(1)).toBe(3)
 		expect(module.state.isLocked(2)).toBe(true)
 		expect(module.setVariableValues).toHaveBeenCalledWith(expect.objectContaining({ dst02: 'MON1' }))
-		expect(module.setVariableValues).toHaveBeenCalledWith(expect.objectContaining({ xpt02: '03' }))
+		expect(module.setVariableValues).toHaveBeenCalledWith(expect.objectContaining({ xpt02: '4' }))
 		expect(module.setVariableValues).toHaveBeenCalledWith({ dst03_locked: 1 })
 
 		// rebuilt once, after the debounce, not once per name
@@ -223,7 +223,7 @@ describe('ModuleInstance against a simulated router', () => {
 		vi.advanceTimersByTime(150)
 		expect(actions.mock.calls.length).toBe(before + 1)
 		const setDst = actions.mock.calls.at(-1)![0].setDst
-		expect(setDst.options[0].choices[1]).toEqual({ id: '01', label: '2: MON1' })
+		expect(setDst.options[0].choices[1]).toEqual({ id: '2', label: '2: MON1' })
 	})
 
 	it('ignores messages for ports beyond the router size or a different level', () => {
@@ -242,8 +242,8 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('cuts the selected source to the selected destination, ahead of the startup reads, then clears the selection', () => {
 		startUp()
-		module.selectDestination('02')
-		module.selectSource('05')
+		module.selectDestination('3')
+		module.selectSource('6')
 		expect(module.state.selectedSrc).toBe(5)
 
 		module.routeSelection('cut')
@@ -266,7 +266,7 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('refuses to cut without both ends selected', () => {
 		startUp()
-		module.selectDestination('02')
+		module.selectDestination('3')
 		module.routeSelection('cut')
 		expect(module.log).toHaveBeenCalledWith('warn', expect.stringContaining('Select a destination'))
 		expect(module.state.selectedDst).toBe(2)
@@ -274,7 +274,7 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('rejects ports outside the router size', () => {
 		startUp()
-		module.selectDestination('09')
+		module.selectDestination('10')
 		expect(module.state.selectedDst).toBeUndefined()
 		expect(module.log).toHaveBeenCalledWith('warn', expect.stringContaining('outside'))
 	})
@@ -282,18 +282,18 @@ describe('ModuleInstance against a simulated router', () => {
 	it('stages several routes into a salvo, then takes them together', () => {
 		startUp()
 		module.config.autoRoute = 'preset'
-		module.selectSource('05')
-		module.selectDestination('01')
-		module.selectDestination('02')
+		module.selectSource('6')
+		module.selectDestination('2')
+		module.selectDestination('3')
 		expect(module.state.presets.get(1)).toBe(5)
 		expect(module.state.presets.get(2)).toBe(5)
 		// the pair stays on show; the next destination reuses the source, the next source starts afresh
 		expect(module.state.selectedSrc).toBe(5)
 		expect(module.state.selectedDst).toBe(2)
-		module.selectSource('06')
+		module.selectSource('7')
 		expect(module.state.selectedDst).toBeUndefined()
 		expect(module.state.presets.size).toBe(2)
-		module.selectSource('05')
+		module.selectSource('6')
 		module.cutPresets()
 		expect(module.state.presets.size).toBe(0)
 		expect(module.state.selectedSrc).toBeUndefined()
@@ -311,9 +311,9 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('removes a cut destination from the staged routes, keeping the others', () => {
 		startUp()
-		module.routeExplicit('preset', '01', '05')
-		module.routeExplicit('preset', '02', '06')
-		module.routeExplicit('cut', '01', '03')
+		module.routeExplicit('preset', '2', '6')
+		module.routeExplicit('preset', '3', '7')
+		module.routeExplicit('cut', '2', '4')
 		expect([...module.state.presets]).toEqual([[2, 6]])
 		expect(drainRouting()).toEqual(['@ P:0/01,05', '@ P:0/02,06', '@ X:0/01,03', '@ B:C', '@ P:0/02,06'])
 	})
@@ -321,11 +321,11 @@ describe('ModuleInstance against a simulated router', () => {
 	it('refuses a cut to a locked destination, keeping the selection and the staged route', () => {
 		startUp()
 		socket.receive('W!001,01,1\r\n')
-		module.selectSource('05')
-		module.selectDestination('01')
+		module.selectSource('6')
+		module.selectDestination('2')
 		module.routeSelection('preset')
 		module.routeSelection('cut')
-		module.routeExplicit('cut', '01', '03')
+		module.routeExplicit('cut', '2', '4')
 		expect(module.log).toHaveBeenCalledWith('warn', expect.stringContaining('is locked'))
 		expect(module.state.selectedDst).toBe(1)
 		expect(module.state.selectedSrc).toBe(5)
@@ -339,8 +339,8 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('leaves the staged routes alone when the cut destination has none', () => {
 		startUp()
-		module.routeExplicit('preset', '02', '06')
-		module.routeExplicit('cut', '01', '03')
+		module.routeExplicit('preset', '3', '7')
+		module.routeExplicit('cut', '2', '4')
 		expect(drainRouting()).toEqual(['@ P:0/02,06', '@ X:0/01,03'])
 	})
 
@@ -367,7 +367,7 @@ describe('ModuleInstance against a simulated router', () => {
 			socket.receive('S:01,5\r\n')
 			expect(log('info')).toContain('DST 2 now on SRC 6')
 
-			module.routeExplicit('cut', '02', '03')
+			module.routeExplicit('cut', '3', '4')
 			socket.receive('S:02,3\r\n')
 			expect(log('info')).not.toContain('DST 3 now on SRC 4')
 			// the same route later, from elsewhere, is logged once this module has seen its own
@@ -379,7 +379,7 @@ describe('ModuleInstance against a simulated router', () => {
 		it('does not log the routes of its own salvo', () => {
 			startUp()
 			finishRead()
-			module.routeExplicit('preset', '01', '05')
+			module.routeExplicit('preset', '2', '6')
 			module.cutPresets()
 			socket.receive('S:01,5\r\n')
 			expect(log('info')).not.toContain('DST 2 now on SRC 6')
@@ -405,7 +405,7 @@ describe('ModuleInstance against a simulated router', () => {
 			vi.advanceTimersByTime(5000) // a refresh
 			expect(log('debug').slice(before)).toEqual([])
 			finishRead()
-			module.routeExplicit('cut', '01', '02')
+			module.routeExplicit('cut', '2', '3')
 			expect(log('debug')).toContain('Sending @ X:0/01,02')
 			vi.advanceTimersByTime(5000)
 			expect(log('debug').some((text) => /^No prompt for @ .* moving on$/.test(text))).toBe(true)
@@ -507,6 +507,35 @@ describe('ModuleInstance against a simulated router', () => {
 			expect(socket.sent.at(-1)).toBe('@ S?0\r')
 		})
 
+		it('runs a refresh missed while busy at the next heartbeat, once', async () => {
+			await module.configUpdated({ ...module.config, pollInterval: 12 })
+			socket = sockets[1]
+			socket.emit('connect')
+			idle()
+			const drain = (): void => {
+				for (let i = 0; i < 200; i++) {
+					const count = socket.sent.length
+					reply(socket, socket.sent.at(-1)!.trim())
+					if (socket.sent.length === count) break
+				}
+			}
+			vi.advanceTimersByTime(5000)
+			reply(socket, '@ A?')
+			vi.advanceTimersByTime(5000)
+			reply(socket, '@ A?')
+			vi.advanceTimersByTime(1900)
+			// an operator's command is still waiting for its prompt when the refresh comes due at 12 s
+			module.routeExplicit('cut', '1', '2')
+			vi.advanceTimersByTime(100)
+			expect(socket.sent.at(-1)).toBe('@ X:0/00,01\r')
+			drain()
+			vi.advanceTimersByTime(3000)
+			expect(socket.sent.at(-1)).toBe('@ S?0\r')
+			drain()
+			vi.advanceTimersByTime(5000)
+			expect(socket.sent.at(-1)).toBe('@ A?\r')
+		})
+
 		it.each([undefined, '', 23.5, 0, 70000])(
 			'reports a bad configuration for the port %s instead of connecting',
 			async (port) => {
@@ -517,10 +546,28 @@ describe('ModuleInstance against a simulated router', () => {
 			},
 		)
 
+		it('takes the port numbers shown in the list, and sends them to the router in hex', () => {
+			reply(socket, '@ A?', '@ A:01')
+			reply(socket, '@ F?0', 'F:003F,3F/3F,3F')
+			module.routeExplicit('cut', '11', '64')
+			reply(socket, socket.sent.at(-1)!.trim())
+			expect(socket.sent).toContain('@ X:0/0A,3F\r')
+		})
+
+		it('warns about a port the router does not have, and sends nothing', () => {
+			idle()
+			const before = socket.sent.length
+			module.routeExplicit('cut', '65', '1')
+			module.routeExplicit('cut', '0A', '1')
+			expect(socket.sent).toHaveLength(before)
+			expect(module.log).toHaveBeenCalledWith('warn', expect.stringContaining('outside the router'))
+			expect(module.log).toHaveBeenCalledWith('warn', 'Invalid port: 0A')
+		})
+
 		it('queues one re-read of the routes for a burst of route actions', () => {
 			idle()
 			const before = socket.sent.length
-			for (const src of ['01', '02', '03']) module.routeExplicit('cut', '00', src)
+			for (const src of ['2', '3', '4']) module.routeExplicit('cut', '1', src)
 			for (let i = 0; i < 20; i++) {
 				const count = socket.sent.length
 				reply(socket, socket.sent.at(-1)!.trim())
@@ -563,37 +610,37 @@ describe('ModuleInstance against a simulated router', () => {
 
 		it('flashes the next source, starting bright', () => {
 			started()
-			module.selectDestination('01')
-			module.selectSource('05')
-			expect(halves('05')).toEqual([true, false, true])
+			module.selectDestination('2')
+			module.selectSource('6')
+			expect(halves('6')).toEqual([true, false, true])
 		})
 
 		it('holds steady with no destination selected', () => {
 			started()
-			module.selectSource('05')
-			expect(halves('05')).toEqual([true, true, true])
+			module.selectSource('6')
+			expect(halves('6')).toEqual([true, true, true])
 		})
 
 		it('holds steady for the source already routed, whichever way it became routed', () => {
 			started()
 			reply(socket, '@ S?0', 'S:01,5')
-			module.selectDestination('01')
-			module.selectSource('05')
-			expect(halves('05')).toEqual([true, true, true])
+			module.selectDestination('2')
+			module.selectSource('6')
+			expect(halves('6')).toEqual([true, true, true])
 
 			// the router reports a new route for the destination: 06 was next, and is now current
-			module.selectSource('06')
-			expect(halves('06')).toEqual([true, false, true])
+			module.selectSource('7')
+			expect(halves('7')).toEqual([true, false, true])
 			socket.receive('S:01,6\r\n\r\n')
-			expect(halves('06')).toEqual([true, true, true])
+			expect(halves('7')).toEqual([true, true, true])
 		})
 
 		it('stops the source flash once staged, and flashes the take button until the take', () => {
 			started()
-			module.selectDestination('01')
-			module.selectSource('05')
+			module.selectDestination('2')
+			module.selectSource('6')
 			module.routeSelection('preset')
-			expect(halves('05')).toEqual([true, true, true])
+			expect(halves('6')).toEqual([true, true, true])
 			expect(takeLit()).toBe(true)
 			vi.advanceTimersByTime(500)
 			expect(takeLit()).toBe(false)
@@ -605,8 +652,8 @@ describe('ModuleInstance against a simulated router', () => {
 
 		it('runs no timer once nothing is flashing', () => {
 			started()
-			module.selectDestination('01')
-			module.selectSource('05')
+			module.selectDestination('2')
+			module.selectSource('6')
 			module.routeSelection('cut')
 			const check = module.checkFeedbacks as unknown as ReturnType<typeof vi.fn>
 			check.mockClear()
@@ -650,11 +697,11 @@ describe('ModuleInstance against a simulated router', () => {
 
 		it('does not route a pair already selected when the mode changes, only the next selection', () => {
 			startUp()
-			module.selectSource('05')
-			module.selectDestination('01')
+			module.selectSource('6')
+			module.selectDestination('2')
 			module.setAutoRouteMode('cut')
 			expect(drainRouting()).toEqual([])
-			module.selectDestination('02')
+			module.selectDestination('3')
 			expect(drainRouting()).toEqual(['@ X:0/02,05'])
 		})
 
@@ -675,19 +722,19 @@ describe('ModuleInstance against a simulated router', () => {
 		startUp()
 		module.config.autoRoute = 'preset'
 		module.handleStartStopRecordActions(true)
-		module.selectSource('05')
-		module.selectDestination('01')
-		module.selectDestination('02')
+		module.selectSource('6')
+		module.selectDestination('2')
+		module.selectDestination('3')
 		module.cutPresets()
 		const record = module.recordAction as unknown as ReturnType<typeof vi.fn>
 		expect(record.mock.calls.map(([action]) => action)).toEqual([
-			{ actionId: 'presetRoute', options: { dst: '01', src: '05' } },
-			{ actionId: 'presetRoute', options: { dst: '02', src: '05' } },
+			{ actionId: 'presetRoute', options: { dst: '2', src: '6' } },
+			{ actionId: 'presetRoute', options: { dst: '3', src: '6' } },
 			{ actionId: 'switchPresetXpts', options: {} },
 		])
 		module.handleStartStopRecordActions(false)
-		module.selectSource('05')
-		module.selectDestination('03')
+		module.selectSource('6')
+		module.selectDestination('4')
 		expect(record).toHaveBeenCalledTimes(3)
 	})
 
@@ -695,16 +742,16 @@ describe('ModuleInstance against a simulated router', () => {
 		startUp()
 		module.config.autoRoute = 'preset'
 		module.handleStartStopRecordActions(true)
-		module.selectSource('05')
-		module.selectDestination('01')
-		module.selectSource('06')
-		module.selectDestination('01') // same destination, same salvo
+		module.selectSource('6')
+		module.selectDestination('2')
+		module.selectSource('7')
+		module.selectDestination('2') // same destination, same salvo
 		module.cutPresets()
-		module.selectSource('05')
-		module.selectDestination('01') // same destination, next salvo
+		module.selectSource('6')
+		module.selectDestination('2') // same destination, next salvo
 		module.cutPresets()
-		module.selectSource('05')
-		module.selectDestination('02')
+		module.selectSource('6')
+		module.selectDestination('3')
 		module.clearPresets()
 		const record = module.recordAction as unknown as ReturnType<typeof vi.fn>
 		const ids = record.mock.calls.map(([, id]) => id as string)
@@ -717,7 +764,7 @@ describe('ModuleInstance against a simulated router', () => {
 		startUp()
 		reply(socket, '@ S?0')
 		expect(socket.sent.at(-1)).toBe('@ V?0\r')
-		module.routeExplicit('preset', '01', '05')
+		module.routeExplicit('preset', '2', '6')
 		reply(socket, '@ V?0', 'V:02,06')
 		expect([...module.state.presets]).toEqual([[1, 5]])
 		expect(socket.sent.at(-1)).toBe('@ P:0/01,05\r')
@@ -725,7 +772,7 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('refreshes the staged display after a take, even if no route changes', () => {
 		startUp()
-		module.routeExplicit('preset', '01', '05')
+		module.routeExplicit('preset', '2', '6')
 		const setVars = module.setVariableValues as unknown as ReturnType<typeof vi.fn>
 		const check = module.checkFeedbacks as unknown as ReturnType<typeof vi.fn>
 		setVars.mockClear()
@@ -753,7 +800,7 @@ describe('ModuleInstance against a simulated router', () => {
 	it('shows the name the router reports after a rename, warning if it differs', () => {
 		startUp()
 		reply(socket, '@ S?0')
-		module.rename('dst', '01', 'A very long studio name')
+		module.rename('dst', '2', 'A very long studio name')
 		expect(module.state.dstNames.has(1)).toBe(false)
 		reply(socket, '@ V?0')
 		expect(socket.sent.at(-1)).toBe(`@ K:DA001,${hex('A very long studio name')}\r`)
@@ -771,7 +818,7 @@ describe('ModuleInstance against a simulated router', () => {
 		const log = module.log as unknown as ReturnType<typeof vi.fn>
 		// the startup read of the destination names is in flight when the rename is asked for
 		while (socket.sent.at(-1) !== '@ K?DA,000\r') reply(socket, socket.sent.at(-1)!.trim())
-		module.rename('dst', '01', 'NEW')
+		module.rename('dst', '2', 'NEW')
 		reply(socket, '@ K?DA,000', `K:DA001,${hex('OLD')}`)
 		expect(log).not.toHaveBeenCalledWith('warn', expect.stringContaining('stored'))
 		expect(socket.sent.at(-1)).toBe(`@ K:DA001,${hex('NEW')}\r`)
@@ -783,7 +830,7 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('does not warn when the router keeps the name as sent', () => {
 		startUp()
-		module.rename('src', '02', 'CAM2')
+		module.rename('src', '3', 'CAM2')
 		socket.receive(`K:SA002,${hex('CAM2')}\r\n`)
 		expect(module.state.srcName(2)).toBe('CAM2')
 		expect(module.log).not.toHaveBeenCalledWith('warn', expect.anything())
@@ -791,8 +838,8 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('stages and cuts explicit routes without touching the selection', () => {
 		startUp()
-		module.selectSource('01')
-		module.routeExplicit('preset', '02', '06')
+		module.selectSource('2')
+		module.routeExplicit('preset', '3', '7')
 		expect(module.state.presets.get(2)).toBe(6)
 		expect(module.state.selectedSrc).toBe(1)
 		expect(module.state.selectedDst).toBeUndefined()
@@ -810,9 +857,9 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('keeps the source when another destination is selected, until the selection is cut', () => {
 		startUp()
-		module.selectSource('02')
-		module.selectDestination('01')
-		module.selectDestination('03')
+		module.selectSource('3')
+		module.selectDestination('2')
+		module.selectDestination('4')
 		expect(module.state.selectedSrc).toBe(2)
 		expect(module.state.selectedDst).toBe(3)
 	})
@@ -829,8 +876,8 @@ describe('ModuleInstance against a simulated router', () => {
 
 	it('cleans up on destroy', async () => {
 		startUp()
-		module.selectDestination('01')
-		module.selectSource('02')
+		module.selectDestination('2')
+		module.selectSource('3')
 		await module.destroy()
 		expect(socket.destroyed).toBe(true)
 		expect(vi.getTimerCount()).toBe(0)

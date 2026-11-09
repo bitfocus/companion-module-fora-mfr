@@ -1,5 +1,5 @@
 import type { CompanionHTTPRequest, CompanionHTTPResponse } from '@companion-module/base'
-import { toHex, type NameKind } from './protocol.js'
+import { portNumber, type NameKind } from './protocol.js'
 import type { RouterState } from './state.js'
 
 export interface NamesHost {
@@ -74,7 +74,7 @@ function applyNames(host: NamesHost, request: CompanionHTTPRequest): CompanionHT
 		return json(503, { error: 'Too many names at once, apply them in smaller batches' })
 	}
 	if (valid.length) host.log(`Names page: sending ${valid.length} name${valid.length === 1 ? '' : 's'}`)
-	for (const { kind, index, name } of valid) host.rename(kind, toHex(index), name)
+	for (const { kind, index, name } of valid) host.rename(kind, portNumber(index), name)
 	return json(200, { sent: valid.length })
 }
 

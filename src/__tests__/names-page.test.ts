@@ -55,7 +55,7 @@ describe('the port names page', () => {
 		})
 	})
 
-	it('renames by the port number people see, sending the hex id the module uses', () => {
+	it('renames by the port number people see, passing that number to the module', () => {
 		const host = setup()
 		const response = post(host, [
 			{ kind: 'dst', port: 2, name: 'MON 2' },
@@ -64,8 +64,8 @@ describe('the port names page', () => {
 		expect(response.status).toBe(200)
 		expect(JSON.parse(response.body!)).toEqual({ sent: 2 })
 		expect(host.rename.mock.calls).toEqual([
-			['dst', '01', 'MON 2'],
-			['src', '00', 'CAM 1'],
+			['dst', '2', 'MON 2'],
+			['src', '1', 'CAM 1'],
 		])
 	})
 
@@ -74,7 +74,7 @@ describe('the port names page', () => {
 		const changes = [{ kind: 'dst', port: 1, name: 'MON' }]
 		const parsed = { ...request('POST', '/names'), body: { changes } as unknown as string }
 		expect(handleNamesRequest(host, parsed).status).toBe(200)
-		expect(host.rename).toHaveBeenCalledWith('dst', '00', 'MON')
+		expect(host.rename).toHaveBeenCalledWith('dst', '1', 'MON')
 		const empty = { ...request('POST', '/names'), body: undefined }
 		expect(handleNamesRequest(host, empty).status).toBe(400)
 	})

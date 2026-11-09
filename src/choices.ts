@@ -1,5 +1,5 @@
 import type { DropdownChoice } from '@companion-module/base'
-import { toHex } from './protocol.js'
+import { portNumber } from './protocol.js'
 import type { RouterState } from './state.js'
 
 export const VIDEO_FORMATS: DropdownChoice<string>[] = [
@@ -68,7 +68,7 @@ export const LOCK_MODES: DropdownChoice<string>[] = [
 	// { id: '2', label: 'Lock others' }, // only valid in a multiple router system
 ]
 
-/** Destination choices, built from the router's current size and names. Ids are hex port numbers. */
+/** Destination choices, built from the router's current size and names. Ids are port numbers, counting from 1. */
 export function destinationChoices(state: RouterState): DropdownChoice<string>[] {
 	return portChoices(state.dstCount, (i) => state.dstName(i))
 }
@@ -80,16 +80,16 @@ export function sourceChoices(state: RouterState): DropdownChoice<string>[] {
 function portChoices(count: number, name: (index: number) => string): DropdownChoice<string>[] {
 	// before the router has reported its size keep one entry, so the dropdowns are never empty
 	const length = Math.max(count, 1)
-	return Array.from({ length }, (_, i) => ({ id: toHex(i), label: `${i + 1}: ${name(i)}` }))
+	return Array.from({ length }, (_, i) => ({ id: portNumber(i), label: `${i + 1}: ${name(i)}` }))
 }
 
 /** Shown in place of the description when a port option is switched to an expression */
 export const PORT_EXPRESSION_DESCRIPTION =
-	'A zero-based hex port id, not the number in the list: 00 = port 1, 0A = port 11, 3F = port 64. ' +
-	'The selected_dst_id, selected_src_id and xpt## variables already use this format.'
+	'The port number shown in the list, for example 11 for port 11. ' +
+	'The selected_dst_id, selected_src_id and xpt## variables hold the same number.'
 
 /**
- * A destination or source dropdown. The ids stay zero-based hex, which saved buttons depend on.
+ * A destination or source dropdown. The ids are the port numbers shown, so a typed 11 means port 11.
  * In expression mode any value is passed through, as the module checks the port itself and logs a bad one.
  */
 export function portDropdown<Id extends string>(
@@ -109,7 +109,7 @@ export function portDropdown<Id extends string>(
 		type: 'dropdown',
 		id,
 		label,
-		default: '00',
+		default: '1',
 		choices,
 		expressionDescription: PORT_EXPRESSION_DESCRIPTION,
 		allowInvalidValues: true,

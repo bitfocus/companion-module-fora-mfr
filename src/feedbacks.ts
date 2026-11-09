@@ -1,6 +1,6 @@
 import { AUTO_ROUTE_MODES, destinationChoices, portDropdown, sourceChoices } from './choices.js'
 import type ModuleInstance from './main.js'
-import { parseHex } from './protocol.js'
+import { parsePort } from './protocol.js'
 
 export const SELECTION_FEEDBACKS = [
 	'SelectedSource',
@@ -37,7 +37,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: 0x00ff00, color: 0x000000 },
 			options: [portDropdown('src', 'Source :', src)],
 			callback: (feedback) => {
-				const port = parseHex(feedback.options.src)
+				const port = parsePort(feedback.options.src)
 				if (port === undefined || !state.isSrcSelected(port)) return false
 				return port !== state.nextSrc || state.flashOn
 			},
@@ -49,7 +49,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: 0xff0000, color: 0x000000 },
 			options: [portDropdown('dst', 'Destination :', dst)],
 			callback: (feedback) => {
-				const port = parseHex(feedback.options.dst)
+				const port = parsePort(feedback.options.dst)
 				return port !== undefined && state.isDstSelected(port)
 			},
 		},
@@ -60,7 +60,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: 0x00ff00, color: 0x000000 },
 			options: [portDropdown('src', 'Source :', src)],
 			callback: (feedback) => {
-				const port = parseHex(feedback.options.src)
+				const port = parsePort(feedback.options.src)
 				return port !== undefined && state.isRoutedSrc(port)
 			},
 		},
@@ -71,7 +71,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: 0xff0000, color: 0x000000 },
 			options: [portDropdown('dst', 'Destination :', dst)],
 			callback: (feedback) => {
-				const port = parseHex(feedback.options.dst)
+				const port = parsePort(feedback.options.dst)
 				return port !== undefined && state.isRoutedDst(port)
 			},
 		},
@@ -82,7 +82,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: 0xff8000, color: 0x000000 },
 			options: [portDropdown('src', 'Source :', src)],
 			callback: (feedback) => {
-				const port = parseHex(feedback.options.src)
+				const port = parsePort(feedback.options.src)
 				return port !== undefined && state.selectedDst !== undefined && state.pendingSrc(state.selectedDst) === port
 			},
 		},
@@ -93,7 +93,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: 0xff8000, color: 0x000000 },
 			options: [portDropdown('dst', 'Destination :', dst)],
 			callback: (feedback) => {
-				const port = parseHex(feedback.options.dst)
+				const port = parsePort(feedback.options.dst)
 				return port !== undefined && state.pendingSrc(port) !== undefined
 			},
 		},
@@ -104,7 +104,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: 0x800000, color: 0x000000 },
 			options: [portDropdown('dst', 'Destination :', dst)],
 			callback: (feedback) => {
-				const port = parseHex(feedback.options.dst)
+				const port = parsePort(feedback.options.dst)
 				return port !== undefined && state.isLocked(port)
 			},
 		},

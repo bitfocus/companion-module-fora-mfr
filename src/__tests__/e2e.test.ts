@@ -180,11 +180,11 @@ describe('ModuleInstance against the fake router over TCP', () => {
 		it('never sends a command before the previous prompt, even with every byte in its own packet', HEAVY, async () => {
 			router.drip = true
 			const m = await startModule(DRIP_STARTUP_MS)
-			m.routeExplicit('preset', '01', '05')
-			m.routeExplicit('preset', '02', '06')
-			m.routeExplicit('cut', '01', '03')
+			m.routeExplicit('preset', '2', '6')
+			m.routeExplicit('preset', '3', '7')
+			m.routeExplicit('cut', '2', '4')
 			m.cutPresets()
-			m.lockDestination('07', '1')
+			m.lockDestination('8', '1')
 			await until(() => sent().at(-1) === '@ V?0' && sent().includes('@ W?0,07'))
 			await settle()
 			await refresh()
@@ -305,7 +305,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 
 		it('reconnects after the router drops it, reads everything again and forgets what it staged', async () => {
 			const m = await startModule()
-			m.routeExplicit('preset', '01', '05')
+			m.routeExplicit('preset', '2', '6')
 			await until(() => sent().at(-1) === '@ V?0')
 			await settle()
 			expect(m.state.presets.get(1)).toBe(5)
@@ -314,7 +314,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			router.dropClients()
 			await until(() => !socket().isConnected, 'the module to see the drop')
 			expect(m.updateStatus).toHaveBeenLastCalledWith(InstanceStatus.Disconnected, undefined)
-			m.routeExplicit('cut', '02', '03')
+			m.routeExplicit('cut', '3', '4')
 			expect(m.log).toHaveBeenCalledWith('warn', 'Not connected, dropped command: @ X:0/02,03')
 
 			// changed while the module was away
@@ -391,7 +391,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			await refresh()
 			expect(logged(m, 'info')).toEqual(['DST 8 renamed on the router: "DST 8" to "FROM PANEL"'])
 			mock(m.log).mockClear()
-			m.rename('dst', '08', 'MINE')
+			m.rename('dst', '9', 'MINE')
 			await until(() => m.state.dstName(8) === 'MINE', 'the rename to be read back')
 			await settle()
 			expect(logged(m, 'info')).toEqual([])
@@ -400,10 +400,10 @@ describe('ModuleInstance against the fake router over TCP', () => {
 		it('does not warn when renaming neighbouring ports together', async () => {
 			// each read back returns a whole block, including neighbours whose rename hasn't been sent yet
 			const m = await startModule()
-			for (const port of ['01', '02', '03']) m.rename('dst', port, `NEW ${port}`)
-			await until(() => m.state.dstName(3) === 'NEW 03', 'the names to be read back')
+			for (const port of ['2', '3', '4']) m.rename('dst', port, `NEW ${port}`)
+			await until(() => m.state.dstName(3) === 'NEW 4', 'the names to be read back')
 			await settle()
-			expect(m.state.dstName(1)).toBe('NEW 01')
+			expect(m.state.dstName(1)).toBe('NEW 2')
 			expect(m.log).not.toHaveBeenCalledWith('warn', expect.stringContaining('stored'))
 		})
 
@@ -427,7 +427,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			const m = await startModule()
 			const first = socket()
 			router.ignore = () => true
-			m.routeExplicit('preset', '01', '05')
+			m.routeExplicit('preset', '2', '6')
 			await until(() => router.received.at(-1)?.command === '@ P:0/01,05', 'the router to get the command')
 
 			vi.advanceTimersByTime(6000)
@@ -507,9 +507,9 @@ describe('ModuleInstance against the fake router over TCP', () => {
 		it('stages a salvo, takes it, then stages and clears another', async () => {
 			const m = await startModule()
 			m.config.autoRoute = 'preset'
-			m.selectSource('05')
-			m.selectDestination('01')
-			m.selectDestination('02')
+			m.selectSource('6')
+			m.selectDestination('2')
+			m.selectDestination('3')
 			await until(() => sent().at(-1) === '@ V?0')
 			await settle()
 			const staged = (): Map<number, number> => connection()!.staged.get('0') ?? new Map()
@@ -526,7 +526,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			expect(m.state.presets.size).toBe(0)
 			expect(routes(m)).toEqual(routerRoutes())
 
-			m.routeExplicit('preset', '03', '07')
+			m.routeExplicit('preset', '4', '8')
 			await until(() => sent().at(-1) === '@ V?0')
 			await settle()
 			m.clearPresets()
@@ -547,9 +547,9 @@ describe('ModuleInstance against the fake router over TCP', () => {
 
 		it('cuts one destination, keeping the other staged routes, and a later take does not undo the cut', async () => {
 			const m = await startModule()
-			m.routeExplicit('preset', '01', '05')
-			m.routeExplicit('preset', '02', '06')
-			m.routeExplicit('cut', '01', '03')
+			m.routeExplicit('preset', '2', '6')
+			m.routeExplicit('preset', '3', '7')
+			m.routeExplicit('cut', '2', '4')
 			await until(() => sent().at(-1) === '@ V?0')
 			await settle()
 			expect(router.route('0', 1)).toBe(3)
@@ -568,9 +568,9 @@ describe('ModuleInstance against the fake router over TCP', () => {
 
 		it('leaves a locked destination alone in a salvo and clears its staged route', async () => {
 			const m = await startModule()
-			m.routeExplicit('preset', '07', '14')
+			m.routeExplicit('preset', '8', '21')
 			await settle()
-			m.lockDestination('07', '1')
+			m.lockDestination('8', '1')
 			await until(() => m.state.locks.get(7) === 1, 'the lock to reach the module')
 			await settle()
 			;(m.setVariableValues as Mock).mockClear()
@@ -589,7 +589,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			await settle()
 			const before = sent().length
 
-			m.routeExplicit('cut', '07', '01')
+			m.routeExplicit('cut', '8', '2')
 			expect(m.log).toHaveBeenCalledWith('warn', expect.stringContaining('is locked'))
 			await settle()
 			expect(sent().length).toBe(before)
@@ -600,7 +600,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			const m = await startModule()
 			// locked on the router without telling anyone, so the module tries the cut
 			router.locks.set(9, { id: '15', mode: 1 })
-			m.routeExplicit('cut', '09', '01')
+			m.routeExplicit('cut', '10', '2')
 			await until(() => sent().at(-1) === '@ V?0')
 			await settle()
 			expect(sent()).toContain('@ X:0/09,01')
@@ -611,7 +611,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 		it('locks and unlocks a destination, and the router tells the other clients', async () => {
 			const m = await startModule()
 			const panel = await router.connectClient()
-			m.lockDestination('07', '1')
+			m.lockDestination('8', '1')
 			await until(() => sent().at(-1) === '@ W?0,07')
 			await settle()
 			expect(router.locks.get(7)).toEqual({ id: '15', mode: 1 })
@@ -619,7 +619,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			await until(() => panel.settled)
 			expect(panel.output).toContain('W!07,15,1\r\n')
 
-			m.lockDestination('07', 'toggle')
+			m.lockDestination('8', 'toggle')
 			await until(() => sent().at(-1) === '@ W?0,07' && sent().includes('@ W:0/07,15,0'))
 			await settle()
 			expect(router.locks.has(7)).toBe(false)
@@ -644,7 +644,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 
 			await panel.request('@ X:0/03,06')
 			await until(() => m.state.routes.get(3) === 6, 'the route')
-			expect(m.setVariableValues).toHaveBeenCalledWith(expect.objectContaining({ xpt04: '06', xpt04_name: 'SRC 7' }))
+			expect(m.setVariableValues).toHaveBeenCalledWith(expect.objectContaining({ xpt04: '7', xpt04_name: 'SRC 7' }))
 			expect(m.checkFeedbacks).toHaveBeenCalledWith(
 				'SelectedSource',
 				'RoutedSource',
@@ -671,7 +671,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 		it('keeps its staged routes apart from another client', async () => {
 			const m = await startModule()
 			const panel = await router.connectClient()
-			m.routeExplicit('preset', '01', '05')
+			m.routeExplicit('preset', '2', '6')
 			await until(() => sent().at(-1) === '@ V?0')
 			await settle()
 
@@ -696,7 +696,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 
 		it('touches no variable, feedback or definition when nothing changed', async () => {
 			const m = await startModule()
-			m.routeExplicit('preset', '01', '05')
+			m.routeExplicit('preset', '2', '6')
 			await until(() => sent().at(-1) === '@ V?0')
 			await settle()
 			// let the name debounce publish the definitions
@@ -723,7 +723,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 			router.routes.get('0')![6] = 20
 			await refresh()
 			expect(m.setVariableValues).toHaveBeenCalledTimes(1)
-			expect(m.setVariableValues).toHaveBeenCalledWith(expect.objectContaining({ xpt07: '14' }))
+			expect(m.setVariableValues).toHaveBeenCalledWith(expect.objectContaining({ xpt07: '21' }))
 		})
 	})
 
@@ -769,7 +769,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 
 		it('reads a renamed source back from the router after reconnecting', async () => {
 			const m = await startModule()
-			m.rename('src', '03', 'CAM 4')
+			m.rename('src', '4', 'CAM 4')
 			await until(() => sent().includes('@ K:SA003,43414D2034'))
 			await settle()
 			expect(router.srcNames[3]).toBe('CAM 4')
@@ -785,7 +785,7 @@ describe('ModuleInstance against the fake router over TCP', () => {
 
 		it('shows what the router kept when it drops non-ASCII characters, and warns', async () => {
 			const m = await startModule()
-			m.rename('src', '03', 'Café')
+			m.rename('src', '4', 'Café')
 			await until(() => m.state.srcName(3) === 'Caf', 'the name to be read back')
 			expect(router.srcNames[3]).toBe('Caf')
 			expect(m.log).toHaveBeenCalledWith('warn', expect.stringContaining('stored "Café" as "Caf"'))
@@ -793,14 +793,14 @@ describe('ModuleInstance against the fake router over TCP', () => {
 
 		it('shows what the router kept when it shortens a long name, and warns', async () => {
 			const m = await startModule()
-			m.rename('dst', '02', 'A very long studio name')
+			m.rename('dst', '3', 'A very long studio name')
 			await until(() => m.state.dstName(2) === 'A very long stud', 'the name to be read back')
 			expect(m.log).toHaveBeenCalledWith('warn', expect.stringContaining('stored'))
 		})
 
 		it('does not warn when the router keeps the name as sent', async () => {
 			const m = await startModule()
-			m.rename('dst', '02', 'MON 3')
+			m.rename('dst', '3', 'MON 3')
 			await until(() => m.state.dstName(2) === 'MON 3', 'the name to be read back')
 			expect(m.log).not.toHaveBeenCalledWith('warn', expect.stringContaining('stored'))
 		})

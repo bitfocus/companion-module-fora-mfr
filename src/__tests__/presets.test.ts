@@ -24,7 +24,7 @@ describe('presets', () => {
 		const hidden = layered.elements.filter((e: any) => e.enabled === false).map((e: any) => e.id)
 		expect(hidden).toEqual(['arrow', 'pending'])
 		const staged = layered.feedbacks.find((f: any) => f.feedbackId === 'PresetDestination')
-		expect(staged.options).toEqual({ dst: '01' })
+		expect(staged.options).toEqual({ dst: '2' })
 		expect(staged.styleOverrides).toEqual(
 			expect.arrayContaining([
 				{ elementId: 'arrow', elementProperty: 'enabled', override: true },
