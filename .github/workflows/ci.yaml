@@ -24,7 +24,10 @@ jobs:
           package-manager-cache: false
 
       - name: Enable corepack
-        run: corepack enable
+        # Node 26 no longer includes Corepack
+        run: |
+          npm install -g corepack
+          corepack enable
 
       - name: Get the Yarn cache folder
         id: yarn-cache

@@ -8,7 +8,14 @@ See [companion/HELP.md](./companion/HELP.md) for setup and usage, and [LICENSE](
 
 ## Development
 
-Requires Node 26 and Yarn 4 (`corepack enable`).
+Requires Node 26 and Yarn 4. Node 26 no longer includes Corepack, so install it first:
+
+```bash
+npm install -g corepack
+corepack enable
+```
+
+Then:
 
 ```bash
 yarn install
