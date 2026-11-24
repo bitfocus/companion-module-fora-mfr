@@ -3,7 +3,7 @@
 	"name": "fora-mfr",
 	"shortname": "fora-mfr",
 	"description": "Control ForA MFR routers",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-fora-mfr.git",
 	"bugs": "https://github.com/bitfocus/companion-module-fora-mfr/issues",
@@ -14,7 +14,7 @@
 		}
 	],
 	"runtime": {
-		"type": "node18",
+		"type": "node26",
 		"api": "nodejs-ipc",
 		"apiVersion": "0.0.0",
 		"entrypoint": "../src/main.js"
